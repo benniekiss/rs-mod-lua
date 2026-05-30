@@ -5,9 +5,9 @@ name = "minijinja-lua"
 version = "0.1.21"
 edition = "2024"
 readme = "README.md"
-repository = "https://github.com/benniekiss/minijinja-lua"
+repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
-description = "lua bindings for minijinja"
+description = "a minijinja module using the rust minijinja crate"
 
 [lib]
 name = "minijinja_lua"

@@ -4,14 +4,14 @@ lua = ">=5.1"
 [description]
 summary = "Lua bindings for minijinja"
 maintainer = "benniekiss"
-homepage = "https://github.com/benniekiss/minijinja-lua"
-issues_url = "https://github.com/benniekiss/minijinja-lua/issues"
+homepage = "https://github.com/benniekiss/rs-mod-lua"
+issues_url = "https://github.com/benniekiss/rs-mod-lua/issues"
 labels = ["jinja", "minijinja", "template", "rust", "bindings"]
 license = "MIT"
 
 [source]
-url = "https://github.com/benniekiss/$(PACKAGE)/archive/refs/tags/$(REF).zip"
-dev = "git+https://github.com/benniekiss/$(PACKAGE)"
+url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-$(REF).zip"
+dev = "git+https://github.com/benniekiss/rs-mod-lua"
 
 [build]
 type = "rust-mlua"

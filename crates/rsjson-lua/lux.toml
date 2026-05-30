@@ -10,13 +10,13 @@ labels = ["json", "rust", "bindings"]
 license = "MIT"
 
 [source]
-url = "https://github.com/benniekiss/$(PACKAGE)/archive/refs/tags/$(REF).zip"
-dev = "git+https://github.com/benniekiss/$(PACKAGE)"
+url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-$(REF).zip"
+dev = "git+https://github.com/benniekiss/rs-mod-lua"
 
 [build]
 type = "rust-mlua"
 default_features = false
-features = ["module", "jsonschema"]
+features = ["module"]
 
 [build.modules]
 "rsjson_lua" = "rsjson_lua"

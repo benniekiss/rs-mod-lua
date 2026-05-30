@@ -5,9 +5,9 @@ name = "rsre-lua"
 version = "0.2.1"
 edition = "2024"
 readme = "README.md"
-repository = "https://github.com/benniekiss/rsre"
+repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
-description = "lua bindings for the rust regex crate"
+description = "a regex module using the rust fancy-regex crate"
 
 [lib]
 name = "rsre_lua"
