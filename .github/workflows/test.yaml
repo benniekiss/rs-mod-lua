@@ -36,9 +36,6 @@ jobs:
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
-
       - name: Setup Lux
         uses: lumen-oss/gh-actions-lux@d12a6bdf3a380de5b9d142272e6fd95d28b44b8d # v1
         with:
