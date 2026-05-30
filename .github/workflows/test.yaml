@@ -24,9 +24,9 @@ jobs:
           # - { os: macos-14, target: aarch64-apple-darwin }
           # - { os: windows-2025, target: x86_64-pc-windows-msvc }
         lua_version:
-          # - 5.1
-          # - 5.2
-          # - 5.3
+          - 5.1
+          - 5.2
+          - 5.3
           - 5.4
           # - 5.5
 
