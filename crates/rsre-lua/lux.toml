@@ -27,6 +27,3 @@ copy_directories = ["library"]
 
 [test]
 type = "busted"
-
-[test_dependencies]
-luacov = "0.17.0-1"
