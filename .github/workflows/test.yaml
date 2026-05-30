@@ -43,7 +43,7 @@ jobs:
 
       - name: Run tests
         run: |
-          lx --lua-version ${{ matrix.lua_version }} test
+          lx --lua-version ${{ matrix.lua_version }} test --no-lock
 
   cargo-test:
     # Do not run on release-plz PRs
