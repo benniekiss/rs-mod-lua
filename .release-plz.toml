@@ -1,2 +1,14 @@
 [workspace]
+release = false
+
+[[package]]
+name = "minijinja-lua"
+publish_features = ["vendored", "contrib"]
+
+[[package]]
+name = "rsjson-lua"
+publish_features = ["vendored"]
+
+[[package]]
+name = "rsre-lua"
 publish_features = ["vendored"]
