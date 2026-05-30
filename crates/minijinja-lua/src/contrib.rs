@@ -33,7 +33,7 @@ pub(crate) fn minijinja_path_loader(lua: &Lua) -> Result<LuaFunction, LuaError> 
                 name = name:gsub("^/+", ""):gsub("/+$", "")
 
                 local sep = package.config:sub(1,1)
-                local pattern = "([^" .. sep .. "]*)"
+                local pattern = "([^" .. sep .. "]+)"
 
                 local splits = {}
                 for piece in name:gmatch(pattern) do
@@ -46,7 +46,7 @@ pub(crate) fn minijinja_path_loader(lua: &Lua) -> Result<LuaFunction, LuaError> 
                     local file = io.open(p, "r")
 
                     if file then
-                        local source = file:read("a")
+                        local source = file:read("*a")
                         file:close()
 
                         return source
