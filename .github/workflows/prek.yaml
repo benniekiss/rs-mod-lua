@@ -9,6 +9,7 @@ on:
 
 jobs:
   lua-version:
+    if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
     runs-on: ubuntu-latest
 
     outputs:
