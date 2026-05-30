@@ -8,9 +8,9 @@ Lua bindings built with [`mlua`](https://github.com/mlua-rs/mlua)
 
 The following modules are contained in this repo:
 
-- [`minijinja-lua`](crates/minijinja-lua/README.md)
-- [`rsjson-lua`](crates/rsjson-lua/README.md)
-- [`rsre-lua`](crates/rsre-lua/README.md)
+- [`minijinja-lua`][minijinja-lua]
+- [`rsjson-lua`][rsjson-lua]
+- [`rsre-lua`][rsre-lua]
 
 ## Documentation
 
@@ -23,3 +23,7 @@ The following modules are contained in this repo:
 - [`lux`](https://github.com/lumen-oss/lux)
 - [`prek`](https://github.com/j178/prek)
 - [`sphinx-lua-ls`](https://github.com/sphinx-contrib/lua-ls)
+
+[minijinja-lua]: crates/minijinja-lua/README.md
+[rsjson-lua]: crates/rsjson-lua/README.md
+[rsre-lua]: crates/rsre-lua/README.md

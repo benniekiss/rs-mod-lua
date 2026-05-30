@@ -1,6 +1,11 @@
 ```{include} ../README.md
 :relative-docs: docs
+:end-line: 27
 ```
+
+[minijinja-lua]: crates/minijinja-lua/index.md
+[rsjson-lua]: crates/rsjson-lua/index.md
+[rsre-lua]: crates/rsre-lua/index.md
 
 ```{toctree}
 :caption: 'Contents'
