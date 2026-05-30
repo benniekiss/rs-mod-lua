@@ -45,5 +45,5 @@ panic = "immediate-abort"
 codegen-units = 1
 rustflags = [
     "-Zlocation-detail=none",
-    "-Zfmt-debug=none",
+    # "-Zfmt-debug=none",
 ]
