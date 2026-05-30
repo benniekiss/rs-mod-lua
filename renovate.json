@@ -1,0 +1,36 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:recommended",
+        ":configMigration",
+        "helpers:pinGitHubActionDigests"
+    ],
+    "prHourlyLimit": 0,
+    "prConcurrentLimit": 0,
+    "enabledManagers": [
+        "github-actions",
+        "cargo",
+        "pip_requirements",
+        "rust-toolchain"
+    ],
+    "pip_requirements": {
+        "rangeStrategy": "pin"
+    },
+    "lockFileMaintenance": {
+        "enabled": true,
+        "schedule": [
+            "before 12pm on monday"
+        ]
+    },
+    "packageRules": [
+        {
+            "matchManagers": [
+                "rust-toolchain"
+            ],
+            "matchDepTypes": [
+                "toolchain"
+            ],
+            "rangeStrategy": "pin"
+        }
+    ]
+}

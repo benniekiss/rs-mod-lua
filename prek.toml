@@ -1,0 +1,65 @@
+# Configuration file for `prek`, a git hook framework written in Rust.
+# See https://prek.j178.dev for more information.
+#:schema https://www.schemastore.org/prek.json
+
+[[repos]]
+repo = "builtin"
+
+[[repos.hooks]]
+id = "trailing-whitespace"
+args = ["--markdown-linebreak-ext=md"]
+
+[[repos.hooks]]
+id = "end-of-file-fixer"
+exclude = { glob = ["*.lock"] }
+
+[[repos.hooks]]
+id = "check-added-large-files"
+args = ["--maxkb=1000"]
+
+[[repos]]
+repo = "local"
+
+## Disabled because there are currently no lua files to check
+[[repos.hooks]]
+id = "lx-check"
+name = "lx check"
+entry = "lx --no-luarc --lua-version 5.4 check"
+language = "system"
+pass_filenames = false
+files = { glob = ["*.lua"] }
+exclude = { glob = [".lux/**"] }
+
+[[repos.hooks]]
+id = "lx-lint"
+name = "lx lint"
+entry = "lx --no-luarc --lua-version 5.4 lint -- -g -q -u --no-max-line-length"
+language = "system"
+pass_filenames = true
+files = { glob = ["*.lua"] }
+exclude = { glob = [".lux/**"] }
+
+[[repos.hooks]]
+id = "lx-fmt"
+name = "lx fmt"
+entry = "lx --no-luarc --lua-version 5.4 fmt --backend luafmt"
+language = "system"
+pass_filenames = 1
+files = { glob = ["*.lua"] }
+exclude = { glob = [".lux/**"] }
+
+[[repos.hooks]]
+id = "cargo-clippy"
+name = "cargo clippy"
+entry = "cargo clippy --locked"
+language = "system"
+pass_filenames = false
+files = { glob = ["*.rs"] }
+
+[[repos.hooks]]
+id = "cargo-fmt"
+name = "cargo fmt"
+entry = "cargo fmt --"
+language = "system"
+pass_filenames = true
+files = { glob = ["*.rs"] }

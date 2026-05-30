@@ -1,0 +1,66 @@
+cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+
+[package]
+name = "minijinja-lua"
+version = "0.1.21"
+edition = "2024"
+readme = "README.md"
+repository = "https://github.com/benniekiss/minijinja-lua"
+license = "MIT"
+description = "lua bindings for minijinja"
+
+[lib]
+name = "minijinja_lua"
+crate-type = ["cdylib"]
+
+[features]
+default = ["lua54", "vendored", "contrib"]
+lua55 = ["mlua/lua55"]
+lua54 = ["mlua/lua54"]
+lua53 = ["mlua/lua53"]
+lua52 = ["mlua/lua52"]
+lua51 = ["mlua/lua51"]
+vendored = ["mlua/vendored"]
+module = ["mlua/module"]
+contrib = ["minijinja-contrib", "json", "datetime"]
+minijinja-contrib = ["dep:minijinja-contrib"]
+json = ["dep:serde_json"]
+datetime = ["dep:jiff"]
+
+[dependencies]
+jiff = { version = "0.2.27", optional = true, features = ["serde"] }
+minijinja = { version = "2.20.0", features = [
+    "unicode",
+    "fuel",
+    "custom_syntax",
+    "preserve_order",
+    "json",
+    "urlencode",
+    "loop_controls",
+    "speedups",
+    "stacker",
+] }
+minijinja-contrib = { version = "2.20.0", features = [
+    "pycompat",
+    "datetime",
+    "rand",
+    "html_entities",
+    "wordcount",
+    "unicode_wordwrap",
+], optional = true }
+mlua = { version = "0.11", features = ["serde"] }
+serde_json = { version = "1.0.150", features = [
+    "preserve_order",
+    "float_roundtrip",
+], optional = true }
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+panic = "immediate-abort"
+codegen-units = 1
+rustflags = [
+    "-Zlocation-detail=none",
+    "-Zfmt-debug=none",
+]

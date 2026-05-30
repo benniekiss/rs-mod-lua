@@ -1,0 +1,14 @@
+return {
+    _all = {
+        coverage = true,
+        lazy = true,
+        shuffle = false,
+        ["keep-going"] = true,
+    },
+
+    pandoc = {
+        ROOT = { "crates/minijinja-lua/examples/spec" },
+        lpath = "./crates/minijinja-lua/examples/?.lua",
+        lua = "pandoc lua",
+    }
+}

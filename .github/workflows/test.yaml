@@ -1,0 +1,61 @@
+name: Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  lx-test:
+    # Do not run on release-plz PRs
+    if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
+    name: ${{ matrix.job.target }} - Lua ${{ matrix.lua_version }}
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ## Only run tests on Linux and Lua 5.4 for now.
+        ## There are issues with installing deps in the runner.
+        job:
+          - { os: ubuntu-24.04, target: x86_64-unknown-linux-gnu }
+          - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+          # - { os: macos-14, target: aarch64-apple-darwin }
+          # - { os: windows-2025, target: x86_64-pc-windows-msvc }
+        lua_version:
+          # - 5.1
+          # - 5.2
+          # - 5.3
+          - 5.4
+          # - 5.5
+
+    steps:
+      - name: install readline headers
+        run: sudo apt-get -y update && sudo apt-get -y install libreadline-dev
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Lux
+        uses: lumen-oss/gh-actions-lux@d12a6bdf3a380de5b9d142272e6fd95d28b44b8d # v1
+        with:
+          version: ${{ vars.LUX_VERSION }}
+
+      - name: Run tests
+        run: |
+          lx --lua-version ${{ matrix.lua_version }} test
+
+  cargo-test:
+    # Do not run on release-plz PRs
+    if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
+    name: cargo tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
+
+      - name: Run tests
+        run: cargo test

@@ -1,0 +1,39 @@
+cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+
+[package]
+name = "rsre-lua"
+version = "0.2.1"
+edition = "2024"
+readme = "README.md"
+repository = "https://github.com/benniekiss/rsre"
+license = "MIT"
+description = "lua bindings for the rust regex crate"
+
+[lib]
+name = "rsre_lua"
+crate-type = ["cdylib"]
+
+[features]
+default = ["lua54", "vendored"]
+lua55 = ["mlua/lua55"]
+lua54 = ["mlua/lua54"]
+lua53 = ["mlua/lua53"]
+lua52 = ["mlua/lua52"]
+lua51 = ["mlua/lua51"]
+vendored = ["mlua/vendored"]
+module = ["mlua/module"]
+
+[dependencies]
+fancy-regex = "0.18.0"
+mlua = "0.11.6"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+panic = "immediate-abort"
+codegen-units = 1
+rustflags = [
+    "-Zlocation-detail=none",
+    "-Zfmt-debug=none",
+]

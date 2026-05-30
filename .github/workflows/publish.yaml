@@ -1,0 +1,128 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build and upload'
+        required: false
+        type: string
+      skip_release_upload:
+        description: 'Skip release upload'
+        required: true
+        default: true
+        type: boolean
+      skip_luarocks_upload:
+        description: 'Skip luarocks upload'
+        required: true
+        default: true
+        type: boolean
+  release:
+    types: [published]
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  build:
+    name: ${{ matrix.job.target }}-${{ matrix.lua_version }}
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { os: ubuntu-24.04, target: x86_64-unknown-linux-gnu }
+          - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
+          - { os: macos-14, target: aarch64-apple-darwin }
+          - { os: windows-2025, target: x86_64-pc-windows-msvc }
+
+    env:
+      CARGO_INCREMENTAL: 0
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+      CARGO_NET_RETRY: 10
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: 1
+      RUSTFLAGS: -D warnings
+      RUSTUP_MAX_RETRIES: 10
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Setup Lux
+        uses: lumen-oss/gh-actions-lux@d12a6bdf3a380de5b9d142272e6fd95d28b44b8d # v1
+        with:
+          version: ${{ vars.LUX_VERSION }}
+
+      # The ilammy/msvc-dev-cmd action has not been updated in years, including
+      # relying on an outdated node version. To address these issues, setup MSVC
+      # directly, as done in:
+      #
+      # See: https://github.com/bitcoin-core/secp256k1/pull/1846
+      - name: Build rock (windows)
+        if: ${{ endsWith(matrix.job.target, '-msvc') }}
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          lx --lua-version ${{ vars.LUA_VERSION }} pack
+
+      - name: Build rock (unix)
+        if: ${{ !endsWith(matrix.job.target, '-msvc') }}
+        run: |
+          lx --lua-version ${{ vars.LUA_VERSION }} pack
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          if-no-files-found: "error"
+          name: ${{ matrix.job.target }}
+          path: |
+            *.rock
+
+  upload:
+    if: ${{ !inputs.skip_release_upload }}
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          merge-multiple: true
+
+      - name: Upload release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          fail_on_unmatched_files: true
+          overwrite_files: false
+          files: |
+            *.rock
+
+  luarocks-upload:
+    if: ${{ !inputs.skip_luarocks_upload }}
+    needs: build
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Setup Lux
+        uses: lumen-oss/gh-actions-lux@d12a6bdf3a380de5b9d142272e6fd95d28b44b8d # v1
+        with:
+          version: ${{ vars.LUX_VERSION }}
+
+      - name: Upload rock
+        env:
+          LUX_API_KEY: ${{ secrets.LUX_API_KEY }}
+        run: lx --lua-version ${{ vars.LUA_VERSION }} upload

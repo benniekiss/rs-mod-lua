@@ -1,0 +1,33 @@
+package = "minijinja-lua"
+lua = ">=5.1"
+
+[description]
+summary = "Lua bindings for minijinja"
+maintainer = "benniekiss"
+homepage = "https://github.com/benniekiss/minijinja-lua"
+issues_url = "https://github.com/benniekiss/minijinja-lua/issues"
+labels = ["jinja", "minijinja", "template", "rust", "bindings"]
+license = "MIT"
+
+[source]
+url = "https://github.com/benniekiss/$(PACKAGE)/archive/refs/tags/$(REF).zip"
+dev = "git+https://github.com/benniekiss/$(PACKAGE)"
+
+[build]
+type = "rust-mlua"
+default_features = false
+features = ["module", "contrib"]
+copy_directories = ["library"]
+
+[build.modules]
+"minijinja" = "minijinja_lua"
+
+[build.include]
+"library/minijinja.d.lua" = "minijinja.d.lua"
+
+[test]
+type = "busted"
+
+[test_dependencies]
+busted = "2.3.0-1"
+luacov = "0.17.0-1"

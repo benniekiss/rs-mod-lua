@@ -1,0 +1,49 @@
+cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+
+[package]
+name = "rsjson-lua"
+version = "0.2.3"
+edition = "2024"
+readme = "README.md"
+repository = "https://github.com/benniekiss/rsjson-lua"
+license = "MIT"
+description = "a json module based on serde-json (rust)"
+
+[lib]
+name = "rsjson_lua"
+crate-type = ["cdylib"]
+
+[features]
+default = ["lua54", "vendored", "jsonschema"]
+lua55 = ["mlua/lua55"]
+lua54 = ["mlua/lua54"]
+lua53 = ["mlua/lua53"]
+lua52 = ["mlua/lua52"]
+lua51 = ["mlua/lua51"]
+vendored = ["mlua/vendored"]
+module = ["mlua/module"]
+jsonschema = ["dep:jsonschema"]
+
+[dependencies]
+jsonschema = { version = "0.46.5", features = [
+    "arbitrary-precision",
+    "resolve-async",
+], optional = true }
+mlua = { version = "0.11", features = ["serde", "macros"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.150", features = [
+    "preserve_order",
+    "float_roundtrip",
+    "arbitrary_precision",
+] }
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+panic = "immediate-abort"
+codegen-units = 1
+rustflags = [
+    "-Zlocation-detail=none",
+    "-Zfmt-debug=none",
+]

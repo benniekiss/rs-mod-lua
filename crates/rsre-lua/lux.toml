@@ -1,0 +1,32 @@
+package = "rsre-lua"
+lua = ">=5.1"
+
+[description]
+summary = "a lua regex module using `fancy-regex` via `mlua`"
+homepage = "https://github.com/benniekiss/rsre-lua"
+issues_url = "https://github.com/benniekiss/rsre-lua/issues"
+maintainer = "benniekiss"
+labels = ["regex"]
+license = "MIT"
+
+[source]
+url = "https://github.com/benniekiss/$(PACKAGE)/archive/refs/tags/$(REF).zip"
+dev = "git+https://github.com/benniekiss/$(PACKAGE)"
+
+[build]
+type = "rust-mlua"
+default_features = false
+features = ["module"]
+copy_directories = ["library"]
+
+[build.modules]
+"rsre" = "rsre_lua"
+
+[build.include]
+"library/rsre.d.lua" = "rsre.d.lua"
+
+[test]
+type = "busted"
+
+[test_dependencies]
+luacov = "0.17.0-1"
