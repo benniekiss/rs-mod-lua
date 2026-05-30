@@ -8,10 +8,28 @@ on:
       - main
 
 jobs:
+  lua-version:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - id: version
+        run: |
+          echo "version=$(cat .lua-version)" >> "$GITHUB_OUTPUT"
+
   prek:
     # Do not run on release-plz PRs
     if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
     runs-on: ubuntu-latest
+    needs: lua-version
+
+    env:
+      LUA_VERSION: ${{needs.lua-version.outputs.version}}
+
     steps:
       - name: install readline headers
         run: sudo apt-get -y update && sudo apt-get -y install libreadline-dev
@@ -25,7 +43,7 @@ jobs:
 
       - name: Sync project
         run: |
-          lx --no-luarc --lua-version ${{ vars.LUA_VERSION }} sync
+          lx --no-luarc --lua-version ${{ env.LUA_VERSION }} sync
 
       - name: Run prek
         uses: j178/prek-action@bdca6f102f98e2b4c7029491a53dfd366469e33d # v2
