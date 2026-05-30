@@ -15,7 +15,7 @@ source/contributing
 ```{toctree}
 :caption: 'Modules'
 :maxdepth: 1
-:glob: 
+:glob:
 :hidden:
 :includehidden:
 
