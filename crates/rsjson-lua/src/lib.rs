@@ -4,9 +4,6 @@ mod config;
 mod decode;
 mod encode;
 
-#[cfg(feature = "jsonschema")]
-mod schema;
-
 use mlua::prelude::{Lua, LuaError, LuaResult, LuaSerdeExt, LuaString, LuaTable, LuaValue};
 
 use crate::config::{DecodeConfig, EncodeConfig};
@@ -34,9 +31,6 @@ pub fn rsjson_lua(lua: &Lua) -> LuaResult<LuaTable> {
             decode::decode(lua, &json.as_bytes(), config).map_err(LuaError::external)
         })?,
     )?;
-
-    #[cfg(feature = "jsonschema")]
-    table.set("schema", schema::jsonschema_lua(lua)?)?;
 
     Ok(table)
 }
