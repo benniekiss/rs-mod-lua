@@ -26,7 +26,7 @@ env:
       startsWith(github.ref_name, 'minijinja-lua'), 'minijinja-lua',
       startsWith(github.ref_name, 'rsjson-lua'), 'rsjson-lua',
       startsWith(github.ref_name, 'rsre-lua'), 'rsre-lua',
-      inputs.tag
+      inputs.package
     ) }}
 
 jobs:
