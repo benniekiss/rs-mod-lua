@@ -36,7 +36,7 @@ jobs:
       packages: |-
         ${{ case(
           inputs.package == 'all', env.ALL_PACKAGES,
-          inputs.package != '', format('[{0}]', inputs.package),
+          inputs.package != '', format('["{0}""]', inputs.package),
           steps.filter.outputs.changes != '[]', steps.filter.outputs.changes,
           '[]'
         ) }}
