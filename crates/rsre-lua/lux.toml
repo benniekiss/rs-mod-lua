@@ -12,6 +12,8 @@ license = "MIT"
 [source]
 url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-$(REF).zip"
 dev = "git+https://github.com/benniekiss/rs-mod-lua"
+tag = "$(REF)"
+dir = "crates/rsre-lua"
 
 [build]
 type = "rust-mlua"
