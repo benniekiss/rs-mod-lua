@@ -28,7 +28,7 @@ jobs:
 
   lx-test:
     # Do not run on release-plz PRs
-    if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
+    if: needs.changes.outputs.packages && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
     name: ${{ matrix.job.target }} - Lua ${{ matrix.lua_version }}
     runs-on: ${{ matrix.job.os }}
     needs: filters
@@ -68,7 +68,7 @@ jobs:
 
   cargo-test:
     # Do not run on release-plz PRs
-    if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
+    if: needs.changes.outputs.packages && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
     name: cargo tests
     runs-on: ubuntu-24.04
     needs: filters
