@@ -22,12 +22,12 @@ on:
 
 env:
   RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
-  PACKAGE: |
+  PACKAGE: |-
     ${{ case(
       startsWith(github.ref_name, 'minijinja-lua'), 'minijinja-lua',
       startsWith(github.ref_name, 'rsjson-lua'), 'rsjson-lua',
       startsWith(github.ref_name, 'rsre-lua'), 'rsre-lua',
-      'unknown'
+      ''
     ) }}
 
 jobs:
