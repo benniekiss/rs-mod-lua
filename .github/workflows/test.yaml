@@ -27,8 +27,8 @@ jobs:
             rsre-lua: 'crates/rsre-lua/**'
 
   lx-test:
-    # Do not run on release-plz PRs
-    if: needs.changes.outputs.packages && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
+    # Do not run if no packages were changed or on release-plz PRs
+    if: needs.changes.outputs.packages != '[]' && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
     name: ${{ matrix.job.target }} - Lua ${{ matrix.lua_version }}
     runs-on: ${{ matrix.job.os }}
     needs: filters
@@ -67,8 +67,8 @@ jobs:
           lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
 
   cargo-test:
-    # Do not run on release-plz PRs
-    if: needs.changes.outputs.packages && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
+    # Do not run if no packages were changed or on release-plz PRs
+    if: needs.changes.outputs.packages != '[]' && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
     name: cargo tests
     runs-on: ubuntu-24.04
     needs: filters
