@@ -1,4 +1,5 @@
 package = "jsonschema-lua"
+version = "0.1.0"
 lua = ">=5.1"
 
 [description]
@@ -10,9 +11,9 @@ labels = ["json schema", "json", "validator", "rust", "bindings"]
 license = "MIT"
 
 [source]
-url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-$(REF).zip"
+url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-v$(VERSION).zip"
 dev = "git+https://github.com/benniekiss/rs-mod-lua"
-tag = "$(REF)"
+tag = "$(PACKAGE)-v$(VERSION)"
 dir = "crates/jsonschema-lua"
 
 [build]

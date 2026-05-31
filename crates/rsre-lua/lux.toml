@@ -1,4 +1,5 @@
 package = "rsre-lua"
+version = "0.2.2"
 lua = ">=5.1"
 
 [description]
@@ -12,7 +13,7 @@ license = "MIT"
 [source]
 url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-v$(VERSION).zip"
 dev = "git+https://github.com/benniekiss/rs-mod-lua"
-tag = "$(REF)"
+tag = "$(PACKAGE)-v$(VERSION)"
 dir = "crates/rsre-lua"
 
 [build]
