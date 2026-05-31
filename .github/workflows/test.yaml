@@ -22,9 +22,9 @@ jobs:
         id: filter
         with:
           filters: |
-            minijinja-lua: 'crate/minijinja-lua/**'
-            rsjson-lua: 'crate/rsjson-lua/**'
-            rsre-lua: 'crate/rsre-lua/**'
+            minijinja-lua: 'crates/minijinja-lua/**'
+            rsjson-lua: 'crates/rsjson-lua/**'
+            rsre-lua: 'crates/rsre-lua/**'
 
   lx-test:
     # Do not run on release-plz PRs
