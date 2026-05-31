@@ -10,7 +10,7 @@ labels = ["regex"]
 license = "MIT"
 
 [source]
-url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-$(VERSION).zip"
+url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-v$(VERSION).zip"
 dev = "git+https://github.com/benniekiss/rs-mod-lua"
 tag = "$(REF)"
 dir = "crates/rsre-lua"
