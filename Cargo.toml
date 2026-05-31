@@ -2,7 +2,12 @@ cargo-features = ["profile-rustflags", "panic-immediate-abort"]
 
 [workspace]
 resolver = "3"
-members = ["crates/*"]
+members = [
+    # "crates/jsonschema-lua",
+    "crates/minijinja-lua",
+    "crates/rsjson-lua",
+    "crates/rsre-lua",
+]
 
 [profile.release]
 strip = true
