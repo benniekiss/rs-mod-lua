@@ -21,7 +21,7 @@ on:
     types: [published]
 
 env:
-  PACKAGE: |
+  PACKAGE: |-
     ${{ case(
       startsWith(github.ref_name, 'minijinja-lua'), 'minijinja-lua',
       startsWith(github.ref_name, 'rsjson-lua'), 'rsjson-lua',
