@@ -68,6 +68,10 @@ jobs:
       RUSTUP_MAX_RETRIES: 10
 
     steps:
+      - name: install readline headers
+        if: contains(matrix.job.target, 'linux')
+        run: sudo apt-get -y update && sudo apt-get -y install libreadline-dev
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup Lux

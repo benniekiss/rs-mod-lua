@@ -89,7 +89,20 @@ jobs:
         with:
           version: ${{ vars.LUX_VERSION }}
 
-      - name: Run tests
+      # The ilammy/msvc-dev-cmd action has not been updated in years, including
+      # relying on an outdated node version. To address these issues, setup MSVC
+      # directly, as done in:
+      #
+      # See: https://github.com/bitcoin-core/secp256k1/pull/1846
+      - name: Run tests (windows)
+        if: ${{ endsWith(matrix.job.target, '-msvc') }}
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
+
+      - name: Run tests (unix)
+        if: ${{ !endsWith(matrix.job.target, '-msvc') }}
         run: |
           lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
 
