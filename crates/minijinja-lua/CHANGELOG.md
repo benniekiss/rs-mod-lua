@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.23](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.22...minijinja-lua-v0.1.23) - 2026-05-31
+
+### Added
+
+- move lua modules to a monorepo
+
+### Fixed
+
+- set package versions in lux.toml
+- prefix version var with `v`
+- *(ci)* restore build.rs file
+- configure source.dir and source.tag
+- lua 5.1 and 5.2 compat in path_loader
+- *(ci)* duplicate rust-toolchain.toml
+- update package metadata
+
+### Other
+
+- bump package versions
+- use $(PACKAGE) var in `source.dir`
+- release ([#4](https://github.com/benniekiss/rs-mod-lua/pull/4))
+- prep for publishing
+- update package descriptions [skip ci]
+- *(minijinja-lua)* update jiff crate
+- remove use some mlua statements
+- *(deps)* update rust to nightly-2026-05-30 ([#2](https://github.com/benniekiss/rs-mod-lua/pull/2))
+- duplicate LICENSE.md
+- *(deps)* remove test_dependencies table
+
 ## [0.1.22](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.21...minijinja-lua-v0.1.22) - 2026-05-31
 
 ### Fixed

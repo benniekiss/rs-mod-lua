@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.3.0...rsjson-lua-v0.3.1) - 2026-05-31
+
+### Fixed
+
+- set package versions in lux.toml
+- prefix version var with `v`
+
+### Other
+
+- bump package versions
+- use $(PACKAGE) var in `source.dir`
+
 ## [0.3.0](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.2.3...rsjson-lua-v0.3.0) - 2026-05-31
 
 ### Added
