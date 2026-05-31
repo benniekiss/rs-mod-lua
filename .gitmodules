@@ -1,0 +1,4 @@
+[submodule "types/LLS-Addons"]
+	path = types/LLS-Addons
+	url = https://github.com/LuaLS/LLS-Addons
+    branch = main
