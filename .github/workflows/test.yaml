@@ -28,7 +28,7 @@ jobs:
 
   lx-test:
     # Do not run if no packages were changed or on release-plz PRs
-    if: needs.changes.outputs.packages != '' && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
+    if: needs.filters.outputs.packages && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
     name: ${{ matrix.job.target }} - Lua ${{ matrix.lua_version }}
     runs-on: ${{ matrix.job.os }}
     needs: filters
@@ -49,7 +49,7 @@ jobs:
           - 5.3
           - 5.4
           # - 5.5
-        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+        package: ${{ fromJSON(needs.filters.outputs.packages) }}
 
     steps:
       - name: install readline headers
@@ -68,7 +68,7 @@ jobs:
 
   cargo-test:
     # Do not run if no packages were changed or on release-plz PRs
-    if: needs.changes.outputs.packages != '' && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
+    if: needs.filters.outputs.packages && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
     name: cargo tests
     runs-on: ubuntu-24.04
     needs: filters
@@ -76,7 +76,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+        package: ${{ fromJSON(needs.filters.outputs.packages) }}
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
