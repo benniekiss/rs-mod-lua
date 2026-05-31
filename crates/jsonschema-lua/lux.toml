@@ -1,0 +1,30 @@
+package = "jsonschema-lua"
+lua = ">=5.1"
+
+[description]
+summary = "a json schema validation lua module using the jsonschema rust crate"
+maintainer = "benniekiss"
+homepage = "https://github.com/benniekiss/rs-mod-lua"
+issues_url = "https://github.com/benniekiss/rs-mod-lua/issues"
+labels = ["json schema", "json", "validator", "rust", "bindings"]
+license = "MIT"
+
+[source]
+url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-$(REF).zip"
+dev = "git+https://github.com/benniekiss/rs-mod-lua"
+tag = "$(REF)"
+dir = "crates/jsonschema-lua"
+
+[build]
+type = "rust-mlua"
+default_features = false
+features = ["module"]
+
+[build.modules]
+"jsonschema" = "jsonschema_lua"
+
+[build.include]
+"library/jsonschema.d.lua" = "jsonschema.d.lua"
+
+[test]
+type = "busted"
