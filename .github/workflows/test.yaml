@@ -62,13 +62,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ## Only run tests on Linux and Lua 5.4 for now.
-        ## There are issues with installing deps in the runner.
         job:
           - { os: ubuntu-24.04, target: x86_64-unknown-linux-gnu }
           - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu }
           - { os: macos-14, target: aarch64-apple-darwin }
-          - { os: windows-2025, target: x86_64-pc-windows-msvc }
+          ## Disabled due to dependency issues
+          # - { os: windows-2025, target: x86_64-pc-windows-msvc }
         lua_version:
           - 5.1
           - 5.2
