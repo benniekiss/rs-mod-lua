@@ -8,7 +8,7 @@ use mlua::prelude::{Lua, LuaError, LuaResult, LuaSerdeExt, LuaString, LuaTable, 
 
 use crate::config::{DecodeConfig, EncodeConfig};
 
-#[cfg_attr(feature = "module", mlua::lua_module(name = "rsjson_lua"))]
+#[cfg_attr(feature = "module", mlua::lua_module(name = "rsjson"))]
 pub fn rsjson_lua(lua: &Lua) -> LuaResult<LuaTable> {
     let table = lua.create_table()?;
 

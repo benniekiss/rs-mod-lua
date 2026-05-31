@@ -21,10 +21,10 @@ default_features = false
 features = ["module"]
 
 [build.modules]
-"rsjson_lua" = "rsjson_lua"
+"rsjson" = "rsjson_lua"
 
 [build.include]
-"lua/rsjson.lua" = "rsjson.lua"
+"library/rsjson.d.lua" = "rsjson.d.lua"
 
 [test]
 type = "busted"
