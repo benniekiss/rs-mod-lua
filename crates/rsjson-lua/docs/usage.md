@@ -28,4 +28,4 @@ for k,v in ipairs(t) do
 end
 ```
 
-The API is documented in the [`lua/rsjson.lua`](../../lua/rsjson.lua) file.
+The API is documented in the [`library/rsjson.d.lua`](../library/rsjson.d.lua) file.
