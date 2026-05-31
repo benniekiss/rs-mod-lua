@@ -2,10 +2,30 @@ name: Tests
 
 on:
   workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to test'
+        required: false
+        type: choice
+        default: all
+        options:
+          - all
+          - minijinja-lua
+          - rsjson-lua
+          - rsre-lua
+
   pull_request:
   push:
     branches:
       - main
+
+env:
+  ALL_PACKAGES: |-
+    [
+      "minijinja-lua",
+      "rsjson-lua",
+      "rsre-lua"
+    ]
 
 jobs:
   filters:
@@ -13,7 +33,13 @@ jobs:
     runs-on: ubuntu-24.04
 
     outputs:
-      packages: ${{ steps.filter.outputs.changes }}
+      packages: |-
+        ${{ case(
+          inputs.package == 'all', env.ALL_PACKAGES,
+          inputs.package != '', input.package,
+          steps.filter.outputs.changes != '[]', steps.filter.outputs.changes,
+          '[]'
+        ) }}
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
