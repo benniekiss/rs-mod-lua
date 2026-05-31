@@ -48,3 +48,5 @@ function rsjson.encode(obj, config) end
 ---
 ---@return any # The deserialized JSON object
 function rsjson.decode(str, config) end
+
+return rsjson
