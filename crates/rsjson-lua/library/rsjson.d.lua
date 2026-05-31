@@ -19,16 +19,19 @@ local rsjson = {}
 ---@field detect_mixed_tables  boolean Detect mixed sequence and key tables
 ---@field error_unsupported    boolean Error on unsupported types (functions, userdata, etc)
 ---@field error_cycles         boolean Error on cycles
----
----@field new                  fun(): rsjson.EncodeConfig
+rsjson.EncodeConfig = {}
+
+--- Create a new `rsjson.EncodeConfig`
+function rsjson.EncodeConfig:new() end
 
 ---@class (exact) rsjson.DecodeConfig: userdata
 ---
 ---@field null            boolean Convert `nil` to `rsjson.null`
 ---@field cast_u64_to_f64 boolean Convert u64 numbers to f64 if they overflow i64
 ---@field set_array_mt    boolean Set the metatable of JSON array tables to `mlua::Lua::array_metatable`
----
----@field new             fun(): rsjson.DecodeConfig
+
+--- Create a new `rsjson.DecodeConfig`
+function rsjson.DecodeConfig:new() end
 
 --- Serialize a Lua object into a JSON string
 ---

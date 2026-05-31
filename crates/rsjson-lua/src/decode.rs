@@ -2,27 +2,24 @@
 
 use std::fmt;
 
-use mlua::{
-    LuaSerdeExt,
-    prelude::{Lua, LuaError, LuaValue},
-};
+use mlua::LuaSerdeExt;
 use serde::de::{self, DeserializeSeed, MapAccess, SeqAccess, Visitor};
 
 use crate::config::DecodeConfig;
 
 pub(crate) struct LuaJsonDeserializer<'lua> {
-    lua: &'lua Lua,
+    lua: &'lua mlua::Lua,
     config: &'lua DecodeConfig,
 }
 
 impl<'lua> LuaJsonDeserializer<'lua> {
-    pub(crate) fn new(lua: &'lua Lua, config: &'lua DecodeConfig) -> Self {
+    pub(crate) fn new(lua: &'lua mlua::Lua, config: &'lua DecodeConfig) -> Self {
         Self { lua, config }
     }
 }
 
 impl<'de, 'lua> DeserializeSeed<'de> for LuaJsonDeserializer<'lua> {
-    type Value = LuaValue;
+    type Value = mlua::Value;
 
     fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
     where
@@ -33,20 +30,20 @@ impl<'de, 'lua> DeserializeSeed<'de> for LuaJsonDeserializer<'lua> {
 }
 
 pub(crate) struct LuaJsonVisitor<'lua> {
-    lua: &'lua Lua,
+    lua: &'lua mlua::Lua,
     config: &'lua DecodeConfig,
 }
 
 impl<'lua> LuaJsonVisitor<'lua> {
     const SERDE_JSON_NUMBER: &'lua str = "$serde_json::private::Number";
 
-    fn new(lua: &'lua Lua, config: &'lua DecodeConfig) -> Self {
+    fn new(lua: &'lua mlua::Lua, config: &'lua DecodeConfig) -> Self {
         Self { lua, config }
     }
 }
 
 impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
-    type Value = LuaValue;
+    type Value = mlua::Value;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(formatter, "any JSON value")
@@ -57,9 +54,9 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
         E: de::Error,
     {
         if self.config.null {
-            Ok(LuaValue::NULL)
+            Ok(mlua::Value::NULL)
         } else {
-            Ok(LuaValue::Nil)
+            Ok(mlua::Value::Nil)
         }
     }
 
@@ -67,14 +64,14 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
     where
         E: de::Error,
     {
-        Ok(LuaValue::Boolean(v))
+        Ok(mlua::Value::Boolean(v))
     }
 
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
-        Ok(LuaValue::Integer(v))
+        Ok(mlua::Value::Integer(v))
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
@@ -82,8 +79,8 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
         E: de::Error,
     {
         match i64::try_from(v) {
-            Ok(i) => Ok(LuaValue::Integer(i)),
-            Err(_) if self.config.cast_u64_to_f64 => Ok(LuaValue::Number(v as f64)),
+            Ok(i) => Ok(mlua::Value::Integer(i)),
+            Err(_) if self.config.cast_u64_to_f64 => Ok(mlua::Value::Number(v as f64)),
             Err(err) => Err(de::Error::custom(err.to_string())),
         }
     }
@@ -92,7 +89,7 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
     where
         E: de::Error,
     {
-        Ok(LuaValue::Number(v))
+        Ok(mlua::Value::Number(v))
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -101,7 +98,7 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
     {
         self.lua
             .create_string(v.as_bytes()) // skip redundant UTF-8 check
-            .map(LuaValue::String)
+            .map(mlua::Value::String)
             .map_err(de::Error::custom)
     }
 
@@ -137,7 +134,7 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
             i += 1;
         }
 
-        Ok(LuaValue::Table(table))
+        Ok(mlua::Value::Table(table))
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
@@ -153,17 +150,17 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
                 let raw: String = map.next_value()?;
 
                 if let Ok(i) = raw.parse::<i64>() {
-                    return Ok(LuaValue::Integer(i));
+                    return Ok(mlua::Value::Integer(i));
                 }
 
                 if let Ok(f) = raw.parse::<f64>() {
-                    return Ok(LuaValue::Number(f));
+                    return Ok(mlua::Value::Number(f));
                 }
 
                 // If the value cannot be cast to i64 or f64, preserve it as a string
                 self.lua
                     .create_string(raw.as_bytes())
-                    .map(LuaValue::String)
+                    .map(mlua::Value::String)
                     .map_err(de::Error::custom)
             },
 
@@ -179,7 +176,7 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
                     .create_string(first.as_bytes())
                     .map_err(de::Error::custom)?;
 
-                let first_val: LuaValue = map.next_value_seed(LuaJsonDeserializer {
+                let first_val: mlua::Value = map.next_value_seed(LuaJsonDeserializer {
                     lua: self.lua,
                     config: self.config,
                 })?;
@@ -194,17 +191,17 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
                         .create_string(k.as_bytes())
                         .map_err(de::Error::custom)?;
 
-                    let v: LuaValue = map.next_value_seed(LuaJsonDeserializer {
+                    let v: mlua::Value = map.next_value_seed(LuaJsonDeserializer {
                         lua: self.lua,
                         config: self.config,
                     })?;
                     table.raw_set(k, v).map_err(de::Error::custom)?;
                 }
 
-                Ok(LuaValue::Table(table))
+                Ok(mlua::Value::Table(table))
             },
 
-            None => Ok(LuaValue::Table(
+            None => Ok(mlua::Value::Table(
                 self.lua.create_table().map_err(de::Error::custom)?,
             )),
         }
@@ -212,27 +209,27 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
 }
 
 pub(crate) fn decode(
-    lua: &Lua,
+    lua: &mlua::Lua,
     json: &[u8],
     config: Option<DecodeConfig>,
-) -> Result<LuaValue, LuaError> {
+) -> Result<mlua::Value, mlua::Error> {
     let config = config.unwrap_or_default();
 
     let mut de = serde_json::Deserializer::from_slice(json);
     let seed = LuaJsonDeserializer::new(lua, &config);
 
-    seed.deserialize(&mut de).map_err(LuaError::external)
+    seed.deserialize(&mut de).map_err(mlua::Error::external)
 }
 
 #[cfg(test)]
 mod test {
-    use mlua::prelude::{LuaSerdeExt, LuaTable};
+    use mlua::LuaSerdeExt;
 
     use super::*;
 
     #[test]
     fn it_json_to_str() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, br#""one two three""#, None)
             .unwrap()
@@ -244,7 +241,7 @@ mod test {
 
     #[test]
     fn it_json_to_int() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, b"99", None).unwrap().as_integer().unwrap();
 
@@ -253,7 +250,7 @@ mod test {
 
     #[test]
     fn it_json_to_float() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, b"9.9", None).unwrap().as_number().unwrap();
 
@@ -262,7 +259,7 @@ mod test {
 
     #[test]
     fn it_json_cast_u64_to_f64() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
         let mut config = DecodeConfig::new();
         config.cast_u64_to_f64 = true;
 
@@ -278,7 +275,7 @@ mod test {
 
     #[test]
     fn it_json_err_cast_u64_to_f64() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
         let mut config = DecodeConfig::new();
         config.cast_u64_to_f64 = false;
 
@@ -291,7 +288,7 @@ mod test {
 
     #[test]
     fn it_json_to_bool() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, b"true", None).unwrap().as_boolean().unwrap();
 
@@ -304,7 +301,7 @@ mod test {
 
     #[test]
     fn it_json_to_null() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, b"null", None).unwrap();
 
@@ -313,7 +310,7 @@ mod test {
 
     #[test]
     fn it_json_to_nil() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let mut config = DecodeConfig::new();
         config.null = false;
@@ -325,20 +322,20 @@ mod test {
 
     #[test]
     fn it_json_to_array() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let te = lua.create_sequence_from(vec![1, 2, 3]).unwrap();
         let res = decode(&lua, b"[1,2,3]", None).unwrap();
 
         assert_eq!(
-            lua.from_value::<Vec<i64>>(LuaValue::Table(te)).unwrap(),
+            lua.from_value::<Vec<i64>>(mlua::Value::Table(te)).unwrap(),
             lua.from_value::<Vec<i64>>(res).unwrap()
         );
     }
 
     #[test]
     fn it_json_array_mt() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
         let mut config = DecodeConfig::new();
         config.set_array_mt = true;
 
@@ -353,7 +350,7 @@ mod test {
 
     #[test]
     fn it_json_no_array_mt() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
         let mut config = DecodeConfig::new();
         config.set_array_mt = false;
 
@@ -368,7 +365,7 @@ mod test {
 
     #[test]
     fn it_json_to_table() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, br#"{"a":1,"b":2,"c":3}"#, None)
             .unwrap()
@@ -383,7 +380,7 @@ mod test {
 
     #[test]
     fn it_json_array_of_objects() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, br#"[{"a":1},{"b":2}]"#, None)
             .unwrap()
@@ -391,8 +388,8 @@ mod test {
             .unwrap()
             .to_owned();
 
-        let first = res.get::<LuaTable>(1).unwrap();
-        let second = res.get::<LuaTable>(2).unwrap();
+        let first = res.get::<mlua::Table>(1).unwrap();
+        let second = res.get::<mlua::Table>(2).unwrap();
 
         assert_eq!(first.get::<i64>("a").unwrap(), 1);
         assert_eq!(second.get::<i64>("b").unwrap(), 2);
@@ -400,7 +397,7 @@ mod test {
 
     #[test]
     fn it_json_object_of_arrays() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, br#"{"a":[1,2,3],"b":[4,5,6]}"#, None)
             .unwrap()
@@ -408,8 +405,8 @@ mod test {
             .unwrap()
             .to_owned();
 
-        let a = res.get::<LuaTable>("a").unwrap();
-        let b = res.get::<LuaTable>("b").unwrap();
+        let a = res.get::<mlua::Table>("a").unwrap();
+        let b = res.get::<mlua::Table>("b").unwrap();
 
         assert_eq!(a.get::<i64>(1).unwrap(), 1);
         assert_eq!(a.get::<i64>(2).unwrap(), 2);
@@ -422,7 +419,7 @@ mod test {
 
     #[test]
     fn it_json_array_of_arrays() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, br#"[[[1,2,[3,4,5]], [6,7,8]]]"#, None)
             .unwrap()
@@ -430,10 +427,10 @@ mod test {
             .unwrap()
             .to_owned();
 
-        let first = res.get::<LuaTable>(1).unwrap();
-        let second = first.get::<LuaTable>(1).unwrap();
-        let third = second.get::<LuaTable>(3).unwrap();
-        let fourth = first.get::<LuaTable>(2).unwrap();
+        let first = res.get::<mlua::Table>(1).unwrap();
+        let second = first.get::<mlua::Table>(1).unwrap();
+        let third = second.get::<mlua::Table>(3).unwrap();
+        let fourth = first.get::<mlua::Table>(2).unwrap();
 
         assert_eq!(second.get::<i64>(1).unwrap(), 1);
         assert_eq!(second.get::<i64>(2).unwrap(), 2);
@@ -447,7 +444,7 @@ mod test {
 
     #[test]
     fn it_json_object_of_objects() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, br#"{"a":{"b":{"c":42}}}"#, None)
             .unwrap()
@@ -455,15 +452,15 @@ mod test {
             .unwrap()
             .to_owned();
 
-        let a = res.get::<LuaTable>("a").unwrap();
-        let b = a.get::<LuaTable>("b").unwrap();
+        let a = res.get::<mlua::Table>("a").unwrap();
+        let b = a.get::<mlua::Table>("b").unwrap();
 
         assert_eq!(b.get::<i64>("c").unwrap(), 42);
     }
 
     #[test]
     fn it_json_empty_array() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, b"[]", None)
             .unwrap()
@@ -476,7 +473,7 @@ mod test {
 
     #[test]
     fn it_json_empty_object() {
-        let lua = Lua::new();
+        let lua = mlua::Lua::new();
 
         let res = decode(&lua, b"{}", None)
             .unwrap()

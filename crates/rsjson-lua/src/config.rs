@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-use mlua::prelude::{FromLua, LuaUserData, LuaValue};
-use serde::{Deserialize, Serialize};
-
-#[non_exhaustive]
-#[derive(Serialize, Deserialize, FromLua, Clone)]
+#[derive(mlua::FromLua, Clone)]
 pub(crate) struct EncodeConfig {
     pub(crate) indent: Option<usize>,
     pub(crate) prefix: String,
@@ -35,9 +31,9 @@ impl Default for EncodeConfig {
     }
 }
 
-impl LuaUserData for EncodeConfig {
+impl mlua::UserData for EncodeConfig {
     fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_function("new", |_lua, _val: LuaValue| {
+        methods.add_function("new", |_, _: mlua::Value| {
             let config = EncodeConfig::new();
             Ok(config)
         });
@@ -108,8 +104,7 @@ impl LuaUserData for EncodeConfig {
     }
 }
 
-#[non_exhaustive]
-#[derive(FromLua, Clone)]
+#[derive(mlua::FromLua, Clone)]
 pub(crate) struct DecodeConfig {
     pub(crate) null: bool,
     pub(crate) cast_u64_to_f64: bool,
@@ -132,9 +127,9 @@ impl Default for DecodeConfig {
     }
 }
 
-impl LuaUserData for DecodeConfig {
+impl mlua::UserData for DecodeConfig {
     fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_function("new", |_lua, _val: LuaValue| Ok(DecodeConfig::new()));
+        methods.add_function("new", |_, _: mlua::Value| Ok(DecodeConfig::new()));
     }
 
     fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
