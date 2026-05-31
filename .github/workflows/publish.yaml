@@ -148,5 +148,5 @@ jobs:
 
       - name: Upload rock
         env:
-          LUX_API_KEY: ${{ secrets.LUX_API_KEY }}
+          LUX_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
         run: lx --lua-version ${{ env.LUA_VERSION }} upload --package ${{ env.PACKAGE }}
