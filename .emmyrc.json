@@ -13,7 +13,7 @@
     "workspaceRoots": [
       "crates/minijinja-lua/library",
       "crates/rsre-lua/library",
-      "crates/rsjson-lua/lua"
+      "crates/rsjson-lua/library"
     ],
     "library": [
       "types/LLS-Addons/addons/luassert/module/library",
