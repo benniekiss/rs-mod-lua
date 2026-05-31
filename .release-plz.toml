@@ -5,14 +5,17 @@ publish = false
 [[package]]
 name = "minijinja-lua"
 release = true
+publish = true
 publish_features = ["vendored", "contrib"]
 
 [[package]]
 name = "rsjson-lua"
 release = true
+publish = true
 publish_features = ["vendored"]
 
 [[package]]
 name = "rsre-lua"
 release = true
+publish = true
 publish_features = ["vendored"]
