@@ -8,6 +8,7 @@ luac.out
 
 # luarocks build files
 *.rock
+*.rockspec
 *.zip
 *.tar.gz
 
