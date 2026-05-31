@@ -7,7 +7,7 @@ edition = "2024"
 readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
-description = "a json module using the rust serde-json crate"
+description = "a json lua module using the serde-json rust crate"
 
 [lib]
 name = "rsjson_lua"

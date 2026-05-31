@@ -2,10 +2,10 @@ package = "rsjson-lua"
 lua = ">=5.1"
 
 [description]
-summary = "a json library for lua using serde-json"
+summary = "a json lua module using the serde-json rust crate"
 maintainer = "benniekiss"
-homepage = "https://github.com/benniekiss/rsjson-lua"
-issues_url = "https://github.com/benniekiss/rsjson-lua/issues"
+homepage = "https://github.com/benniekiss/rs-mod-lua"
+issues_url = "https://github.com/benniekiss/rs-mod-lua/issues"
 labels = ["json", "rust", "bindings"]
 license = "MIT"
 

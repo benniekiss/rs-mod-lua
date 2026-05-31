@@ -2,7 +2,7 @@ package = "minijinja-lua"
 lua = ">=5.1"
 
 [description]
-summary = "Lua bindings for minijinja"
+summary = "a minijinja lua module using the minijinja rust crate"
 maintainer = "benniekiss"
 homepage = "https://github.com/benniekiss/rs-mod-lua"
 issues_url = "https://github.com/benniekiss/rs-mod-lua/issues"

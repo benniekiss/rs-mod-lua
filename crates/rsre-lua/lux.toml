@@ -2,7 +2,7 @@ package = "rsre-lua"
 lua = ">=5.1"
 
 [description]
-summary = "a lua regex module using `fancy-regex` via `mlua`"
+summary = "a regex lua module using the fancy-regex rust crate"
 homepage = "https://github.com/benniekiss/rsre-lua"
 issues_url = "https://github.com/benniekiss/rsre-lua/issues"
 maintainer = "benniekiss"
