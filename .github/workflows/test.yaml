@@ -8,11 +8,29 @@ on:
       - main
 
 jobs:
+  filters:
+    if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
+    runs-on: ubuntu-24.04
+
+    outputs:
+      packages: ${{ steps.filter.outputs.changes }}
+
+    steps:
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            minijinja-lua: 'crate/minijinja-lua/**'
+            rsjson-lua: 'crate/rsjson-lua/**'
+            rsre-lua: 'crate/rsre-lua/**'
+
   lx-test:
     # Do not run on release-plz PRs
     if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
     name: ${{ matrix.job.target }} - Lua ${{ matrix.lua_version }}
     runs-on: ${{ matrix.job.os }}
+    needs: filters
+
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +47,7 @@ jobs:
           - 5.3
           - 5.4
           # - 5.5
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
 
     steps:
       - name: install readline headers
@@ -43,13 +62,19 @@ jobs:
 
       - name: Run tests
         run: |
-          lx --lua-version ${{ matrix.lua_version }} test --no-lock
+          lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
 
   cargo-test:
     # Do not run on release-plz PRs
     if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
     name: cargo tests
     runs-on: ubuntu-24.04
+    needs: filters
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -58,4 +83,4 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
 
       - name: Run tests
-        run: cargo test
+        run: cargo test --package ${{ matrix.package }}
