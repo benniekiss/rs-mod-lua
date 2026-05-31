@@ -22,6 +22,7 @@ lua52 = ["mlua/lua52"]
 lua51 = ["mlua/lua51"]
 vendored = ["mlua/vendored"]
 module = ["mlua/module"]
+arbitrary_precision = ["serde_json/arbitrary_precision"]
 
 [dependencies]
 mlua = { version = "0.11", features = ["serde", "macros"] }
@@ -29,7 +30,6 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.150", features = [
     "preserve_order",
     "float_roundtrip",
-    # "arbitrary_precision",
 ] }
 
 [profile.release]
