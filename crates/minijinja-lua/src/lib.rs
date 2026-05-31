@@ -5,7 +5,7 @@ mod convert;
 mod environment;
 mod state;
 
-use mlua::prelude::{Lua, LuaFunction, LuaResult, LuaTable, LuaValue};
+use mlua::LuaSerdeExt;
 
 pub use crate::{environment::LuaEnvironment, state::LuaState};
 
@@ -20,23 +20,23 @@ pub use crate::{environment::LuaEnvironment, state::LuaState};
 ///   to load templates from the filesystem.
 /// - `type()`: a function to return types for minijinja-lua objects.
 #[cfg_attr(feature = "module", mlua::lua_module(name = "minijinja"))]
-pub fn minijinja_lua(lua: &Lua) -> LuaResult<LuaTable> {
+pub fn minijinja_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
     table.set(
         "type",
-        lua.create_function(|_, val: LuaValue| contrib::minijinja_types(&val))?,
+        lua.create_function(|_, val: mlua::Value| contrib::minijinja_types(&val))?,
     )?;
 
     let path_loader = contrib::minijinja_path_loader(lua)?;
     table.set(
         "path_loader",
-        lua.create_function(move |_, val: LuaValue| -> Result<LuaFunction, _> {
+        lua.create_function(move |_, val: mlua::Value| -> Result<mlua::Function, _> {
             path_loader.call(val)
         })?,
     )?;
 
-    table.set("None", LuaValue::NULL)?;
+    table.set("None", lua.null())?;
     table.set("Environment", lua.create_proxy::<LuaEnvironment>()?)?;
 
     Ok(table)

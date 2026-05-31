@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-use mlua::prelude::{Lua, LuaError, LuaFunction, LuaValue};
-
 use crate::LuaEnvironment;
 
 /// Helper to get the lua type for minijinja wrapper userdata.
 ///
 /// Returns `environment`, `state`, `none`, or any other regular lua type name.
-pub(crate) fn minijinja_types(val: &LuaValue) -> Result<&'static str, LuaError> {
+pub(crate) fn minijinja_types(val: &mlua::Value) -> Result<&'static str, mlua::Error> {
     match val {
-        LuaValue::UserData(ud) if ud.is::<LuaEnvironment>() => Ok("environment"),
-        LuaValue::UserData(ud) if ud.type_name()? == Some("state".to_string()) => Ok("state"),
+        mlua::Value::UserData(ud) if ud.is::<LuaEnvironment>() => Ok("environment"),
+        mlua::Value::UserData(ud) if ud.type_name()? == Some("state".to_string()) => Ok("state"),
         val if val.is_null() => Ok("none"),
         _ => Ok(val.type_name()),
     }
@@ -19,7 +17,7 @@ pub(crate) fn minijinja_types(val: &LuaValue) -> Result<&'static str, LuaError> 
 /// Helper to load templates from a directory.
 ///
 /// The returned function can be provided to `Environment:set_loader`
-pub(crate) fn minijinja_path_loader(lua: &Lua) -> Result<LuaFunction, LuaError> {
+pub(crate) fn minijinja_path_loader(lua: &mlua::Lua) -> Result<mlua::Function, mlua::Error> {
     lua.load(
         r#"
         local function path_loader(paths)
@@ -194,36 +192,34 @@ pub mod datetime {
 #[cfg(test)]
 mod test {
     use minijinja::context;
-    use mlua::Lua;
     use serde_json::json;
 
     use super::*;
     use crate::state::LuaState;
 
-    fn setup() -> Lua {
-        Lua::new()
-    }
-
     #[test]
     fn test_minijinja_types_environment() {
-        let lua = setup();
+        let lua = mlua::Lua::new();
         let env = lua.create_userdata(LuaEnvironment::new()).unwrap();
 
         assert_eq!(
-            minijinja_types(&LuaValue::UserData(env)).unwrap(),
+            minijinja_types(&mlua::Value::UserData(env)).unwrap(),
             "environment"
         );
     }
 
     #[test]
     fn test_minijinja_types_state() {
-        let lua = setup();
+        let lua = mlua::Lua::new();
         let env = minijinja::Environment::new();
         let state = env.empty_state();
 
         lua.scope(|scope| {
             let ud = scope.create_userdata(LuaState::new(&state)).unwrap();
-            assert_eq!(minijinja_types(&LuaValue::UserData(ud)).unwrap(), "state");
+            assert_eq!(
+                minijinja_types(&mlua::Value::UserData(ud)).unwrap(),
+                "state"
+            );
             Ok(())
         })
         .unwrap();
@@ -231,38 +227,44 @@ mod test {
 
     #[test]
     fn test_minijinja_types_none() {
-        assert_eq!(minijinja_types(&LuaValue::NULL).unwrap(), "none");
+        assert_eq!(minijinja_types(&mlua::Value::NULL).unwrap(), "none");
     }
 
     #[test]
     fn test_minijinja_types_lua() {
-        let lua = setup();
+        let lua = mlua::Lua::new();
 
-        assert_eq!(minijinja_types(&LuaValue::Nil).unwrap(), "nil");
+        assert_eq!(minijinja_types(&mlua::Value::Nil).unwrap(), "nil");
         assert_eq!(
-            minijinja_types(&LuaValue::Boolean(true)).unwrap(),
+            minijinja_types(&mlua::Value::Boolean(true)).unwrap(),
             "boolean"
         );
         assert_eq!(
-            minijinja_types(&LuaValue::Function(
-                lua.create_function(|_, _: LuaValue| Ok(())).unwrap()
+            minijinja_types(&mlua::Value::Function(
+                lua.create_function(|_, _: mlua::Value| Ok(())).unwrap()
             ))
             .unwrap(),
             "function"
         );
-        assert_eq!(minijinja_types(&LuaValue::Integer(99)).unwrap(), "integer");
-        assert_eq!(minijinja_types(&LuaValue::Number(99.99)).unwrap(), "number");
         assert_eq!(
-            minijinja_types(&LuaValue::String(lua.create_string("foo").unwrap())).unwrap(),
+            minijinja_types(&mlua::Value::Integer(99)).unwrap(),
+            "integer"
+        );
+        assert_eq!(
+            minijinja_types(&mlua::Value::Number(99.99)).unwrap(),
+            "number"
+        );
+        assert_eq!(
+            minijinja_types(&mlua::Value::String(lua.create_string("foo").unwrap())).unwrap(),
             "string"
         );
         assert_eq!(
-            minijinja_types(&LuaValue::Table(lua.create_table().unwrap())).unwrap(),
+            minijinja_types(&mlua::Value::Table(lua.create_table().unwrap())).unwrap(),
             "table"
         );
         assert_eq!(
-            minijinja_types(&LuaValue::Thread(
-                lua.create_thread(lua.create_function(|_, _: LuaValue| Ok(())).unwrap())
+            minijinja_types(&mlua::Value::Thread(
+                lua.create_thread(lua.create_function(|_, _: mlua::Value| Ok(())).unwrap())
                     .unwrap()
             ))
             .unwrap(),

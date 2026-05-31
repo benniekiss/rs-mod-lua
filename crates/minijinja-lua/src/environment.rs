@@ -19,17 +19,7 @@ use minijinja::{
     args,
     value::{Rest as JinjaRest, Value as JinjaValue},
 };
-use mlua::prelude::{
-    Lua,
-    LuaError,
-    LuaFunction,
-    LuaMultiValue,
-    LuaSerdeExt,
-    LuaTable,
-    LuaUserData,
-    LuaUserDataMethods,
-    LuaValue,
-};
+use mlua::LuaSerdeExt;
 
 use crate::{
     convert::{
@@ -46,7 +36,7 @@ use crate::{
 };
 
 /// A wrapper around a [`minijinja::Environment`]. This wrapper can be serialized into
-/// an [`mlua::UserData`] object for use within Lua.
+/// an [`mlua::UserData`] object for use within mlua::Lua.
 #[derive(Debug)]
 pub struct LuaEnvironment {
     env: RwLock<Environment<'static>>,
@@ -92,17 +82,21 @@ impl LuaEnvironment {
     }
 
     /// Get a read-only lock on the underlying `minijinja::Environment`
-    pub(crate) fn read_env(&self) -> Result<RwLockReadGuard<'_, Environment<'static>>, LuaError> {
+    pub(crate) fn read_env(
+        &self,
+    ) -> Result<RwLockReadGuard<'_, Environment<'static>>, mlua::Error> {
         self.env
             .read()
-            .map_err(|_| LuaError::runtime("environment lock poisoned"))
+            .map_err(|_| mlua::Error::runtime("environment lock poisoned"))
     }
 
     /// Get a write lock on the underlying [`minijinja::Environment`]
-    pub(crate) fn write_env(&self) -> Result<RwLockWriteGuard<'_, Environment<'static>>, LuaError> {
+    pub(crate) fn write_env(
+        &self,
+    ) -> Result<RwLockWriteGuard<'_, Environment<'static>>, mlua::Error> {
         self.env
             .write()
-            .map_err(|_| LuaError::runtime("environment lock poisoned"))
+            .map_err(|_| mlua::Error::runtime("environment lock poisoned"))
     }
 }
 
@@ -118,18 +112,18 @@ impl fmt::Display for LuaEnvironment {
     }
 }
 
-impl LuaUserData for LuaEnvironment {
+impl mlua::UserData for LuaEnvironment {
     fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get(
             "reload_before_render",
-            |_, this: &LuaEnvironment| -> Result<bool, LuaError> {
+            |_, this: &LuaEnvironment| -> Result<bool, mlua::Error> {
                 Ok(this.reload_before_render())
             },
         );
 
         fields.add_field_method_set(
             "reload_before_render",
-            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), LuaError> {
+            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), mlua::Error> {
                 this.set_reload_before_render(val);
 
                 Ok(())
@@ -138,14 +132,14 @@ impl LuaUserData for LuaEnvironment {
 
         fields.add_field_method_get(
             "keep_trailing_newline",
-            |_, this: &LuaEnvironment| -> Result<bool, LuaError> {
+            |_, this: &LuaEnvironment| -> Result<bool, mlua::Error> {
                 Ok(this.read_env()?.keep_trailing_newline())
             },
         );
 
         fields.add_field_method_set(
             "keep_trailing_newline",
-            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), LuaError> {
+            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), mlua::Error> {
                 this.write_env()?.set_keep_trailing_newline(val);
 
                 Ok(())
@@ -154,14 +148,14 @@ impl LuaUserData for LuaEnvironment {
 
         fields.add_field_method_get(
             "trim_blocks",
-            |_, this: &LuaEnvironment| -> Result<bool, LuaError> {
+            |_, this: &LuaEnvironment| -> Result<bool, mlua::Error> {
                 Ok(this.read_env()?.trim_blocks())
             },
         );
 
         fields.add_field_method_set(
             "trim_blocks",
-            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), LuaError> {
+            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), mlua::Error> {
                 this.write_env()?.set_trim_blocks(val);
 
                 Ok(())
@@ -170,14 +164,14 @@ impl LuaUserData for LuaEnvironment {
 
         fields.add_field_method_get(
             "lstrip_blocks",
-            |_, this: &LuaEnvironment| -> Result<bool, LuaError> {
+            |_, this: &LuaEnvironment| -> Result<bool, mlua::Error> {
                 Ok(this.read_env()?.lstrip_blocks())
             },
         );
 
         fields.add_field_method_set(
             "lstrip_blocks",
-            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), LuaError> {
+            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), mlua::Error> {
                 this.write_env()?.set_lstrip_blocks(val);
 
                 Ok(())
@@ -186,12 +180,14 @@ impl LuaUserData for LuaEnvironment {
 
         fields.add_field_method_get(
             "debug",
-            |_, this: &LuaEnvironment| -> Result<bool, LuaError> { Ok(this.read_env()?.debug()) },
+            |_, this: &LuaEnvironment| -> Result<bool, mlua::Error> {
+                Ok(this.read_env()?.debug())
+            },
         );
 
         fields.add_field_method_set(
             "debug",
-            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), LuaError> {
+            |_, this: &mut LuaEnvironment, val: bool| -> Result<(), mlua::Error> {
                 this.write_env()?.set_debug(val);
 
                 Ok(())
@@ -200,14 +196,14 @@ impl LuaUserData for LuaEnvironment {
 
         fields.add_field_method_get(
             "fuel",
-            |_, this: &LuaEnvironment| -> Result<Option<u64>, LuaError> {
+            |_, this: &LuaEnvironment| -> Result<Option<u64>, mlua::Error> {
                 Ok(this.read_env()?.fuel())
             },
         );
 
         fields.add_field_method_set(
             "fuel",
-            |_, this: &mut LuaEnvironment, val: Option<u64>| -> Result<(), LuaError> {
+            |_, this: &mut LuaEnvironment, val: Option<u64>| -> Result<(), mlua::Error> {
                 this.write_env()?.set_fuel(val);
 
                 Ok(())
@@ -216,14 +212,14 @@ impl LuaUserData for LuaEnvironment {
 
         fields.add_field_method_get(
             "recursion_limit",
-            |_, this: &LuaEnvironment| -> Result<usize, LuaError> {
+            |_, this: &LuaEnvironment| -> Result<usize, mlua::Error> {
                 Ok(this.read_env()?.recursion_limit())
             },
         );
 
         fields.add_field_method_set(
             "recursion_limit",
-            |_, this: &mut LuaEnvironment, val: usize| -> Result<(), LuaError> {
+            |_, this: &mut LuaEnvironment, val: usize| -> Result<(), mlua::Error> {
                 this.write_env()?.set_recursion_limit(val);
 
                 Ok(())
@@ -232,7 +228,7 @@ impl LuaUserData for LuaEnvironment {
 
         fields.add_field_method_get(
             "undefined_behavior",
-            |_, this: &LuaEnvironment| -> Result<Option<String>, LuaError> {
+            |_, this: &LuaEnvironment| -> Result<Option<String>, mlua::Error> {
                 let ub = this.read_env()?.undefined_behavior();
 
                 Ok(undefined_behavior_to_lua(ub))
@@ -241,7 +237,7 @@ impl LuaUserData for LuaEnvironment {
 
         fields.add_field_method_set(
             "undefined_behavior",
-            |_, this: &mut LuaEnvironment, val: String| -> Result<(), LuaError> {
+            |_, this: &mut LuaEnvironment, val: String| -> Result<(), mlua::Error> {
                 let behavior = lua_to_undefined_behavior(&val)?;
 
                 this.write_env()?.set_undefined_behavior(behavior);
@@ -251,33 +247,34 @@ impl LuaUserData for LuaEnvironment {
         );
     }
 
-    fn add_methods<M: LuaUserDataMethods<Self>>(methods: &mut M) {
-        methods.add_function("new", |_, _: LuaMultiValue| -> Result<LuaEnvironment, _> {
-            Ok(LuaEnvironment::new())
-        });
+    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_function(
+            "new",
+            |_, _: mlua::MultiValue| -> Result<LuaEnvironment, _> { Ok(LuaEnvironment::new()) },
+        );
 
         methods.add_function(
             "empty",
-            |_, _: LuaMultiValue| -> Result<LuaEnvironment, _> { Ok(LuaEnvironment::empty()) },
+            |_, _: mlua::MultiValue| -> Result<LuaEnvironment, _> { Ok(LuaEnvironment::empty()) },
         );
 
         methods.add_method(
             "add_template",
-            |lua: &Lua,
+            |lua: &mlua::Lua,
              this: &LuaEnvironment,
              (name, source): (String, String)|
-             -> Result<(), LuaError> {
+             -> Result<(), mlua::Error> {
                 bind_lua(lua, || {
                     this.write_env()?
                         .add_template_owned(name, source)
-                        .map_err(LuaError::external)
+                        .map_err(mlua::Error::external)
                 })
             },
         );
 
         methods.add_method(
             "remove_template",
-            |lua: &Lua, this: &LuaEnvironment, name: String| -> Result<(), LuaError> {
+            |lua: &mlua::Lua, this: &LuaEnvironment, name: String| -> Result<(), mlua::Error> {
                 bind_lua(lua, || {
                     this.write_env()?.remove_template(&name);
                     Ok(())
@@ -287,7 +284,7 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "clear_templates",
-            |lua: &Lua, this: &LuaEnvironment, _: LuaValue| -> Result<(), LuaError> {
+            |lua: &mlua::Lua, this: &LuaEnvironment, _: mlua::Value| -> Result<(), mlua::Error> {
                 bind_lua(lua, || {
                     this.write_env()?.clear_templates();
 
@@ -298,10 +295,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "undeclared_variables",
-            |lua: &Lua,
+            |lua: &mlua::Lua,
              this: &LuaEnvironment,
              (name, nested): (String, Option<bool>)|
-             -> Result<LuaValue, LuaError> {
+             -> Result<mlua::Value, mlua::Error> {
                 bind_lua(lua, || {
                     if this.reload_before_render() {
                         this.write_env()?.clear_templates();
@@ -312,7 +309,7 @@ impl LuaUserData for LuaEnvironment {
                     let vars = this
                         .read_env()?
                         .get_template(&name)
-                        .map_err(LuaError::external)?
+                        .map_err(mlua::Error::external)?
                         .undeclared_variables(nested);
 
                     lua.to_value(&vars)
@@ -322,7 +319,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "set_loader",
-            |lua: &Lua, this: &LuaEnvironment, callback: LuaFunction| -> Result<(), LuaError> {
+            |lua: &mlua::Lua,
+             this: &LuaEnvironment,
+             callback: mlua::Function|
+             -> Result<(), mlua::Error> {
                 let key = lua.create_registry_value(callback)?;
                 let func = LuaFunctionObject::new(key);
 
@@ -346,7 +346,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "set_path_join_callback",
-            |lua: &Lua, this: &LuaEnvironment, callback: LuaFunction| -> Result<(), LuaError> {
+            |lua: &mlua::Lua,
+             this: &LuaEnvironment,
+             callback: mlua::Function|
+             -> Result<(), mlua::Error> {
                 let key = lua.create_registry_value(callback)?;
                 let func = LuaFunctionObject::new(key);
 
@@ -364,7 +367,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "set_unknown_method_callback",
-            |lua: &Lua, this: &LuaEnvironment, callback: LuaFunction| -> Result<(), LuaError> {
+            |lua: &mlua::Lua,
+             this: &LuaEnvironment,
+             callback: mlua::Function|
+             -> Result<(), mlua::Error> {
                 let key = lua.create_registry_value(callback)?;
                 let mut func = LuaFunctionObject::new(key);
                 func.set_pass_state(true);
@@ -401,7 +407,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "set_auto_escape_callback",
-            |lua: &Lua, this: &LuaEnvironment, callback: LuaFunction| -> Result<(), LuaError> {
+            |lua: &mlua::Lua,
+             this: &LuaEnvironment,
+             callback: mlua::Function|
+             -> Result<(), mlua::Error> {
                 let key = lua.create_registry_value(callback)?;
                 let func = LuaFunctionObject::new(key);
 
@@ -421,7 +430,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "set_formatter",
-            |lua: &Lua, this: &LuaEnvironment, callback: LuaFunction| -> Result<(), LuaError> {
+            |lua: &mlua::Lua,
+             this: &LuaEnvironment,
+             callback: mlua::Function|
+             -> Result<(), mlua::Error> {
                 let key = lua.create_registry_value(callback)?;
                 let mut func = LuaFunctionObject::new(key);
                 func.set_pass_state(true);
@@ -448,8 +460,8 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "set_syntax",
-            |_, this: &LuaEnvironment, syntax: LuaTable| -> Result<(), LuaError> {
-                let config = lua_to_syntax_config(syntax).map_err(LuaError::external)?;
+            |_, this: &LuaEnvironment, syntax: mlua::Table| -> Result<(), mlua::Error> {
+                let config = lua_to_syntax_config(syntax).map_err(mlua::Error::external)?;
                 this.write_env()?.set_syntax(config);
 
                 Ok(())
@@ -458,66 +470,66 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "render_template",
-            |lua: &Lua,
+            |lua: &mlua::Lua,
              this: &LuaEnvironment,
-             (name, ctx): (String, Option<LuaTable>)|
-             -> Result<String, LuaError> {
+             (name, ctx): (String, Option<mlua::Table>)|
+             -> Result<String, mlua::Error> {
                 if this.reload_before_render() {
                     this.write_env()?.clear_templates();
                 }
 
                 let ctx = ctx.unwrap_or(lua.create_table()?);
 
-                let context = lua_to_minijinja(lua, &LuaValue::Table(ctx));
+                let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
 
                 bind_lua(lua, || {
                     this.read_env()?
                         .get_template(&name)
-                        .map_err(LuaError::external)?
+                        .map_err(mlua::Error::external)?
                         .render(context)
-                        .map_err(LuaError::external)
+                        .map_err(mlua::Error::external)
                 })
             },
         );
 
         methods.add_method(
             "render_str",
-            |lua: &Lua,
+            |lua: &mlua::Lua,
              this: &LuaEnvironment,
-             (source, ctx, name): (String, Option<LuaTable>, Option<String>)|
-             -> Result<String, LuaError> {
+             (source, ctx, name): (String, Option<mlua::Table>, Option<String>)|
+             -> Result<String, mlua::Error> {
                 let ctx = ctx.unwrap_or(lua.create_table()?);
 
                 let name = name.unwrap_or("<string>".to_string());
-                let context = lua_to_minijinja(lua, &LuaValue::Table(ctx));
+                let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
 
                 bind_lua(lua, || {
                     this.read_env()?
                         .render_named_str(&name, &source, context)
-                        .map_err(LuaError::external)
+                        .map_err(mlua::Error::external)
                 })
             },
         );
 
         methods.add_method(
             "eval",
-            |lua: &Lua,
+            |lua: &mlua::Lua,
              this: &LuaEnvironment,
-             (source, ctx): (String, Option<LuaTable>)|
-             -> Result<LuaValue, LuaError> {
+             (source, ctx): (String, Option<mlua::Table>)|
+             -> Result<mlua::Value, mlua::Error> {
                 let ctx = ctx.unwrap_or(lua.create_table()?);
 
-                let context = lua_to_minijinja(lua, &LuaValue::Table(ctx));
+                let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
 
                 bind_lua(lua, || {
                     let expr = this
                         .read_env()?
                         .compile_expression(&source)
-                        .map_err(LuaError::external)?
+                        .map_err(mlua::Error::external)?
                         .eval(&context)
-                        .map_err(LuaError::external)?;
+                        .map_err(mlua::Error::external)?;
 
-                    minijinja_to_lua(lua, &expr).ok_or_else(|| LuaError::ToLuaConversionError {
+                    minijinja_to_lua(lua, &expr).ok_or_else(|| mlua::Error::ToLuaConversionError {
                         from: "".to_string(),
                         to: "",
                         message: None,
@@ -528,10 +540,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "add_filter",
-            |lua: &Lua,
+            |lua: &mlua::Lua,
              this: &LuaEnvironment,
-             (name, filter, pass_state): (String, LuaFunction, Option<bool>)|
-             -> Result<(), LuaError> {
+             (name, filter, pass_state): (String, mlua::Function, Option<bool>)|
+             -> Result<(), mlua::Error> {
                 let key = lua.create_registry_value(filter)?;
                 let mut func = LuaFunctionObject::new(key);
                 func.set_pass_state(pass_state.unwrap_or(true));
@@ -549,7 +561,7 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "remove_filter",
-            |_, this: &LuaEnvironment, name: String| -> Result<(), LuaError> {
+            |_, this: &LuaEnvironment, name: String| -> Result<(), mlua::Error> {
                 this.write_env()?.remove_filter(&name);
 
                 Ok(())
@@ -558,10 +570,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "add_test",
-            |lua: &Lua,
+            |lua: &mlua::Lua,
              this: &LuaEnvironment,
-             (name, test, pass_state): (String, LuaFunction, Option<bool>)|
-             -> Result<(), LuaError> {
+             (name, test, pass_state): (String, mlua::Function, Option<bool>)|
+             -> Result<(), mlua::Error> {
                 let key = lua.create_registry_value(test)?;
                 let mut func = LuaFunctionObject::new(key);
                 func.set_pass_state(pass_state.unwrap_or(true));
@@ -579,7 +591,7 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "remove_test",
-            |_, this: &LuaEnvironment, name: String| -> Result<(), LuaError> {
+            |_, this: &LuaEnvironment, name: String| -> Result<(), mlua::Error> {
                 this.write_env()?.remove_test(&name);
 
                 Ok(())
@@ -588,12 +600,12 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "add_global",
-            |lua: &Lua,
+            |lua: &mlua::Lua,
              this: &LuaEnvironment,
-             (name, val, pass_state): (String, LuaValue, Option<bool>)|
-             -> Result<(), LuaError> {
+             (name, val, pass_state): (String, mlua::Value, Option<bool>)|
+             -> Result<(), mlua::Error> {
                 match val {
-                    LuaValue::Function(f) => {
+                    mlua::Value::Function(f) => {
                         let key = lua.create_registry_value(f)?;
                         let mut func = LuaFunctionObject::new(key);
                         func.set_pass_state(pass_state.unwrap_or(true));
@@ -616,7 +628,7 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "remove_global",
-            |_, this: &LuaEnvironment, name: String| -> Result<(), LuaError> {
+            |_, this: &LuaEnvironment, name: String| -> Result<(), mlua::Error> {
                 this.write_env()?.remove_global(&name);
 
                 Ok(())
@@ -625,7 +637,10 @@ impl LuaUserData for LuaEnvironment {
 
         methods.add_method(
             "globals",
-            |lua: &Lua, this: &LuaEnvironment, _val: LuaValue| -> Result<LuaTable, LuaError> {
+            |lua: &mlua::Lua,
+             this: &LuaEnvironment,
+             _val: mlua::Value|
+             -> Result<mlua::Table, mlua::Error> {
                 let table = lua.create_table()?;
 
                 for (name, value) in this.read_env()?.globals() {

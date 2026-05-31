@@ -24,31 +24,16 @@ use minijinja::{
         ValueKind as JinjaValueKind,
     },
 };
-use mlua::{
-    LuaSerdeExt,
-    ObjectLike,
-    prelude::{
-        FromLua,
-        Lua,
-        LuaAnyUserData,
-        LuaError,
-        LuaFunction,
-        LuaMultiValue,
-        LuaRegistryKey,
-        LuaTable,
-        LuaValue,
-        LuaVariadic,
-    },
-};
+use mlua::{LuaSerdeExt, ObjectLike};
 
 use crate::state::{LuaState, with_lua};
 
 pub(crate) trait LuaObject {
     /// Create a new wrapper around the [`mlua::Value`] associated with `key`
-    fn new(key: LuaRegistryKey) -> Self;
+    fn new(key: mlua::RegistryKey) -> Self;
 
     /// Get the stored `RegistryKey`
-    fn key(&self) -> Arc<LuaRegistryKey>;
+    fn key(&self) -> Arc<mlua::RegistryKey>;
 
     /// Whether to pass a [`minijinja::State`] to function calls, if provided
     fn pass_state(&self) -> bool;
@@ -56,11 +41,11 @@ pub(crate) trait LuaObject {
     /// Set whether to pass a [`minijinja::State`] to function calls, if provided
     fn set_pass_state(&mut self, enable: bool);
 
-    /// Execute a callback with [`mlua::Lua`] and the retrieved [`mlua::Value`] as arguments
+    /// Execute a callback with [`mlua::mlua::Lua`] and the retrieved [`mlua::Value`] as arguments
     fn with<R, F, T>(&self, f: F) -> Result<R, JinjaError>
     where
-        F: FnOnce(&Lua, T) -> Result<R, LuaError>,
-        T: FromLua,
+        F: FnOnce(&mlua::Lua, T) -> Result<R, mlua::Error>,
+        T: mlua::FromLua,
     {
         with_lua(|lua| {
             let value = lua.registry_value::<T>(&self.key())?;
@@ -76,7 +61,7 @@ pub(crate) trait LuaObject {
 /// [`mlua::RegistryKey`].
 #[derive(Debug)]
 pub(crate) struct LuaFunctionObject {
-    key: Arc<LuaRegistryKey>,
+    key: Arc<mlua::RegistryKey>,
     pass_state: Arc<AtomicBool>,
 }
 
@@ -86,12 +71,13 @@ impl LuaFunctionObject {
         args: &[JinjaValue],
         state: Option<&minijinja::State>,
     ) -> Result<Option<JinjaValue>, JinjaError> {
-        self.with(|lua, func: LuaFunction| {
+        self.with(|lua, func: mlua::Function| {
             let mut mv = minijinja_args_to_lua(lua, args);
 
-            // Using `Lua::scope` here allows passing the `minijinja::State` to the callback. Since
-            // `minijinja::State` is not `'static`, this enables passing a temporarily created
-            // `mlua::UserData` to the callback, which is then destructured at the end of the scope.
+            // Using `mlua::Lua::scope` here allows passing the `minijinja::State` to the callback.
+            // Since `minijinja::State` is not `'static`, this enables passing a
+            // temporarily created `mlua::UserData` to the callback, which is then
+            // destructured at the end of the scope.
             //
             // This prevents misuse in lua, such as if the callback assigned the `minijinja::State`
             // to a global variable.
@@ -100,10 +86,10 @@ impl LuaFunctionObject {
                     && self.pass_state()
                 {
                     let userdate = scope.create_userdata(LuaState::new(st))?;
-                    mv.push_front(LuaValue::UserData(userdate.clone()));
+                    mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
-                let res: LuaValue = func.call(mv)?;
+                let res: mlua::Value = func.call(mv)?;
 
                 Ok(lua_to_minijinja(lua, &res))
             })
@@ -127,14 +113,14 @@ impl Drop for LuaFunctionObject {
 }
 
 impl LuaObject for LuaFunctionObject {
-    fn new(key: LuaRegistryKey) -> Self {
+    fn new(key: mlua::RegistryKey) -> Self {
         Self {
             key: Arc::new(key),
             pass_state: Arc::new(AtomicBool::new(false)),
         }
     }
 
-    fn key(&self) -> Arc<LuaRegistryKey> {
+    fn key(&self) -> Arc<mlua::RegistryKey> {
         Arc::clone(&self.key)
     }
 
@@ -174,7 +160,7 @@ impl JinjaObject for LuaFunctionObject {
 /// [`mlua::RegistryKey`].
 #[derive(Debug)]
 pub(crate) struct LuaTableObject {
-    key: Arc<LuaRegistryKey>,
+    key: Arc<mlua::RegistryKey>,
     pass_state: Arc<AtomicBool>,
     array_like: Arc<AtomicBool>,
 }
@@ -191,7 +177,7 @@ impl LuaTableObject {
 
 impl fmt::Display for LuaTableObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let repr = self.with(|_, table: LuaTable| {
+        let repr = self.with(|_, table: mlua::Table| {
             if self.array_like() {
                 Ok(JinjaValue::from_serialize(table).to_string())
             } else {
@@ -216,7 +202,7 @@ impl Drop for LuaTableObject {
 }
 
 impl LuaObject for LuaTableObject {
-    fn new(key: LuaRegistryKey) -> Self {
+    fn new(key: mlua::RegistryKey) -> Self {
         Self {
             key: Arc::new(key),
             pass_state: Arc::new(AtomicBool::new(false)),
@@ -224,7 +210,7 @@ impl LuaObject for LuaTableObject {
         }
     }
 
-    fn key(&self) -> Arc<LuaRegistryKey> {
+    fn key(&self) -> Arc<mlua::RegistryKey> {
         Arc::clone(&self.key)
     }
 
@@ -258,16 +244,16 @@ impl JinjaObject for LuaTableObject {
         state: &minijinja::State<'_, '_>,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, minijinja::Error> {
-        self.with(|lua, table: LuaTable| {
+        self.with(|lua, table: mlua::Table| {
             let mut mv = minijinja_args_to_lua(lua, args);
 
             lua.scope(move |scope| {
                 if self.pass_state() {
                     let userdate = scope.create_userdata(LuaState::new(state))?;
-                    mv.push_front(LuaValue::UserData(userdate.clone()));
+                    mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
-                let res: LuaValue = table.call(mv)?;
+                let res: mlua::Value = table.call(mv)?;
 
                 Ok(lua_to_minijinja(lua, &res).unwrap_or(JinjaValue::UNDEFINED))
             })
@@ -280,13 +266,13 @@ impl JinjaObject for LuaTableObject {
         method: &str,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, JinjaError> {
-        self.with(|lua, table: LuaTable| {
+        self.with(|lua, table: mlua::Table| {
             let mut mv = minijinja_args_to_lua(lua, args);
 
             lua.scope(move |scope| {
                 if self.pass_state() {
                     let userdate = scope.create_userdata(LuaState::new(state))?;
-                    mv.push_front(LuaValue::UserData(userdate.clone()));
+                    mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
                 let res = table.call_method(method, mv)?;
@@ -298,7 +284,7 @@ impl JinjaObject for LuaTableObject {
     }
 
     fn get_value(self: &Arc<Self>, key: &JinjaValue) -> Option<JinjaValue> {
-        self.with(|lua, table: LuaTable| {
+        self.with(|lua, table: mlua::Table| {
             let mut key = lua.to_value(key)?;
 
             // Since lua is 1-indexed, if the provided value is an integer,
@@ -307,10 +293,10 @@ impl JinjaObject for LuaTableObject {
             if let Some(num) = key.as_integer()
                 && self.array_like()
             {
-                key = LuaValue::Integer(num + 1)
+                key = mlua::Value::Integer(num + 1)
             }
 
-            let value: LuaValue = table.get(key)?;
+            let value: mlua::Value = table.get(key)?;
 
             // If the table did not return a value, return `None` to fallback to global lookups.
             // Otherwise, this prevents the use of global variables when the render context
@@ -326,20 +312,20 @@ impl JinjaObject for LuaTableObject {
     }
 
     fn enumerate(self: &std::sync::Arc<Self>) -> Enumerator {
-        let items = self.with(|lua, table: LuaTable| {
+        let items = self.with(|lua, table: mlua::Table| {
             if self.array_like() {
                 table
-                    .sequence_values::<LuaValue>()
+                    .sequence_values::<mlua::Value>()
                     .map(|v| {
                         let v = v?;
                         let value = lua_to_minijinja(lua, &v).unwrap_or(JinjaValue::UNDEFINED);
 
                         Ok(value)
                     })
-                    .collect::<Result<Vec<JinjaValue>, LuaError>>()
+                    .collect::<Result<Vec<JinjaValue>, mlua::Error>>()
             } else {
                 table
-                    .pairs::<LuaValue, LuaValue>()
+                    .pairs::<mlua::Value, mlua::Value>()
                     .map(|pair| {
                         let (k, _v) = pair?;
 
@@ -347,7 +333,7 @@ impl JinjaObject for LuaTableObject {
 
                         Ok(key)
                     })
-                    .collect::<Result<Vec<JinjaValue>, LuaError>>()
+                    .collect::<Result<Vec<JinjaValue>, mlua::Error>>()
             }
         });
 
@@ -360,8 +346,8 @@ impl JinjaObject for LuaTableObject {
     fn custom_cmp(self: &Arc<Self>, other: &minijinja::value::DynObject) -> Option<cmp::Ordering> {
         let other = other.downcast_ref::<LuaTableObject>()?;
 
-        self.with(|lua, table: LuaTable| {
-            let other_table = lua.registry_value::<LuaTable>(&other.key)?;
+        self.with(|lua, table: mlua::Table| {
+            let other_table = lua.registry_value::<mlua::Table>(&other.key)?;
 
             if table.equals(&other_table)? {
                 return Ok(Some(cmp::Ordering::Equal));
@@ -385,13 +371,13 @@ impl JinjaObject for LuaTableObject {
 /// [`mlua::RegistryKey`].
 #[derive(Debug)]
 pub(crate) struct LuaUserDataObject {
-    key: Arc<LuaRegistryKey>,
+    key: Arc<mlua::RegistryKey>,
     pass_state: Arc<AtomicBool>,
 }
 
 impl fmt::Display for LuaUserDataObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let repr = self.with(|_, userdata: LuaAnyUserData| userdata.to_string());
+        let repr = self.with(|_, userdata: mlua::AnyUserData| userdata.to_string());
 
         match repr {
             Ok(s) => write!(f, "{s}"),
@@ -410,14 +396,14 @@ impl Drop for LuaUserDataObject {
 }
 
 impl LuaObject for LuaUserDataObject {
-    fn new(key: LuaRegistryKey) -> Self {
+    fn new(key: mlua::RegistryKey) -> Self {
         Self {
             key: Arc::new(key),
             pass_state: Arc::new(AtomicBool::new(false)),
         }
     }
 
-    fn key(&self) -> Arc<LuaRegistryKey> {
+    fn key(&self) -> Arc<mlua::RegistryKey> {
         Arc::clone(&self.key)
     }
 
@@ -447,16 +433,16 @@ impl JinjaObject for LuaUserDataObject {
         state: &minijinja::State<'_, '_>,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, minijinja::Error> {
-        self.with(|lua, userdata: LuaAnyUserData| {
+        self.with(|lua, userdata: mlua::AnyUserData| {
             let mut mv = minijinja_args_to_lua(lua, args);
 
             lua.scope(move |scope| {
                 if self.pass_state() {
                     let ud = scope.create_userdata(LuaState::new(state))?;
-                    mv.push_front(LuaValue::UserData(ud.clone()));
+                    mv.push_front(mlua::Value::UserData(ud.clone()));
                 };
 
-                let res: LuaValue = userdata.call(mv)?;
+                let res: mlua::Value = userdata.call(mv)?;
 
                 Ok(lua_to_minijinja(lua, &res).unwrap_or(JinjaValue::UNDEFINED))
             })
@@ -469,13 +455,13 @@ impl JinjaObject for LuaUserDataObject {
         method: &str,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, JinjaError> {
-        self.with(|lua, userdata: LuaAnyUserData| {
+        self.with(|lua, userdata: mlua::AnyUserData| {
             let mut mv = minijinja_args_to_lua(lua, args);
 
             lua.scope(move |scope| {
                 if self.pass_state() {
                     let ud = scope.create_userdata(LuaState::new(state))?;
-                    mv.push_front(LuaValue::UserData(ud.clone()));
+                    mv.push_front(mlua::Value::UserData(ud.clone()));
                 };
 
                 let res = userdata.call_method(method, mv)?;
@@ -487,9 +473,9 @@ impl JinjaObject for LuaUserDataObject {
     }
 
     fn get_value(self: &Arc<Self>, key: &JinjaValue) -> Option<JinjaValue> {
-        self.with(|lua, userdata: LuaAnyUserData| {
+        self.with(|lua, userdata: mlua::AnyUserData| {
             let key = lua.to_value(key)?;
-            let value: LuaValue = userdata.get(key)?;
+            let value: mlua::Value = userdata.get(key)?;
 
             Ok(lua_to_minijinja(lua, &value))
         })
@@ -500,8 +486,8 @@ impl JinjaObject for LuaUserDataObject {
     fn custom_cmp(self: &Arc<Self>, other: &minijinja::value::DynObject) -> Option<cmp::Ordering> {
         let other = other.downcast_ref::<LuaTableObject>()?;
 
-        self.with(|lua: &Lua, userdata: LuaAnyUserData| {
-            let otherdata = lua.registry_value::<LuaAnyUserData>(&other.key)?;
+        self.with(|lua: &mlua::Lua, userdata: mlua::AnyUserData| {
+            let otherdata = lua.registry_value::<mlua::AnyUserData>(&other.key)?;
 
             if let Ok(true) = userdata.call_method::<bool>("__eq", &otherdata) {
                 return Ok(Some(cmp::Ordering::Equal));
@@ -525,9 +511,9 @@ impl JinjaObject for LuaUserDataObject {
 /// If the [`mlua::Value`] is an [`mlua::Table`] that is not array-like, it is wrapped in a
 /// [`LuaTableObject`]. Otherwise, the  object is serialized to a [`minijinja::Value`] via
 /// `serde` using [`minijinja::Value::from_serialize`]
-pub(crate) fn lua_to_minijinja(lua: &Lua, value: &LuaValue) -> Option<JinjaValue> {
+pub(crate) fn lua_to_minijinja(lua: &mlua::Lua, value: &mlua::Value) -> Option<JinjaValue> {
     match value {
-        LuaValue::UserData(userdata) => {
+        mlua::Value::UserData(userdata) => {
             let res = lua.create_registry_value(userdata);
 
             match res {
@@ -535,7 +521,7 @@ pub(crate) fn lua_to_minijinja(lua: &Lua, value: &LuaValue) -> Option<JinjaValue
                 Err(_) => None,
             }
         },
-        LuaValue::Table(table) => {
+        mlua::Value::Table(table) => {
             let res = lua.create_registry_value(table);
 
             match res {
@@ -550,7 +536,7 @@ pub(crate) fn lua_to_minijinja(lua: &Lua, value: &LuaValue) -> Option<JinjaValue
                 Err(_) => None,
             }
         },
-        LuaValue::Function(func) => {
+        mlua::Value::Function(func) => {
             let res = lua.create_registry_value(func);
 
             match res {
@@ -561,7 +547,7 @@ pub(crate) fn lua_to_minijinja(lua: &Lua, value: &LuaValue) -> Option<JinjaValue
         // minijinja::Value::from_serialize converts `mlua::Value::Nil` to
         // `minijinja::Value::None` otherwise. Semantically, `None` is more
         // similar to the `mlua::NULL` value.
-        LuaValue::Nil => Some(JinjaValue::UNDEFINED),
+        mlua::Value::Nil => Some(JinjaValue::UNDEFINED),
         v if v.is_null() => Some(JinjaValue::from(())),
         _ => Some(JinjaValue::from_serialize(value)),
     }
@@ -571,29 +557,29 @@ pub(crate) fn lua_to_minijinja(lua: &Lua, value: &LuaValue) -> Option<JinjaValue
 ///
 /// If the [`minijinja::Value`] is a [`LuaObject`], the underlying [`mlua::Table`] is retrieved so
 /// that round trips `lua -> minijinja -> lua` maintain access to the same [`mlua::Table`].
-/// Otherwise, objects are converted via `serde` using [`mlua::Lua::to_value`].
-pub(crate) fn minijinja_to_lua(lua: &Lua, value: &JinjaValue) -> Option<LuaValue> {
+/// Otherwise, objects are converted via `serde` using [`mlua::mlua::Lua::to_value`].
+pub(crate) fn minijinja_to_lua(lua: &mlua::Lua, value: &JinjaValue) -> Option<mlua::Value> {
     if let Some(obj) = value.downcast_object_ref::<LuaUserDataObject>() {
-        let userdata = lua.registry_value::<LuaAnyUserData>(&obj.key).ok()?;
+        let userdata = lua.registry_value::<mlua::AnyUserData>(&obj.key).ok()?;
 
-        return Some(LuaValue::UserData(userdata));
+        return Some(mlua::Value::UserData(userdata));
     };
 
     if let Some(obj) = value.downcast_object_ref::<LuaTableObject>() {
-        let table = lua.registry_value::<LuaTable>(&obj.key).ok()?;
+        let table = lua.registry_value::<mlua::Table>(&obj.key).ok()?;
 
-        return Some(LuaValue::Table(table));
+        return Some(mlua::Value::Table(table));
     };
 
     if let Some(obj) = value.downcast_object_ref::<LuaFunctionObject>() {
-        let func = lua.registry_value::<LuaFunction>(&obj.key).ok()?;
+        let func = lua.registry_value::<mlua::Function>(&obj.key).ok()?;
 
-        return Some(LuaValue::Function(func));
+        return Some(mlua::Value::Function(func));
     };
 
     match value.kind() {
-        JinjaValueKind::Undefined => Some(LuaValue::Nil),
-        JinjaValueKind::None => Some(LuaValue::NULL),
+        JinjaValueKind::Undefined => Some(mlua::Value::Nil),
+        JinjaValueKind::None => Some(mlua::Value::NULL),
         _ => lua.to_value(&value).ok(),
     }
 }
@@ -602,10 +588,10 @@ pub(crate) fn minijinja_to_lua(lua: &Lua, value: &JinjaValue) -> Option<LuaValue
 ///
 /// This is used to convert arguments passed to minijinja filters, tests, and
 /// functions into lua arguments to be handled by the registered lua callbacks.
-pub(crate) fn minijinja_args_to_lua(lua: &Lua, args: &[JinjaValue]) -> LuaMultiValue {
-    LuaMultiValue::from_iter(
+pub(crate) fn minijinja_args_to_lua(lua: &mlua::Lua, args: &[JinjaValue]) -> mlua::MultiValue {
+    mlua::MultiValue::from_iter(
         args.iter()
-            .map(|v| minijinja_to_lua(lua, v).unwrap_or(LuaValue::Nil)),
+            .map(|v| minijinja_to_lua(lua, v).unwrap_or(mlua::Value::Nil)),
     )
 }
 
@@ -617,15 +603,15 @@ pub(crate) fn minijinja_args_to_lua(lua: &Lua, args: &[JinjaValue]) -> LuaMultiV
 /// This is currently only used in the [`LuaState`] methods `apply_filter()`, `perform_test()`,
 /// and `call_macro()` to pass keyword arguments to those callbacks.
 pub(crate) fn lua_args_to_minijinja(
-    lua: &Lua,
-    mut args: LuaVariadic<LuaValue>,
+    lua: &mlua::Lua,
+    mut args: mlua::Variadic<mlua::Value>,
     accept_kwargs: bool,
 ) -> Vec<JinjaValue> {
     let kwargs = args.pop_if(|v| accept_kwargs && v.is_table()).map(|v| {
         v.as_table()
             .map(|tbl| {
                 JinjaValue::from(Kwargs::from_iter(
-                    tbl.pairs::<LuaValue, LuaValue>().filter_map(|pair| {
+                    tbl.pairs::<mlua::Value, mlua::Value>().filter_map(|pair| {
                         let (k, v) = pair.ok()?;
 
                         let key = k.to_string().ok()?;
@@ -671,12 +657,12 @@ pub(crate) fn auto_escape_to_lua(autoescape: AutoEscape) -> Option<String> {
 }
 
 /// Convert a string to a [`minijinja::AutoEscape`] variant
-pub(crate) fn lua_to_auto_escape(autoescape: &str) -> Result<AutoEscape, LuaError> {
+pub(crate) fn lua_to_auto_escape(autoescape: &str) -> Result<AutoEscape, mlua::Error> {
     let au = match autoescape.to_lowercase().as_str() {
         "html" => AutoEscape::Html,
         "json" => AutoEscape::Json,
         "none" => AutoEscape::None,
-        _ => return Err(LuaError::FromLuaConversionError { from: "auto_escape", to: "minijinja::AutoEscape".to_string(), message: Some("Failed to convert {} to minijinja::AutoEscape. Arguments must be one of 'html', 'json', or 'none'".to_string()) })};
+        _ => return Err(mlua::Error::FromLuaConversionError { from: "auto_escape", to: "minijinja::AutoEscape".to_string(), message: Some("Failed to convert {} to minijinja::AutoEscape. Arguments must be one of 'html', 'json', or 'none'".to_string()) })};
 
     Ok(au)
 }
@@ -697,20 +683,20 @@ pub(crate) fn undefined_behavior_to_lua(behavior: UndefinedBehavior) -> Option<S
 /// Convert a string to a [`minijinja::UndefinedBehavior`] variant.
 ///
 /// The conversion is case-insensitive
-pub(crate) fn lua_to_undefined_behavior(behavior: &str) -> Result<UndefinedBehavior, LuaError> {
+pub(crate) fn lua_to_undefined_behavior(behavior: &str) -> Result<UndefinedBehavior, mlua::Error> {
     let ub = match behavior.to_lowercase().as_str() {
         "chainable" => UndefinedBehavior::Chainable,
         "lenient" => UndefinedBehavior::Lenient,
         "semi-strict" => UndefinedBehavior::SemiStrict,
         "strict" => UndefinedBehavior::Strict,
-        _ => return Err(LuaError::FromLuaConversionError { from: "undefined_behavior", to: "minijinja::UndefinedBehavior".to_string(), message: Some("Failed to convert {} to minijinja::UndefinedBehavior. Arguments must be one of 'chainable', 'lenient', 'semi-strict', or 'strict'".to_string()) })
+        _ => return Err(mlua::Error::FromLuaConversionError { from: "undefined_behavior", to: "minijinja::UndefinedBehavior".to_string(), message: Some("Failed to convert {} to minijinja::UndefinedBehavior. Arguments must be one of 'chainable', 'lenient', 'semi-strict', or 'strict'".to_string()) })
     };
 
     Ok(ub)
 }
 
 /// Convert an [`mlua::Table`] to a [`minijinja::syntax::SyntaxConfig`]
-pub(crate) fn lua_to_syntax_config(syntax: LuaTable) -> Result<SyntaxConfig, JinjaError> {
+pub(crate) fn lua_to_syntax_config(syntax: mlua::Table) -> Result<SyntaxConfig, JinjaError> {
     let defaults = SyntaxConfig::default();
 
     let (block_s, block_e) =
@@ -749,12 +735,12 @@ pub(crate) fn lua_to_syntax_config(syntax: LuaTable) -> Result<SyntaxConfig, Jin
 /// Returns `Some((start, end))` if the key is present, `None` if absent or
 /// nil, or an error if the value is present but malformed.
 fn optional_delimiter_pair(
-    syntax: &LuaTable,
+    syntax: &mlua::Table,
     name: &str,
 ) -> Result<Option<(String, String)>, JinjaError> {
-    match syntax.get::<LuaValue>(name) {
-        Ok(LuaValue::Nil) | Err(_) => Ok(None),
-        Ok(LuaValue::Table(table)) => table_to_syntax_args(&table, name).map(Some),
+    match syntax.get::<mlua::Value>(name) {
+        Ok(mlua::Value::Nil) | Err(_) => Ok(None),
+        Ok(mlua::Value::Table(table)) => table_to_syntax_args(&table, name).map(Some),
         Ok(_) => Err(JinjaError::new(
             JinjaErrorKind::InvalidDelimiter,
             format!("{name} must be an array-like table of 2 strings"),
@@ -763,10 +749,10 @@ fn optional_delimiter_pair(
 }
 
 /// Returns `Some(string)` if the key is present, `None` if absent or nil.
-fn optional_string(syntax: &LuaTable, name: &str) -> Result<Option<String>, JinjaError> {
-    match syntax.get::<LuaValue>(name) {
-        Ok(LuaValue::Nil) | Err(_) => Ok(None),
-        Ok(LuaValue::String(s)) => s
+fn optional_string(syntax: &mlua::Table, name: &str) -> Result<Option<String>, JinjaError> {
+    match syntax.get::<mlua::Value>(name) {
+        Ok(mlua::Value::Nil) | Err(_) => Ok(None),
+        Ok(mlua::Value::String(s)) => s
             .to_str()
             .map(|s| Some(s.to_string()))
             .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::InvalidDelimiter)),
@@ -780,7 +766,7 @@ fn optional_string(syntax: &LuaTable, name: &str) -> Result<Option<String>, Jinj
 /// Helper to parse an [`mlua::Table`] into [`minijinja::syntax::SyntaxConfig`] setting arguments.
 ///
 /// Valid values are array-like tables with only 2 items.
-fn table_to_syntax_args(table: &LuaTable, name: &str) -> Result<(String, String), JinjaError> {
+fn table_to_syntax_args(table: &mlua::Table, name: &str) -> Result<(String, String), JinjaError> {
     if table_is_array_like(table, None) {
         match table.len() {
             Ok(2) => {
@@ -816,7 +802,7 @@ fn table_to_syntax_args(table: &LuaTable, name: &str) -> Result<(String, String)
 /// keys are sequential numbers with no holes.
 ///
 /// Empty tables can optionally be encoded as arrays.
-fn table_is_array_like(table: &LuaTable, empty_as_array: Option<bool>) -> bool {
+fn table_is_array_like(table: &mlua::Table, empty_as_array: Option<bool>) -> bool {
     let seq_len = table.raw_len();
 
     if seq_len == 0 {
@@ -825,17 +811,15 @@ fn table_is_array_like(table: &LuaTable, empty_as_array: Option<bool>) -> bool {
 
     // If the sequence length matches the total number of pairs,
     // there are no non-integer or out-of-sequence keys
-    seq_len == table.pairs::<LuaValue, LuaValue>().count()
+    seq_len == table.pairs::<mlua::Value, mlua::Value>().count()
 }
 
 #[cfg(test)]
 mod tests {
-    use mlua::prelude::{Lua, LuaUserData};
-
     use super::*;
 
-    fn setup() -> Lua {
-        Lua::new()
+    fn setup() -> mlua::Lua {
+        mlua::Lua::new()
     }
 
     // TYPE CONVERSION TESTS //
@@ -843,7 +827,7 @@ mod tests {
     #[test]
     fn test_lua_minijinja_roundtrip_nil() {
         let lua = setup();
-        let jinja = lua_to_minijinja(&lua, &LuaValue::Nil).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::Nil).unwrap();
         assert!(jinja.is_undefined());
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -853,7 +837,7 @@ mod tests {
     #[test]
     fn test_lua_minijinja_roundtrip_null() {
         let lua = setup();
-        let jinja = lua_to_minijinja(&lua, &LuaValue::NULL).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::NULL).unwrap();
         assert!(jinja.is_none());
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -863,7 +847,7 @@ mod tests {
     #[test]
     fn test_lua_minijinja_roundtrip_bool() {
         let lua = setup();
-        let jinja = lua_to_minijinja(&lua, &LuaValue::Boolean(true)).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::Boolean(true)).unwrap();
         assert_eq!(jinja.kind(), JinjaValueKind::Bool);
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -873,8 +857,11 @@ mod tests {
     #[test]
     fn test_lua_minijinja_roundtrip_string() {
         let lua = setup();
-        let jinja =
-            lua_to_minijinja(&lua, &LuaValue::String(lua.create_string("test").unwrap())).unwrap();
+        let jinja = lua_to_minijinja(
+            &lua,
+            &mlua::Value::String(lua.create_string("test").unwrap()),
+        )
+        .unwrap();
         assert_eq!(jinja.as_str().unwrap(), "test");
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -884,7 +871,7 @@ mod tests {
     #[test]
     fn test_lua_minijinja_roundtrip_number() {
         let lua = setup();
-        let jinja = lua_to_minijinja(&lua, &LuaValue::Number(99.99f64)).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::Number(99.99f64)).unwrap();
         assert!(jinja.is_number());
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -894,7 +881,7 @@ mod tests {
     #[test]
     fn test_lua_minijinja_roundtrip_integer() {
         let lua = setup();
-        let jinja = lua_to_minijinja(&lua, &LuaValue::Integer(99i64)).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::Integer(99i64)).unwrap();
         assert!(jinja.is_integer());
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -907,7 +894,7 @@ mod tests {
         let table = lua.create_table().unwrap();
         table.set("a", 1).unwrap();
 
-        let jinja = lua_to_minijinja(&lua, &LuaValue::Table(table)).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::Table(table)).unwrap();
         assert!(jinja.downcast_object_ref::<LuaTableObject>().is_some());
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -921,7 +908,7 @@ mod tests {
         table.set(1, "a").unwrap();
         table.set(2, "b").unwrap();
 
-        let jinja = lua_to_minijinja(&lua, &LuaValue::Table(table)).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::Table(table)).unwrap();
         assert_eq!(jinja.kind(), JinjaValueKind::Seq);
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -932,10 +919,10 @@ mod tests {
     fn test_lua_minijinja_roundtrip_function() {
         let lua = setup();
         let func = lua
-            .create_function(|_: &Lua, _: LuaValue| Ok("BOO"))
+            .create_function(|_: &mlua::Lua, _: mlua::Value| Ok("BOO"))
             .unwrap();
 
-        let jinja = lua_to_minijinja(&lua, &LuaValue::Function(func)).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::Function(func)).unwrap();
         assert_eq!(jinja.kind(), JinjaValueKind::Plain);
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -946,12 +933,12 @@ mod tests {
     fn test_lua_minijinja_roundtrip_userdata() {
         struct TestData {}
 
-        impl LuaUserData for TestData {}
+        impl mlua::UserData for TestData {}
 
         let lua = setup();
         let userdata = lua.create_userdata(TestData {}).unwrap();
 
-        let jinja = lua_to_minijinja(&lua, &LuaValue::UserData(userdata)).unwrap();
+        let jinja = lua_to_minijinja(&lua, &mlua::Value::UserData(userdata)).unwrap();
         assert_eq!(jinja.kind(), JinjaValueKind::Plain);
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
@@ -964,10 +951,10 @@ mod tests {
         let table = lua.create_table().unwrap();
         table.set("foo", "bar").unwrap();
 
-        let args: LuaVariadic<LuaValue> = LuaVariadic::from_iter(vec![
-            LuaValue::Integer(1),
-            LuaValue::Integer(2),
-            LuaValue::Table(table),
+        let args: mlua::Variadic<mlua::Value> = mlua::Variadic::from_iter(vec![
+            mlua::Value::Integer(1),
+            mlua::Value::Integer(2),
+            mlua::Value::Table(table),
         ]);
 
         let jinja = lua_args_to_minijinja(&lua, args, true);
@@ -998,10 +985,10 @@ mod tests {
         let table = lua.create_table().unwrap();
         table.set("foo", "bar").unwrap();
 
-        let args: LuaVariadic<LuaValue> = LuaVariadic::from_iter(vec![
-            LuaValue::Integer(1),
-            LuaValue::Integer(2),
-            LuaValue::Table(table),
+        let args: mlua::Variadic<mlua::Value> = mlua::Variadic::from_iter(vec![
+            mlua::Value::Integer(1),
+            mlua::Value::Integer(2),
+            mlua::Value::Table(table),
         ]);
 
         let jinja = lua_args_to_minijinja(&lua, args, false);
