@@ -104,7 +104,7 @@ jobs:
           path: |
             *.rock
 
-  upload:
+  upload-release:
     if: ${{ !inputs.skip_release_upload }}
     needs: build
     runs-on: ubuntu-24.04
@@ -124,7 +124,7 @@ jobs:
           files: |
             *.rock
 
-  luarocks-upload:
+  upload-luarocks:
     if: ${{ !inputs.skip_luarocks_upload }}
     needs: [build, lua-version]
     runs-on: ubuntu-24.04
