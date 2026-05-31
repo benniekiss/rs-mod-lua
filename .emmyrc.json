@@ -17,7 +17,10 @@
     ],
     "library": [
       "types/LLS-Addons/addons/luassert/module/library",
-      "types/LLS-Addons/addons/busted/module/library"
+      "types/LLS-Addons/addons/busted/module/library",
+      "crates/minijinja-lua/library",
+      "crates/rsjson-lua/library",
+      "crates/rsre-lua/library"
     ]
   }
 }
