@@ -2,7 +2,7 @@ cargo-features = ["profile-rustflags", "panic-immediate-abort"]
 
 [package]
 name = "rsjson-lua"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2024"
 readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.24](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.23...minijinja-lua-v0.1.24) - 2026-06-01
+
+### Fixed
+
+- remove conflicting `tag` key
+
+### Other
+
+- bump version
+
 ## [0.1.23](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.22...minijinja-lua-v0.1.23) - 2026-05-31
 
 ### Added
