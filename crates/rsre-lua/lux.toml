@@ -13,19 +13,18 @@ license = "MIT"
 [source]
 url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-v$(VERSION).zip"
 dev = "git+https://github.com/benniekiss/rs-mod-lua"
-dir = "crates/$(PACKAGE)"
 
 [build]
 type = "rust-mlua"
 default_features = false
 features = ["module"]
-copy_directories = ["library"]
+cargo_extra_args = ["--package", "rsre-lua"]
 
 [build.modules]
 "rsre" = "rsre_lua"
 
 [build.include]
-"library/rsre.d.lua" = "rsre.d.lua"
+"crates/rsre-lua/library/rsre.d.lua" = "rsre.d.lua"
 
 [test]
 type = "busted"
