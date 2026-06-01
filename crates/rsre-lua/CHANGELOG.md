@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.2.4...rsre-lua-v0.2.5) - 2026-06-01
+
+### Fixed
+
+- set the correct `source.dir` value
+- update lux.toml with cargo args
+
+### Other
+
+- bump version
+
 ## [0.2.4](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.2.3...rsre-lua-v0.2.4) - 2026-06-01
 
 ### Fixed

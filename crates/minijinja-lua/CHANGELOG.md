@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.25](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.24...minijinja-lua-v0.1.25) - 2026-06-01
+
+### Fixed
+
+- set the correct `source.dir` value
+- update lux.toml with cargo args
+
+### Other
+
+- bump version
+
 ## [0.1.24](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.23...minijinja-lua-v0.1.24) - 2026-06-01
 
 ### Fixed
