@@ -1,6 +1,6 @@
 return {
     _all = {
-        coverage = true,
+        coverage = false,
         lazy = true,
         shuffle = false,
         ["keep-going"] = true,
