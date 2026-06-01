@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.3.1...rsjson-lua-v0.3.2) - 2026-06-01
+
+### Fixed
+
+- remove conflicting `tag` key
+
+### Other
+
+- bump version
+
 ## [0.3.1](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.3.0...rsjson-lua-v0.3.1) - 2026-05-31
 
 ### Fixed
