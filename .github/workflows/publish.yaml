@@ -116,12 +116,12 @@ jobs:
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          lx --lua-version ${{ env.LUA_VERSION }} pack
+          lx --lua-version ${{ env.LUA_VERSION }} pack ${{ env.PACKAGE }}
 
       - name: Build rock (unix)
         if: ${{ !endsWith(matrix.job.target, '-msvc') }}
         run: |
-          lx --lua-version ${{ env.LUA_VERSION }} pack
+          lx --lua-version ${{ env.LUA_VERSION }} pack ${{ env.PACKAGE }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
