@@ -9,10 +9,14 @@
     "prConcurrentLimit": 0,
     "enabledManagers": [
         "github-actions",
+        "git-submodules",
         "cargo",
         "pip_requirements",
         "rust-toolchain"
     ],
+    "git-submodules": {
+        "enabled": true
+    },
     "pip_requirements": {
         "rangeStrategy": "pin"
     },
