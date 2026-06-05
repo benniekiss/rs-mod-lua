@@ -6,10 +6,7 @@ use std::{
 };
 
 use minijinja::Value as JinjaValue;
-use mlua::{
-    LuaSerdeExt,
-    prelude::{Lua, LuaError, LuaFunction, LuaUserData, LuaValue, LuaVariadic},
-};
+use mlua::LuaSerdeExt;
 
 use crate::convert::{
     auto_escape_to_lua,
@@ -20,7 +17,7 @@ use crate::convert::{
 };
 
 thread_local! {
-    static CURRENT_LUA: AtomicPtr<Lua> = const { AtomicPtr::new(std::ptr::null_mut()) };
+    static CURRENT_LUA: AtomicPtr<mlua::Lua> = const { AtomicPtr::new(std::ptr::null_mut()) };
 }
 
 /// A [`mlua::UserData`] wrapper around a [`minijinja::State`]. This is passed to
@@ -44,24 +41,21 @@ impl<'scope> fmt::Display for LuaState<'scope> {
     }
 }
 
-impl<'scope> LuaUserData for LuaState<'scope> {
+impl<'scope> mlua::UserData for LuaState<'scope> {
     fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_meta_field("__name", "state");
     }
 
     fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
         // The name of the current template
-        methods.add_method(
-            "name",
-            |_, this: &LuaState<'scope>, _: LuaValue| -> Result<String, _> {
-                Ok(this.state.name().to_string())
-            },
-        );
+        methods.add_method("name", |_, this, _: mlua::Value| -> mlua::Result<String> {
+            Ok(this.state.name().to_string())
+        });
 
         // The current auto escape flag
         methods.add_method(
             "auto_escape",
-            |_, this: &LuaState<'scope>, _: LuaValue| -> Result<Option<String>, _> {
+            |_, this, _: mlua::Value| -> mlua::Result<Option<String>> {
                 Ok(auto_escape_to_lua(this.state.auto_escape()))
             },
         );
@@ -69,7 +63,7 @@ impl<'scope> LuaUserData for LuaState<'scope> {
         // The current undefined behavior
         methods.add_method(
             "undefined_behavior",
-            |_, this: &LuaState<'scope>, _: LuaValue| -> Result<Option<String>, _> {
+            |_, this, _: mlua::Value| -> mlua::Result<Option<String>> {
                 Ok(undefined_behavior_to_lua(this.state.undefined_behavior()))
             },
         );
@@ -77,7 +71,7 @@ impl<'scope> LuaUserData for LuaState<'scope> {
         // The name of the current block
         methods.add_method(
             "current_block",
-            |_, this: &LuaState<'scope>, _: LuaValue| -> Result<Option<&str>, _> {
+            |_, this, _: mlua::Value| -> mlua::Result<Option<&str>> {
                 Ok(this.state.current_block())
             },
         );
@@ -85,7 +79,7 @@ impl<'scope> LuaUserData for LuaState<'scope> {
         // Lookup a value by key in the current context
         methods.add_method(
             "lookup",
-            |lua: &Lua, this: &LuaState<'scope>, name: String| -> Result<Option<LuaValue>, _> {
+            |lua, this, name: String| -> mlua::Result<Option<mlua::Value>> {
                 // Since the context may contain dynamic objects, convert the returned value
                 // through the custom layer before returning.
                 Ok(this
@@ -98,33 +92,28 @@ impl<'scope> LuaUserData for LuaState<'scope> {
         // Call the named macro with the provided args.
         methods.add_method(
             "call_macro",
-            |lua: &Lua,
-             this: &LuaState<'scope>,
-             (name, args): (String, LuaVariadic<LuaValue>)|
-             -> Result<String, LuaError> {
+            |lua,
+             this,
+             (name, args): (String, mlua::Variadic<mlua::Value>)|
+             -> mlua::Result<String> {
                 let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, args, true);
 
                 this.state
                     .call_macro(&name, &args)
-                    .map_err(LuaError::external)
+                    .map_err(mlua::Error::external)
             },
         );
 
         // A list of exported variables
         methods.add_method(
             "exports",
-            |_, this: &LuaState<'scope>, _: LuaValue| -> Result<Vec<&str>, _> {
-                Ok(this.state.exports())
-            },
+            |_, this, _: mlua::Value| -> mlua::Result<Vec<&str>> { Ok(this.state.exports()) },
         );
 
         // A list of all known variables
         methods.add_method(
             "known_variables",
-            |_,
-             this: &LuaState<'scope>,
-             _: LuaValue|
-             -> Result<Vec<std::borrow::Cow<'_, str>>, _> {
+            |_, this, _: mlua::Value| -> mlua::Result<Vec<std::borrow::Cow<'_, str>>> {
                 Ok(this.state.known_variables())
             },
         );
@@ -132,10 +121,10 @@ impl<'scope> LuaUserData for LuaState<'scope> {
         // Apply the named filter with the provided args
         methods.add_method(
             "apply_filter",
-            |lua: &Lua,
-             this: &LuaState<'scope>,
-             (filter, args): (String, LuaVariadic<LuaValue>)|
-             -> Result<Option<LuaValue>, LuaError> {
+            |lua,
+             this,
+             (filter, args): (String, mlua::Variadic<mlua::Value>)|
+             -> mlua::Result<Option<mlua::Value>> {
                 let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, args, true);
 
                 // Since the context may contain dynamic objects, convert the returned value
@@ -143,39 +132,39 @@ impl<'scope> LuaUserData for LuaState<'scope> {
                 this.state
                     .apply_filter(&filter, &args)
                     .map(|v| minijinja_to_lua(lua, &v))
-                    .map_err(LuaError::external)
+                    .map_err(mlua::Error::external)
             },
         );
 
         // Perform the named test with the provided args
         methods.add_method(
             "perform_test",
-            |lua: &Lua,
-             this: &LuaState<'scope>,
-             (test, args): (String, LuaVariadic<LuaValue>)|
-             -> Result<bool, LuaError> {
+            |lua,
+             this,
+             (test, args): (String, mlua::Variadic<mlua::Value>)|
+             -> mlua::Result<bool> {
                 let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, args, true);
 
                 this.state
                     .perform_test(&test, &args)
-                    .map_err(LuaError::external)
+                    .map_err(mlua::Error::external)
             },
         );
 
         // Format a value to a string
         methods.add_method(
             "format",
-            |lua: &Lua, this: &LuaState<'scope>, val: LuaValue| -> Result<String, LuaError> {
+            |lua, this, val: mlua::Value| -> mlua::Result<String> {
                 let val = lua_to_minijinja(lua, &val).unwrap_or(JinjaValue::UNDEFINED);
 
-                this.state.format(val).map_err(LuaError::external)
+                this.state.format(val).map_err(mlua::Error::external)
             },
         );
 
         // A tuple of the current and remaining fuel usage
         methods.add_method(
             "fuel_levels",
-            |lua: &Lua, this: &LuaState<'scope>, _: LuaValue| -> Result<LuaValue, _> {
+            |lua, this, _: mlua::Value| -> mlua::Result<mlua::Value> {
                 lua.to_value(&this.state.fuel_levels())
             },
         );
@@ -184,10 +173,7 @@ impl<'scope> LuaUserData for LuaState<'scope> {
         // See: https://docs.rs/minijinja/latest/minijinja/struct.State.html#method.get_temp
         methods.add_method(
             "get_temp",
-            |lua: &Lua,
-             this: &LuaState<'scope>,
-             name: String|
-             -> Result<Option<LuaValue>, LuaError> {
+            |lua, this, name: String| -> mlua::Result<Option<mlua::Value>> {
                 // Since the context may contain dynamic objects, convert the returned value
                 // through the custom layer before returning.
                 Ok(this
@@ -200,17 +186,14 @@ impl<'scope> LuaUserData for LuaState<'scope> {
         // Set a temp value and return the old value
         methods.add_method(
             "set_temp",
-            |lua: &Lua,
-             this: &LuaState<'scope>,
-             (name, val): (String, LuaValue)|
-             -> Result<Option<LuaValue>, LuaError> {
+            |lua, this, (name, val): (String, mlua::Value)| -> mlua::Result<Option<mlua::Value>> {
                 if let Some(val) = lua_to_minijinja(lua, &val) {
                     Ok(this
                         .state
                         .set_temp(&name, val)
                         .and_then(|v| minijinja_to_lua(lua, &v)))
                 } else {
-                    Err(LuaError::ToLuaConversionError {
+                    Err(mlua::Error::ToLuaConversionError {
                         from: val.type_name().to_string(),
                         to: "minijinja::Value",
                         message: None,
@@ -222,20 +205,20 @@ impl<'scope> LuaUserData for LuaState<'scope> {
         // Get a temp value or call `func` to add the value
         methods.add_method(
             "get_or_set_temp",
-            |lua: &Lua,
-             this: &LuaState<'scope>,
-             (name, func): (String, LuaFunction)|
-             -> Result<Option<LuaValue>, LuaError> {
+            |lua,
+             this,
+             (name, func): (String, mlua::Function)|
+             -> mlua::Result<Option<mlua::Value>> {
                 let val = match this.state.get_temp(&name) {
                     Some(v) => v,
                     None => {
-                        let val = func.call::<LuaValue>(LuaValue::Nil)?;
+                        let val = func.call::<mlua::Value>(mlua::Value::Nil)?;
 
                         if let Some(val) = lua_to_minijinja(lua, &val) {
                             this.state.set_temp(&name, val.clone());
                             val
                         } else {
-                            return Err(LuaError::ToLuaConversionError {
+                            return Err(mlua::Error::ToLuaConversionError {
                                 from: val.type_name().to_string(),
                                 to: "minijinja::Value",
                                 message: None,
@@ -253,13 +236,15 @@ impl<'scope> LuaUserData for LuaState<'scope> {
 /// Allow access to a [`mlua::Lua`] instance across a `Send + Sync` boundary in module mode.
 ///
 /// This code mirrors the [`minijinja-py`](https://github.com/mitsuhiko/minijinja/blob/29ac0b2936eacf83ebf781c52f4f4ffc3add4c52/minijinja-py/src/state.rs) implementation.
-pub(crate) fn with_lua<R, F: FnOnce(&Lua) -> Result<R, LuaError>>(f: F) -> Result<R, LuaError> {
+pub(crate) fn with_lua<R, F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>>(
+    f: F,
+) -> Result<R, mlua::Error> {
     CURRENT_LUA.with(|handle| {
-        let ptr = unsafe { (handle.load(Ordering::Relaxed) as *const Lua).as_ref() };
+        let ptr = unsafe { (handle.load(Ordering::Relaxed) as *const mlua::Lua).as_ref() };
 
         match ptr {
             Some(lua) => f(lua),
-            None => Err(LuaError::runtime(
+            None => Err(mlua::Error::runtime(
                 "mlua::Lua state accessed outside of a render context.",
             )),
         }
@@ -269,9 +254,9 @@ pub(crate) fn with_lua<R, F: FnOnce(&Lua) -> Result<R, LuaError>>(f: F) -> Resul
 /// Invokes a function with the state stashed away.
 ///
 /// This code mirrors the [`minijinja-py`](https://github.com/mitsuhiko/minijinja/blob/29ac0b2936eacf83ebf781c52f4f4ffc3add4c52/minijinja-py/src/state.rs) implementation.
-pub(crate) fn bind_lua<R, F: FnOnce() -> R>(lua: &Lua, f: F) -> R {
-    let old_handle =
-        CURRENT_LUA.with(|handle| handle.swap(lua as *const Lua as *mut Lua, Ordering::Relaxed));
+pub(crate) fn bind_lua<R, F: FnOnce() -> R>(lua: &mlua::Lua, f: F) -> R {
+    let old_handle = CURRENT_LUA
+        .with(|handle| handle.swap(lua as *const mlua::Lua as *mut mlua::Lua, Ordering::Relaxed));
 
     let rv = std::panic::catch_unwind(std::panic::AssertUnwindSafe(f));
 
