@@ -7,9 +7,9 @@ local minijinja = {}
 --- MiniJinja types
 ---
 ---@alias minijinja.Types
----| "environment"
----| "state"
----| "none"
+--- | "environment"
+--- | "state"
+--- | "none"
 
 --- Determines how undefined values are handled.
 ---
@@ -39,10 +39,10 @@ local minijinja = {}
 ---     - test: fails
 ---
 ---@alias minijinja.UndefinedBehavior
----| "lenient"
----| "chainable"
----| "semi-strict"
----| "strict"
+--- | "lenient"
+--- | "chainable"
+--- | "semi-strict"
+--- | "strict"
 
 --- Determines how autoescaping is applied.
 ---
@@ -53,9 +53,9 @@ local minijinja = {}
 --- - none
 ---
 ---@alias minijinja.AutoEscape
----| "html"
----| "json"
----| "none"
+--- | "html"
+--- | "json"
+--- | "none"
 
 --- A minijinja callback.
 ---
@@ -77,19 +77,19 @@ local minijinja = {}
 ---
 --- This type can be provided to [`Environment:add_global()`](lua-minijinja.Environment.add_global)
 ---
----@alias minijinja.Global any|minijinja.Callback|minijinja.CallbackStateless
+---@alias minijinja.Global any | minijinja.Callback | minijinja.CallbackStateless
 
 --- A minijinja filter function.
 ---
 --- This type of function can be provided to [`Environment:add_filter()`](lua-minijinja.Environment.add_filter)
 ---
----@alias minijinja.Filter minijinja.Callback|minijinja.CallbackStateless
+---@alias minijinja.Filter minijinja.Callback | minijinja.CallbackStateless
 
 --- A minijinja test function.
 ---
 --- This type of function can be provided to [`Environment:add_test()`](lua-minijinja.Environment.add_test)
 ---
----@alias minijinja.Test minijinja.Callback|minijinja.CallbackStateless
+---@alias minijinja.Test minijinja.Callback | minijinja.CallbackStateless
 
 --- A template loader callback.
 ---
@@ -97,7 +97,7 @@ local minijinja = {}
 ---
 --- This type of function can be provided to [`Environment:set_loader()`](lua-minijinja.Environment.set_loader) to load templates from a filesystem.
 ---
----@alias minijinja.LoaderCallback fun(name: string): string|nil
+---@alias minijinja.LoaderCallback fun(name: string): string | nil
 
 --- A path join callback
 ---
@@ -141,24 +141,24 @@ local minijinja = {}
 ---
 ---@class (exact) minijinja.SyntaxConfig
 ---
----@field block_delimiters? [string, string] Start and end delimiters
----@field variable_delimiters? [string, string] Start and end delimiters
----@field comment_delimiters? [string, string] Start and end delimiters
+---@field block_delimiters?      [string, string] Start and end delimiters
+---@field variable_delimiters?   [string, string] Start and end delimiters
+---@field comment_delimiters?    [string, string] Start and end delimiters
 ---@field line_statement_prefix? string
----@field line_comment_prefix? string
+---@field line_comment_prefix?   string
 
 --- A minijinja environment.
 ---
 ---@class (exact) minijinja.Environment: userdata
 ---
----@field reload_before_render boolean Reload templates before each render.
----@field keep_trailing_newline boolean Preserve trailing newlines at the end of templates.
----@field trim_blocks boolean Remove the first newline after a block.
----@field lstrip_blocks boolean Remove leading spaces and tabs from the start of a line to a block.
----@field debug boolean Enable debug behavior.
----@field fuel number|nil Sets the fuel of the engine. If `nil`, fuel usage is disabled.
----@field recursion_limit number Reconfigures the runtime recursion limit. Default is 500.
----@field undefined_behavior minijinja.UndefinedBehavior Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
+---@field reload_before_render  boolean                     Reload templates before each render.
+---@field keep_trailing_newline boolean                     Preserve trailing newlines at the end of templates.
+---@field trim_blocks           boolean                     Remove the first newline after a block.
+---@field lstrip_blocks         boolean                     Remove leading spaces and tabs from the start of a line to a block.
+---@field debug                 boolean                     Enable debug behavior.
+---@field fuel                  number | nil                Sets the fuel of the engine. If `nil`, fuel usage is disabled.
+---@field recursion_limit       number                      Reconfigures the runtime recursion limit. Default is 500.
+---@field undefined_behavior    minijinja.UndefinedBehavior Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
 minijinja.Environment = {}
 
 --- Create a new environment.
@@ -175,7 +175,7 @@ function minijinja.Environment:empty() end
 
 --- Add a template.
 ---
----@param name string The name of the template.
+---@param name   string The name of the template.
 ---@param source string The template source contents.
 function minijinja.Environment:add_template(name, source) end
 
@@ -189,7 +189,7 @@ function minijinja.Environment:clear_templates() end
 
 --- Return a table of all undeclared variables in a template.
 ---
----@param name string The name of the template.
+---@param name    string  The name of the template.
 ---@param nested? boolean If `true`, nested trivial attribute lookups are also returned.
 ---
 ---@return table
@@ -239,16 +239,27 @@ function minijinja.Environment:set_syntax(syntax) end
 --- Render a template.
 ---
 ---@param name string The name of the template to render.
----@param ctx? table The template context.
+---@param ctx? table  The template context.
 ---
 ---@return string # The rendered template.
 function minijinja.Environment:render_template(name, ctx) end
 
+--- Render a template with a callback with access to the internal State.
+---
+---@generic R: any
+---@param name     string The name of the template to render.
+---@param ctx?     table  The template context.
+---@param callback fun(state: minijinja.State): R
+---
+---@return string # The rendered template.
+---@return R      # The value returned by `callback`
+function minijinja.Environment:render_captured(name, ctx, callback) end
+
 --- Render a string directly.
 ---
 ---@param source string The template source.
----@param ctx? table The template context.
----@param name? string The name of the template. Defaults to `<string>`.
+---@param ctx?   table  The template context.
+---@param name?  string The name of the template. Defaults to `<string>`.
 ---
 ---@return string # The rendered template.
 function minijinja.Environment:render_str(source, ctx, name) end
@@ -256,16 +267,16 @@ function minijinja.Environment:render_str(source, ctx, name) end
 --- Evaluate an expression.
 ---
 ---@param source string The expression source
----@param ctx? table The expression context.
+---@param ctx?   table  The expression context.
 ---
 ---@return any # The result of the expression
 function minijinja.Environment:eval(source, ctx) end
 
 --- Add a filter.
 ---
----@param name string The name of the filter.
----@param filter minijinja.Filter The filter.
----@param pass_state? boolean Whether to pass a [`State`](lua-minijinja.State) as the first argument.
+---@param name        string           The name of the filter.
+---@param filter      minijinja.Filter The filter.
+---@param pass_state? boolean          Whether to pass a [`State`](lua-minijinja.State) as the first argument.
 function minijinja.Environment:add_filter(name, filter, pass_state) end
 
 --- Remove a filter.
@@ -275,9 +286,9 @@ function minijinja.Environment:remove_filter(name) end
 
 --- Add a test.
 ---
----@param name string The name of the test.
----@param test minijinja.Test The test.
----@param pass_state? boolean Whether to pass a [`State`](lua-minijinja.State) as the first argument.
+---@param name        string         The name of the test.
+---@param test        minijinja.Test The test.
+---@param pass_state? boolean        Whether to pass a [`State`](lua-minijinja.State) as the first argument.
 function minijinja.Environment:add_test(name, test, pass_state) end
 
 --- Remove a test.
@@ -287,9 +298,9 @@ function minijinja.Environment:remove_test(name) end
 
 --- Add a global variable.
 ---
----@param name string The name of the variable.
----@param global minijinja.Global The variable.
----@param pass_state? boolean Whether to pass a [`State`](lua-minijinja.State) as the first argument to function variables.
+---@param name        string           The name of the variable.
+---@param global      minijinja.Global The variable.
+---@param pass_state? boolean          Whether to pass a [`State`](lua-minijinja.State) as the first argument to function variables.
 function minijinja.Environment:add_global(name, global, pass_state) end
 
 --- Remove a global variable.
@@ -329,6 +340,16 @@ function minijinja.State:undefined_behavior() end
 ---@return string # The name of the innermost block.
 function minijinja.State:current_block() end
 
+--- Render a block.
+---
+--- This method is only available within the callback passed to
+--- [`Environment:render_captured()`](lua-minijinja.Environment.render_captured)
+---
+---@param block string The name of the block to render
+---
+---@return string # The rendered block
+function minijinja.State:render_block(block) end
+
 --- Look up a variable in the render context by name.
 ---
 ---@param name string The name of the variable.
@@ -339,7 +360,7 @@ function minijinja.State:lookup(name) end
 --- Call a macro.
 ---
 ---@param name string The name of the macro.
----@param ... any Arguments to pass to the macro.
+---@param ...  any    Arguments to pass to the macro.
 ---
 ---@return string # The macro output.
 function minijinja.State:call_macro(name, ...) end
@@ -357,7 +378,7 @@ function minijinja.State:known_variables() end
 --- Invokes a filter with some arguments.
 ---
 ---@param filter string The name of the filter.
----@param ... any Arguments to pass to the filter.
+---@param ...    any    Arguments to pass to the filter.
 ---
 ---@return any # The output of the filter.
 function minijinja.State:apply_filter(filter, ...) end
@@ -365,7 +386,7 @@ function minijinja.State:apply_filter(filter, ...) end
 --- Invokes a test function on a value.
 ---
 ---@param test string The name of the test.
----@param ... any Arguments to pass to the test.
+---@param ...  any    Arguments to pass to the test.
 ---
 ---@return boolean # The output of the test.
 function minijinja.State:perform_test(test, ...) end
@@ -392,14 +413,14 @@ function minijinja.State:get_temp(name) end
 --- Set a temp variable and return the old value.
 ---
 ---@param name string The name of the variable.
----@param temp any The temp variable.
+---@param temp any    The temp variable.
 ---
 ---@return any # The old temp variable value.
 function minijinja.State:set_temp(name, temp) end
 
 --- Get a temp variable or add the variable returned by `func`.
 ---
----@param name string The name of the variable.
+---@param name string     The name of the variable.
 ---@param func fun(): any The function to call if the temp is not set.
 ---
 ---@return any # The variable associated with `name`, or the variable returnd by `func`.
@@ -415,14 +436,14 @@ function minijinja.State:get_or_set_temp(name, func) end
 ---
 ---@param value any
 ---
----@return minijinja.Types|string
+---@return minijinja.Types | string
 function minijinja.type(value) end
 
 --- Get a callback to load templates from the provided directory paths.
 ---
 --- The function returned by this one can be passed to [`Environment:set_loader()`](lua-minijinja.Environment.set_loader) to load templates from the filesystem.
 ---
----@param paths string|string[]
+---@param paths string | string[]
 ---
 ---@return minijinja.LoaderCallback
 function minijinja.path_loader(paths) end

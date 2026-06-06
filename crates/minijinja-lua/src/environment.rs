@@ -512,6 +512,51 @@ impl mlua::UserData for LuaEnvironment {
         );
 
         methods.add_method(
+            "render_captured",
+            |lua: &mlua::Lua,
+             this: &LuaEnvironment,
+             (name, ctx, callback): (String, Option<mlua::Table>, mlua::Function)|
+             -> mlua::Result<mlua::MultiValue> {
+                if this.reload_before_render() {
+                    this.write_env()?.clear_templates();
+                }
+
+                let key = lua.create_registry_value(callback)?;
+                let mut func = LuaFunctionObject::new(key);
+                func.set_pass_state(true);
+
+                let ctx = ctx.unwrap_or(lua.create_table()?);
+
+                let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
+
+                bind_lua(lua, || {
+                    let env = this.read_env()?;
+
+                    let mut captured = env
+                        .get_template(&name)
+                        .map_err(mlua::Error::external)?
+                        .render_captured(context)
+                        .map_err(mlua::Error::external)?;
+
+                    let expr = captured
+                        .with_state_mut(|state| func.with_func_mut(&[], Some(state)))
+                        .map_err(mlua::Error::external)?
+                        .and_then(|v| minijinja_to_lua(lua, &v))
+                        .unwrap_or_else(|| mlua::Value::Nil);
+
+                    let rendered = captured.into_output();
+
+                    let mut mv = mlua::MultiValue::new();
+
+                    mv.push_back(mlua::Value::String(lua.create_string(rendered)?));
+                    mv.push_back(expr);
+
+                    Ok(mv)
+                })
+            },
+        );
+
+        methods.add_method(
             "eval",
             |lua: &mlua::Lua,
              this: &LuaEnvironment,

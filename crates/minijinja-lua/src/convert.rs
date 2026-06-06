@@ -26,7 +26,7 @@ use minijinja::{
 };
 use mlua::{LuaSerdeExt, ObjectLike};
 
-use crate::state::{LuaState, with_lua};
+use crate::state::{LuaStateMut, LuaStateRef, with_lua};
 
 pub(crate) trait LuaObject {
     /// Create a new wrapper around the [`mlua::Value`] associated with `key`
@@ -81,11 +81,41 @@ impl LuaFunctionObject {
             //
             // This prevents misuse in lua, such as if the callback assigned the `minijinja::State`
             // to a global variable.
-            lua.scope(move |scope| {
+            lua.scope(|scope| {
                 if let Some(st) = state
                     && self.pass_state()
                 {
-                    let userdate = scope.create_userdata(LuaState::new(st))?;
+                    let userdate = scope.create_userdata(LuaStateRef::new(st))?;
+                    mv.push_front(mlua::Value::UserData(userdate.clone()));
+                };
+
+                let res: mlua::Value = func.call(mv)?;
+
+                Ok(lua_to_minijinja(lua, &res))
+            })
+        })
+    }
+
+    pub(crate) fn with_func_mut(
+        &self,
+        args: &[JinjaValue],
+        state: Option<&mut minijinja::State>,
+    ) -> Result<Option<JinjaValue>, JinjaError> {
+        self.with(|lua, func: mlua::Function| {
+            let mut mv = minijinja_args_to_lua(lua, args);
+
+            // Using `mlua::Lua::scope` here allows passing the `minijinja::State` to the callback.
+            // Since `minijinja::State` is not `'static`, this enables passing a
+            // temporarily created `mlua::UserData` to the callback, which is then
+            // destructured at the end of the scope.
+            //
+            // This prevents misuse in lua, such as if the callback assigned the `minijinja::State`
+            // to a global variable.
+            lua.scope(|scope| {
+                if let Some(st) = state
+                    && self.pass_state()
+                {
+                    let userdate = scope.create_userdata(LuaStateMut::new(st))?;
                     mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
@@ -249,7 +279,7 @@ impl JinjaObject for LuaTableObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let userdate = scope.create_userdata(LuaState::new(state))?;
+                    let userdate = scope.create_userdata(LuaStateRef::new(state))?;
                     mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
@@ -271,7 +301,7 @@ impl JinjaObject for LuaTableObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let userdate = scope.create_userdata(LuaState::new(state))?;
+                    let userdate = scope.create_userdata(LuaStateRef::new(state))?;
                     mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
@@ -438,7 +468,7 @@ impl JinjaObject for LuaUserDataObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let ud = scope.create_userdata(LuaState::new(state))?;
+                    let ud = scope.create_userdata(LuaStateRef::new(state))?;
                     mv.push_front(mlua::Value::UserData(ud.clone()));
                 };
 
@@ -460,7 +490,7 @@ impl JinjaObject for LuaUserDataObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let ud = scope.create_userdata(LuaState::new(state))?;
+                    let ud = scope.create_userdata(LuaStateRef::new(state))?;
                     mv.push_front(mlua::Value::UserData(ud.clone()));
                 };
 

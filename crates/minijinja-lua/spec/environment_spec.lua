@@ -433,6 +433,18 @@ describe("Environment tests", function ()
 
             assert.Equal([[3: 1 2: {"b": 1, "c": 2, "a": 3} 1: 3 ]], rv)
         end)
+
+        it("captured#templates", function ()
+            local env = Environment:new()
+            env:add_template("foo.txt", "I am {% block baz %}baz{% endblock baz %}!")
+
+            local rv, cb = env:render_captured("foo.txt", {}, function (state)
+                return state:render_block("baz")
+            end)
+
+            assert.Equal("I am baz!", rv)
+            assert.Equal("baz", cb)
+        end)
     end)
 
     describe("callbacks#Environment", function ()
