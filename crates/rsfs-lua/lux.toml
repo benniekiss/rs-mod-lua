@@ -1,0 +1,30 @@
+package = "rsfs-lua"
+version = "0.1.0"
+lua = ">=5.1"
+
+[description]
+summary = "a filesystem lua module using rust `std::fs`"
+homepage = "https://github.com/benniekiss/rsfs-lua"
+issues_url = "https://github.com/benniekiss/rsfs-lua/issues"
+maintainer = "benniekiss"
+labels = ["filesystem", "rust", "mlua"]
+license = "MIT"
+
+[source]
+url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-v$(VERSION).zip"
+dev = "git+https://github.com/benniekiss/rs-mod-lua"
+dir = "rs-mod-lua-$(PACKAGE)-v$(VERSION)/crates/$(PACKAGE)"
+
+[build]
+type = "rust-mlua"
+default_features = false
+features = ["module"]
+
+[build.modules]
+"rsfs" = "rsfs_lua"
+
+[build.include]
+"library/rsfs.d.lua" = "rsfs.d.lua"
+
+[test]
+type = "busted"
