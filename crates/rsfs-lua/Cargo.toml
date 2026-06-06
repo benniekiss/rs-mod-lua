@@ -1,0 +1,38 @@
+cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+
+[package]
+name = "rsfs-lua"
+version = "0.2.5"
+edition = "2024"
+readme = "README.md"
+repository = "https://github.com/benniekiss/rs-mod-lua"
+license = "MIT"
+description = "a filesystem lua module using rust `std::fs`"
+
+[lib]
+name = "rsfs_lua"
+crate-type = ["cdylib"]
+
+[features]
+default = ["lua54", "vendored"]
+lua55 = ["mlua/lua55"]
+lua54 = ["mlua/lua54"]
+lua53 = ["mlua/lua53"]
+lua52 = ["mlua/lua52"]
+lua51 = ["mlua/lua51"]
+vendored = ["mlua/vendored"]
+module = ["mlua/module"]
+
+[dependencies]
+mlua = "0.11.6"
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+panic = "immediate-abort"
+codegen-units = 1
+rustflags = [
+    "-Zlocation-detail=none",
+    "-Zfmt-debug=none",
+]
