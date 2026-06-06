@@ -1,7 +1,40 @@
 local jsonschema = require("jsonschema")
 
-pending("meta", function () end)
+pending("meta", function ()
+    it("is_valid#meta", function () end)
+    it("validate#meta", function () end)
+    describe("validator_for#meta", function () end)
+end)
 
-pending("async", function () end)
+pending("async", function ()
+    it("bundle#async", function ()
+        async()
+        done()
+    end)
 
-pending("schema", function () end)
+    it("dereference#async", function ()
+        async()
+        done()
+    end)
+
+    describe("validator_for#async", function ()
+        async()
+        done()
+    end)
+
+    describe("validator_map_for#async", function ()
+        async()
+        done()
+    end)
+end)
+
+pending("schema", function ()
+    it("is_valid#schema", function () end)
+    it("validate#schema", function () end)
+    it("evaluate#schema", function () end)
+    it("bundle#schema", function () end)
+    it("dereference#schema", function () end)
+
+    describe("validator_for#schema", function () end)
+    describe("validator_map_for#schema", function () end)
+end)
