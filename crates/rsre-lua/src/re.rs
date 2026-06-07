@@ -25,27 +25,29 @@ impl mlua::UserData for LuaMatch {
     fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
         methods.add_method(
             "start",
-            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> Result<usize, _> { Ok(this.start) },
+            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> mlua::Result<usize> { Ok(this.start) },
         );
 
         methods.add_method(
             "stop",
-            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> Result<usize, _> { Ok(this.end) },
+            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> mlua::Result<usize> { Ok(this.end) },
         );
 
         methods.add_method(
             "range",
-            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> Result<(usize, usize), _> {
+            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> mlua::Result<(usize, usize)> {
                 Ok((this.start, this.end))
             },
         );
 
         methods.add_method(
             "as_str",
-            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> Result<String, _> { Ok(this.text.clone()) },
+            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> mlua::Result<String> {
+                Ok(this.text.clone())
+            },
         );
 
-        methods.add_meta_method("__tostring", |_, this, _: ()| -> Result<String, _> {
+        methods.add_meta_method("__tostring", |_, this, _: ()| -> mlua::Result<String> {
             Ok(this.text.clone())
         });
     }
@@ -99,15 +101,15 @@ impl mlua::UserData for LuaCaptures {
     fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
         methods.add_method(
             "get",
-            |_, this, index: usize| -> Result<Option<LuaMatch>, _> {
+            |_, this, index: usize| -> mlua::Result<Option<LuaMatch>> {
                 Ok(this.get(index - 1)) // since lua is 1-indexed
             },
         );
         methods.add_method(
             "name",
-            |_, this, name: String| -> Result<Option<LuaMatch>, _> { Ok(this.name(&name)) },
+            |_, this, name: String| -> mlua::Result<Option<LuaMatch>> { Ok(this.name(&name)) },
         );
-        methods.add_method("len", |_, this, _: ()| -> Result<usize, _> {
+        methods.add_method("len", |_, this, _: ()| -> mlua::Result<usize> {
             Ok(this.len())
         });
     }
@@ -127,24 +129,18 @@ impl mlua::UserData for LuaRegex {
     fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
         methods.add_function(
             "new",
-            |_: &mlua::Lua, patt: String| -> Result<LuaRegex, mlua::Error> {
+            |_: &mlua::Lua, patt: String| -> mlua::Result<LuaRegex> {
                 LuaRegex::new(&patt).map_err(mlua::Error::external)
             },
         );
 
-        methods.add_method(
-            "match",
-            |_, this, hay: String| -> Result<bool, mlua::Error> {
-                this.re.is_match(&hay).map_err(mlua::Error::external)
-            },
-        );
+        methods.add_method("match", |_, this, hay: String| -> mlua::Result<bool> {
+            this.re.is_match(&hay).map_err(mlua::Error::external)
+        });
 
         methods.add_method(
             "find",
-            |_,
-             this,
-             (hay, start): (String, Option<usize>)|
-             -> Result<Option<LuaMatch>, mlua::Error> {
+            |_, this, (hay, start): (String, Option<usize>)| -> mlua::Result<Option<LuaMatch>> {
                 let start = start.unwrap_or(1);
                 this.re
                     .find_from_pos(&hay, start - 1)
@@ -155,10 +151,7 @@ impl mlua::UserData for LuaRegex {
 
         methods.add_method(
             "captures",
-            |_,
-             this,
-             (hay, start): (String, Option<usize>)|
-             -> Result<Option<LuaCaptures>, mlua::Error> {
+            |_, this, (hay, start): (String, Option<usize>)| -> mlua::Result<Option<LuaCaptures>> {
                 let start = start.unwrap_or(1);
                 let mut captures = this
                     .re
@@ -184,7 +177,7 @@ impl mlua::UserData for LuaRegex {
             |_,
              this,
              (text, rep, limit): (String, String, Option<usize>)|
-             -> Result<String, mlua::Error> {
+             -> mlua::Result<String> {
                 let limit = limit.unwrap_or(0);
                 this.re
                     .try_replacen(&text, limit, rep)
@@ -195,10 +188,7 @@ impl mlua::UserData for LuaRegex {
 
         methods.add_method(
             "split",
-            |_,
-             this,
-             (target, limit): (String, Option<usize>)|
-             -> Result<Vec<String>, mlua::Error> {
+            |_, this, (target, limit): (String, Option<usize>)| -> mlua::Result<Vec<String>> {
                 match limit {
                     Some(l) => this
                         .re
@@ -216,11 +206,11 @@ impl mlua::UserData for LuaRegex {
             },
         );
 
-        methods.add_method("as_str", |_, this, _: ()| -> Result<String, _> {
+        methods.add_method("as_str", |_, this, _: ()| -> mlua::Result<String> {
             Ok(this.re.as_str().to_string())
         });
 
-        methods.add_meta_method("__tostring", |_, this, _: ()| -> Result<String, _> {
+        methods.add_meta_method("__tostring", |_, this, _: ()| -> mlua::Result<String> {
             Ok(this.re.as_str().to_string())
         });
     }
