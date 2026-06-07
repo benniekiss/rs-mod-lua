@@ -1,4 +1,6 @@
-struct FsAttributes {
+use std::fs;
+
+struct LuaFsAttributes {
     dev: u64,
     ino: u64,
     mode: String,
@@ -15,6 +17,14 @@ struct FsAttributes {
     blksize: u64,
     target: String,
 }
+
+struct LuaFsMetadata {}
+
+struct LuaFsFileType {}
+
+struct LuaFsPermissions {}
+
+struct LuaDirIter {}
 
 pub(crate) fn lfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
@@ -36,7 +46,21 @@ pub(crate) fn lfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         lua.create_function(|_, _: mlua::Value| Ok(()))?,
     )?;
 
-    table.set("dir", lua.create_function(|_, _path: String| Ok(()))?)?;
+    table.set(
+        "dir",
+        lua.create_function(|lua, path: String| {
+            let mut iter_dir = fs::read_dir(path).map_err(mlua::Error::external)?;
+
+            let iter_func = lua.create_function_mut(move |_lua, _: mlua::Value| {
+                iter_dir
+                    .next()
+                    .map(|d| d.map(|d| d.file_name()).map_err(mlua::Error::external))
+                    .transpose()
+            })?;
+
+            Ok(iter_func)
+        })?,
+    )?;
 
     table.set(
         "lock",
