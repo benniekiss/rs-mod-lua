@@ -2,6 +2,6 @@
     "recommendations": [
         "tamasfe.even-better-toml",
         "rust-lang.rust-analyzer",
-        "sumneko.lua"
+        "xuhuanzy.emmylua-luals"
     ]
 }
