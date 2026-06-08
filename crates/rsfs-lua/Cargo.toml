@@ -24,7 +24,7 @@ vendored = ["mlua/vendored"]
 module = ["mlua/module"]
 
 [dependencies]
-mlua = "0.11.6"
+mlua = { version = "0.12.0-rc.2", features = ["macros"] }
 
 [profile.release]
 strip = true
