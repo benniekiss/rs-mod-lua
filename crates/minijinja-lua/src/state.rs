@@ -271,9 +271,9 @@ where
                     .set_temp(&name, val)
                     .and_then(|v| minijinja_to_lua(lua, &v)))
             } else {
-                Err(mlua::Error::ToLuaConversionError {
-                    from: val.type_name().to_string(),
-                    to: "minijinja::Value",
+                Err(mlua::Error::FromLuaConversionError {
+                    from: val.type_name(),
+                    to: "minijinja::Value".to_string(),
                     message: None,
                 })
             }
@@ -293,9 +293,9 @@ where
                         this.state().set_temp(&name, val.clone());
                         val
                     } else {
-                        return Err(mlua::Error::ToLuaConversionError {
-                            from: val.type_name().to_string(),
-                            to: "minijinja::Value",
+                        return Err(mlua::Error::FromLuaConversionError {
+                            from: val.type_name(),
+                            to: "minijinja::Value".to_string(),
                             message: None,
                         });
                     }
