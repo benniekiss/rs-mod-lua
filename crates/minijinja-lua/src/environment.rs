@@ -567,10 +567,8 @@ impl mlua::UserData for LuaEnvironment {
                         .eval(&context)
                         .map_err(mlua::Error::external)?;
 
-                    minijinja_to_lua(lua, &expr).ok_or_else(|| mlua::Error::ToLuaConversionError {
-                        from: "".to_string(),
-                        to: "",
-                        message: None,
+                    minijinja_to_lua(lua, &expr).ok_or_else(|| {
+                        mlua::Error::DeserializeError("could not convert output to lua".to_string())
                     })
                 })
             },
