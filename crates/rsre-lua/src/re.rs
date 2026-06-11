@@ -215,8 +215,9 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(c.get(0).unwrap().text, "abc123def");
-        assert_eq!(c.get(1).unwrap().text, "123");
+        // Note that `get()` is 1-indexed
+        assert_eq!(c.get(1).unwrap().text, "abc123def");
+        assert_eq!(c.get(2).unwrap().text, "123");
     }
 
     #[test]
