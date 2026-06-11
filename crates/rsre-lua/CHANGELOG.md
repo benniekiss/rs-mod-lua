@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.2.6...rsre-lua-v0.2.7) - 2026-06-11
+
+### Other
+
+- bump lux project version
+- release ([#13](https://github.com/benniekiss/rs-mod-lua/pull/13))
+- bump lux project version
+- Revert "chore: bump lux project versions"
+
 ## [0.2.6](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.2.5...rsre-lua-v0.2.6) - 2026-06-11
 
 ### Other
