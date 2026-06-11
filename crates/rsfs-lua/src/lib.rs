@@ -15,7 +15,10 @@ mod path;
 
 use std::time::{Duration, SystemTime};
 
-use crate::{fs::LuaPermissions, path::LuaPath};
+use crate::{
+    fs::{LuaMetadata, LuaPermissions, LuaReadDir},
+    path::LuaPath,
+};
 
 #[cfg_attr(feature = "module", mlua::lua_module(name = "rsfs"))]
 pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
@@ -29,6 +32,15 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     )?;
 
     table.set("Path", lua.create_proxy::<LuaPath>()?)?;
+
+    table.set(
+        "canonicalize",
+        lua.create_function(|_, path: LuaPath| -> mlua::Result<LuaPath> {
+            std::fs::canonicalize(path)
+                .map(|p| p.into())
+                .map_err(mlua::Error::external)
+        })?,
+    )?;
 
     table.set(
         "copy",
@@ -52,12 +64,62 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     )?;
 
     table.set(
+        "exists",
+        lua.create_function(|_, path: LuaPath| -> mlua::Result<bool> {
+            std::fs::exists(path).map_err(mlua::Error::external)
+        })?,
+    )?;
+
+    table.set(
         "hard_link",
         lua.create_function(
             |_, (original, link): (LuaPath, LuaPath)| -> mlua::Result<()> {
                 std::fs::hard_link(original, link).map_err(mlua::Error::external)
             },
         )?,
+    )?;
+
+    table.set(
+        "metadata",
+        lua.create_function(|_, path: LuaPath| -> mlua::Result<LuaMetadata> {
+            std::fs::metadata(path)
+                .map(|m| m.into())
+                .map_err(mlua::Error::external)
+        })?,
+    )?;
+
+    table.set(
+        "symlink_metadata",
+        lua.create_function(|_, path: LuaPath| -> mlua::Result<LuaMetadata> {
+            std::fs::symlink_metadata(path)
+                .map(|m| m.into())
+                .map_err(mlua::Error::external)
+        })?,
+    )?;
+
+    table.set(
+        "read",
+        lua.create_function(|_, path: LuaPath| -> mlua::Result<Vec<u8>> {
+            std::fs::read(path).map_err(mlua::Error::external)
+        })?,
+    )?;
+
+    table.set(
+        "read_dir",
+        lua.create_function(|_, path: LuaPath| -> mlua::Result<LuaReadDir> {
+            std::fs::read_dir(path)
+                .map(|d| d.into())
+                .map_err(mlua::Error::external)
+        })?,
+    )?;
+
+    table.set(
+        "read_link",
+        lua.create_function(|_, path: LuaPath| -> mlua::Result<LuaPath> {
+            std::fs::read_link(path)
+                .map(|p| p.into())
+                .map_err(mlua::Error::external)
+        })?,
     )?;
 
     table.set(
@@ -86,6 +148,15 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         lua.create_function(|_, (from, to): (LuaPath, LuaPath)| -> mlua::Result<()> {
             std::fs::rename(from, to).map_err(mlua::Error::external)
         })?,
+    )?;
+
+    table.set(
+        "write",
+        lua.create_function(
+            |_, (path, content): (LuaPath, String)| -> mlua::Result<()> {
+                std::fs::write(path, content).map_err(mlua::Error::external)
+            },
+        )?,
     )?;
 
     table.set(
