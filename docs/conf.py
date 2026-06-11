@@ -57,14 +57,12 @@ lua_ls_apidoc_format = "md"
 
 lua_ls_project_directories = [
     "crates/minijinja-lua/library/",
-    # "crates/jsonschema-lua/library/",
     "crates/rsjson-lua/library/",
     "crates/rsre-lua/library/",
 ]
 
 lua_ls_apidoc_roots = {
     "minijinja": "api/minijinja",
-    # "jsonschema": "api/jsonschema",
     "rsjson": "api/rsjson",
     "rsre": "api/rsre",
 }

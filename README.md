@@ -9,7 +9,6 @@ Lua bindings built with [`mlua`](https://github.com/mlua-rs/mlua)
 The following modules are contained in this repo:
 
 - [`minijinja-lua`][minijinja-lua]
-- [`jsonschema-lua`][jsonschema-lua]
 - [`rsjson-lua`][rsjson-lua]
 - [`rsre-lua`][rsre-lua]
 
