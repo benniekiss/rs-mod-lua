@@ -8,7 +8,14 @@ use crate::LuaEnvironment;
 pub(crate) fn minijinja_types(val: &mlua::Value) -> Result<&'static str, mlua::Error> {
     match val {
         mlua::Value::UserData(ud) if ud.is::<LuaEnvironment>() => Ok("environment"),
-        mlua::Value::UserData(ud) if ud.type_name()? == Some("state".to_string()) => Ok("state"),
+        mlua::Value::UserData(ud)
+            if ud
+                .type_name()
+                .map(|s| s.to_string_lossy())
+                .is_ok_and(|s| s == "state") =>
+        {
+            Ok("state")
+        },
         val if val.is_null() => Ok("none"),
         _ => Ok(val.type_name()),
     }
