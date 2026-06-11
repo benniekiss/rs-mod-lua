@@ -4,85 +4,45 @@ use std::collections::BTreeMap;
 
 use fancy_regex as regex;
 
-#[derive(Clone)]
+#[derive(mlua::UserData, Clone)]
 pub(crate) struct LuaMatch {
+    #[lua(get)]
     start: usize,
-    end: usize,
+    #[lua(get)]
+    stop: usize,
+    #[lua(get)]
     text: String,
 }
 
 impl From<regex::Match<'_>> for LuaMatch {
     fn from(m: regex::Match<'_>) -> Self {
         Self {
-            start: m.start() + 1, // since lua is 1-indexed
-            end: m.end() + 1,     // since lua is 1-indexed
+            start: m.start().saturating_add(1), // since lua is 1-indexed
+            stop: m.end().saturating_add(1),    // since lua is 1-indexed
             text: m.as_str().to_string(),
         }
     }
 }
 
-impl mlua::UserData for LuaMatch {
-    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method(
-            "start",
-            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> mlua::Result<usize> { Ok(this.start) },
-        );
+#[mlua::userdata_impl]
+impl LuaMatch {
+    #[lua(infallible)]
+    pub(crate) fn range(&self) -> (usize, usize) {
+        (self.start, self.stop)
+    }
 
-        methods.add_method(
-            "stop",
-            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> mlua::Result<usize> { Ok(this.end) },
-        );
-
-        methods.add_method(
-            "range",
-            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> mlua::Result<(usize, usize)> {
-                Ok((this.start, this.end))
-            },
-        );
-
-        methods.add_method(
-            "as_str",
-            |_: &mlua::Lua, this: &LuaMatch, _: ()| -> mlua::Result<String> {
-                Ok(this.text.clone())
-            },
-        );
-
-        methods.add_meta_method("__tostring", |_, this, _: ()| -> mlua::Result<String> {
-            Ok(this.text.clone())
-        });
+    #[lua(meta, name = "__tostring", infallible)]
+    pub(crate) fn tostring(&self) -> String {
+        self.text.clone()
     }
 }
 
-#[derive(Clone)]
+#[derive(mlua::UserData, Clone)]
 pub(crate) struct LuaCaptures {
+    #[lua(skip)]
     matches: Vec<Option<LuaMatch>>,
+    #[lua(skip)]
     names: BTreeMap<String, usize>,
-}
-
-impl LuaCaptures {
-    pub(crate) fn set_names(&mut self, names: Vec<Option<String>>) {
-        for (i, name) in names.into_iter().enumerate() {
-            if let Some(n) = name {
-                self.names.insert(n, i);
-            }
-        }
-    }
-
-    pub(crate) fn get(&self, index: usize) -> Option<LuaMatch> {
-        self.matches.get(index)?.clone()
-    }
-
-    pub(crate) fn name(&self, name: &str) -> Option<LuaMatch> {
-        if let Some(index) = self.names.get(name) {
-            self.get(*index)
-        } else {
-            None
-        }
-    }
-
-    pub(crate) fn len(&self) -> usize {
-        self.matches.len()
-    }
 }
 
 impl From<regex::Captures<'_>> for LuaCaptures {
@@ -97,122 +57,129 @@ impl From<regex::Captures<'_>> for LuaCaptures {
     }
 }
 
-impl mlua::UserData for LuaCaptures {
-    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method(
-            "get",
-            |_, this, index: usize| -> mlua::Result<Option<LuaMatch>> {
-                Ok(this.get(index - 1)) // since lua is 1-indexed
-            },
-        );
-        methods.add_method(
-            "name",
-            |_, this, name: String| -> mlua::Result<Option<LuaMatch>> { Ok(this.name(&name)) },
-        );
-        methods.add_method("len", |_, this, _: ()| -> mlua::Result<usize> {
-            Ok(this.len())
-        });
+#[mlua::userdata_impl]
+impl LuaCaptures {
+    #[lua(skip)]
+    pub(crate) fn set_names(&mut self, names: Vec<Option<String>>) {
+        for (i, name) in names.into_iter().enumerate() {
+            if let Some(n) = name {
+                self.names.insert(n, i);
+            }
+        }
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn get(&self, index: usize) -> Option<LuaMatch> {
+        self.matches.get(index.saturating_sub(1))?.clone()
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn name(&self, name: &str) -> Option<LuaMatch> {
+        if let Some(index) = self.names.get(name) {
+            self.get(index.saturating_add(1))
+        } else {
+            None
+        }
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn len(&self) -> usize {
+        self.matches.len()
     }
 }
 
+#[derive(mlua::UserData)]
 pub(crate) struct LuaRegex {
+    #[lua(skip)]
     re: regex::Regex,
 }
 
+#[mlua::userdata_impl]
 impl LuaRegex {
-    pub(crate) fn new(patt: &str) -> Result<Self, regex::Error> {
-        regex::Regex::new(patt).map(|re| Self { re })
+    pub(crate) fn new(patt: &str) -> mlua::Result<Self> {
+        regex::Regex::new(patt)
+            .map(|re| Self { re })
+            .map_err(mlua::Error::external)
     }
-}
 
-impl mlua::UserData for LuaRegex {
-    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_function(
-            "new",
-            |_: &mlua::Lua, patt: String| -> mlua::Result<LuaRegex> {
-                LuaRegex::new(&patt).map_err(mlua::Error::external)
-            },
-        );
+    #[lua(meta, name = "__tostring", infallible)]
+    pub(crate) fn tostring(&self) -> String {
+        self.re.as_str().to_string()
+    }
 
-        methods.add_method("match", |_, this, hay: String| -> mlua::Result<bool> {
-            this.re.is_match(&hay).map_err(mlua::Error::external)
-        });
+    #[lua(name = "match")]
+    pub(crate) fn is_match(&self, hay: String) -> mlua::Result<bool> {
+        self.re.is_match(&hay).map_err(mlua::Error::external)
+    }
 
-        methods.add_method(
-            "find",
-            |_, this, (hay, start): (String, Option<usize>)| -> mlua::Result<Option<LuaMatch>> {
-                let start = start.unwrap_or(1);
-                this.re
-                    .find_from_pos(&hay, start - 1)
-                    .map(|r| r.map(LuaMatch::from))
-                    .map_err(mlua::Error::external)
-            },
-        );
+    #[lua(name = "find")]
+    pub(crate) fn find_from_pos(
+        &self,
+        hay: String,
+        start: Option<usize>,
+    ) -> mlua::Result<Option<LuaMatch>> {
+        let start = start.unwrap_or(1).saturating_sub(1);
+        self.re
+            .find_from_pos(&hay, start)
+            .map(|r| r.map(LuaMatch::from))
+            .map_err(mlua::Error::external)
+    }
 
-        methods.add_method(
-            "captures",
-            |_, this, (hay, start): (String, Option<usize>)| -> mlua::Result<Option<LuaCaptures>> {
-                let start = start.unwrap_or(1);
-                let mut captures = this
-                    .re
-                    .captures_from_pos(&hay, start - 1)
-                    .map(|r| r.map(LuaCaptures::from))
-                    .map_err(mlua::Error::external)?;
+    #[lua(name = "captures")]
+    pub(crate) fn captures_from_pos(
+        &self,
+        hay: String,
+        start: Option<usize>,
+    ) -> mlua::Result<Option<LuaCaptures>> {
+        let start = start.unwrap_or(1);
+        let mut captures = self
+            .re
+            .captures_from_pos(&hay, start - 1)
+            .map(|r| r.map(LuaCaptures::from))
+            .map_err(mlua::Error::external)?;
 
-                if let Some(ref mut c) = captures {
-                    c.set_names(
-                        this.re
-                            .capture_names()
-                            .map(|v| v.map(|s| s.to_string()))
-                            .collect::<Vec<Option<String>>>(),
-                    );
-                }
+        if let Some(ref mut c) = captures {
+            c.set_names(
+                self.re
+                    .capture_names()
+                    .map(|v| v.map(|s| s.to_string()))
+                    .collect::<Vec<Option<String>>>(),
+            );
+        }
 
-                Ok(captures)
-            },
-        );
+        Ok(captures)
+    }
 
-        methods.add_method(
-            "replace",
-            |_,
-             this,
-             (text, rep, limit): (String, String, Option<usize>)|
-             -> mlua::Result<String> {
-                let limit = limit.unwrap_or(0);
-                this.re
-                    .try_replacen(&text, limit, rep)
-                    .map(|s| s.to_string())
-                    .map_err(mlua::Error::external)
-            },
-        );
+    #[lua(name = "replace")]
+    pub(crate) fn try_replacen(
+        &self,
+        text: String,
+        rep: String,
+        limit: Option<usize>,
+    ) -> mlua::Result<String> {
+        let limit = limit.unwrap_or(0);
+        self.re
+            .try_replacen(&text, limit, rep)
+            .map(|s| s.to_string())
+            .map_err(mlua::Error::external)
+    }
 
-        methods.add_method(
-            "split",
-            |_, this, (target, limit): (String, Option<usize>)| -> mlua::Result<Vec<String>> {
-                match limit {
-                    Some(l) => this
-                        .re
-                        .splitn(&target, l)
-                        .map(|r| r.map(|s| s.to_string()))
-                        .collect::<Result<Vec<String>, _>>()
-                        .map_err(mlua::Error::external),
-                    None => this
-                        .re
-                        .split(&target)
-                        .map(|r| r.map(|s| s.to_string()))
-                        .collect::<Result<Vec<String>, _>>()
-                        .map_err(mlua::Error::external),
-                }
-            },
-        );
-
-        methods.add_method("as_str", |_, this, _: ()| -> mlua::Result<String> {
-            Ok(this.re.as_str().to_string())
-        });
-
-        methods.add_meta_method("__tostring", |_, this, _: ()| -> mlua::Result<String> {
-            Ok(this.re.as_str().to_string())
-        });
+    #[lua(name = "split")]
+    pub(crate) fn splitn(&self, target: String, limit: Option<usize>) -> mlua::Result<Vec<String>> {
+        match limit {
+            Some(l) => self
+                .re
+                .splitn(&target, l)
+                .map(|r| r.map(|s| s.to_string()))
+                .collect::<Result<Vec<String>, _>>()
+                .map_err(mlua::Error::external),
+            None => self
+                .re
+                .split(&target)
+                .map(|r| r.map(|s| s.to_string()))
+                .collect::<Result<Vec<String>, _>>()
+                .map_err(mlua::Error::external),
+        }
     }
 }
 
