@@ -534,10 +534,10 @@ describe("Environment tests", function ()
             local env = Environment:new()
             local source = "{'x': 42}.get('x')"
 
-            env:set_pycompat()
+            env.pycompat = true
             assert.Equal(42, env:eval(source))
 
-            env:set_pycompat(false)
+            env.pycompat = false
             assert.Error(function ()
                 env:eval(source)
             end)
