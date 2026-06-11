@@ -2,15 +2,23 @@
 use std::os::unix::fs::{DirEntryExt, FileTypeExt, MetadataExt, PermissionsExt};
 #[cfg(windows)]
 use std::os::windows::fs::{FileTypeExt, MetadataExt};
-use std::{ffi::OsString, fs, path::PathBuf, time::SystemTime};
+use std::{ffi::OsString, fs, time::SystemTime};
+
+use crate::path::LuaPath;
 
 #[derive(mlua::UserData)]
-pub(crate) struct LuaFsMetadata(fs::Metadata);
+pub(crate) struct LuaMetadata(fs::Metadata);
+
+impl From<fs::Metadata> for LuaMetadata {
+    fn from(value: fs::Metadata) -> Self {
+        LuaMetadata(value)
+    }
+}
 
 #[mlua::userdata_impl]
-impl LuaFsMetadata {
+impl LuaMetadata {
     #[lua(infallible)]
-    pub(crate) fn file_type(&self) -> LuaFsFileType {
+    pub(crate) fn file_type(&self) -> LuaFileType {
         self.0.file_type().into()
     }
 
@@ -35,7 +43,7 @@ impl LuaFsMetadata {
     }
 
     #[lua(infallible)]
-    pub(crate) fn permissions(&self) -> LuaFsPermissions {
+    pub(crate) fn permissions(&self) -> LuaPermissions {
         self.0.permissions().into()
     }
 
@@ -63,7 +71,7 @@ impl LuaFsMetadata {
 
 #[cfg(unix)]
 #[mlua::userdata_impl]
-impl LuaFsMetadata {
+impl LuaMetadata {
     #[lua(infallible)]
     pub(crate) fn dev(&self) -> u64 {
         self.0.dev()
@@ -132,7 +140,7 @@ impl LuaFsMetadata {
 
 #[cfg(windows)]
 #[mlua::userdata_impl]
-impl LuaFsMetadata {
+impl LuaMetadata {
     #[lua(infallible)]
     pub(crate) fn file_attributes(&self) -> u32 {
         self.0.file_attributes()
@@ -159,23 +167,17 @@ impl LuaFsMetadata {
     }
 }
 
-impl From<fs::Metadata> for LuaFsMetadata {
-    fn from(value: fs::Metadata) -> Self {
-        LuaFsMetadata(value)
-    }
-}
-
 #[derive(mlua::UserData)]
-pub(crate) struct LuaFsFileType(fs::FileType);
+pub(crate) struct LuaFileType(fs::FileType);
 
-impl From<fs::FileType> for LuaFsFileType {
+impl From<fs::FileType> for LuaFileType {
     fn from(value: fs::FileType) -> Self {
-        LuaFsFileType(value)
+        LuaFileType(value)
     }
 }
 
 #[mlua::userdata_impl]
-impl LuaFsFileType {
+impl LuaFileType {
     #[lua(infallible)]
     pub(crate) fn is_dir(&self) -> bool {
         self.0.is_dir()
@@ -194,7 +196,7 @@ impl LuaFsFileType {
 
 #[cfg(unix)]
 #[mlua::userdata_impl]
-impl LuaFsFileType {
+impl LuaFileType {
     #[lua(infallible)]
     pub(crate) fn is_block_device(&self) -> bool {
         self.0.is_block_device()
@@ -218,7 +220,7 @@ impl LuaFsFileType {
 
 #[cfg(windows)]
 #[mlua::userdata_impl]
-impl LuaFsFileType {
+impl LuaFileType {
     #[lua(infallible)]
     pub(crate) fn is_symlink_dir(&self) -> bool {
         self.0.is_symlink_dir()
@@ -230,17 +232,40 @@ impl LuaFsFileType {
     }
 }
 
-#[derive(mlua::UserData)]
-pub(crate) struct LuaFsPermissions(fs::Permissions);
+#[derive(mlua::UserData, Clone)]
+pub(crate) struct LuaPermissions(fs::Permissions);
 
-impl From<fs::Permissions> for LuaFsPermissions {
+impl From<fs::Permissions> for LuaPermissions {
     fn from(value: fs::Permissions) -> Self {
-        LuaFsPermissions(value)
+        LuaPermissions(value)
+    }
+}
+
+impl AsRef<fs::Permissions> for LuaPermissions {
+    fn as_ref(&self) -> &fs::Permissions {
+        &self.0
+    }
+}
+
+impl mlua::FromLua for LuaPermissions {
+    fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
+        match value {
+            mlua::Value::UserData(ud) => Ok(ud.borrow::<Self>()?.clone()),
+            mlua::Value::String(s) => Ok(LuaPermissions::from_perms(s.to_str()?.to_string())?),
+            mlua::Value::Integer(int) => Ok(LuaPermissions::from_mode(
+                u32::try_from(int).map_err(mlua::Error::external)?,
+            )),
+            _ => Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "LuaPermissions".to_string(),
+                message: Some("could not convert to Permissions".to_string()),
+            }),
+        }
     }
 }
 
 #[mlua::userdata_impl]
-impl LuaFsPermissions {
+impl LuaPermissions {
     #[lua(infallible)]
     pub(crate) fn readonly(&self) -> bool {
         self.0.readonly()
@@ -254,7 +279,12 @@ impl LuaFsPermissions {
 
 #[cfg(unix)]
 #[mlua::userdata_impl]
-impl LuaFsPermissions {
+impl LuaPermissions {
+    #[lua(infallible)]
+    pub(crate) fn from_mode(mode: u32) -> LuaPermissions {
+        fs::Permissions::from_mode(mode).into()
+    }
+
     #[lua(infallible)]
     pub(crate) fn mode(&self) -> u32 {
         self.0.mode()
@@ -266,29 +296,44 @@ impl LuaFsPermissions {
     }
 
     #[lua(infallible)]
-    pub(crate) fn from_mode(mode: u32) -> LuaFsPermissions {
-        fs::Permissions::from_mode(mode).into()
+    pub(crate) fn from_perms(perms: String) -> mlua::Result<LuaPermissions> {
+        let mode = u32::from_str_radix(&perms, 8).map_err(mlua::Error::external)?;
+
+        Ok(fs::Permissions::from_mode(mode).into())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn perms(&self) -> String {
+        format!("{:o}", self.0.mode())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn set_perms(&mut self, perms: String) -> mlua::Result<()> {
+        let mode = u32::from_str_radix(&perms, 8).map_err(mlua::Error::external)?;
+        self.0.set_mode(mode);
+
+        Ok(())
     }
 }
 
 #[derive(mlua::UserData)]
-pub(crate) struct LuaFsDirEntry(fs::DirEntry);
+pub(crate) struct LuaDirEntry(fs::DirEntry);
 
-impl From<fs::DirEntry> for LuaFsDirEntry {
+impl From<fs::DirEntry> for LuaDirEntry {
     fn from(value: fs::DirEntry) -> Self {
-        LuaFsDirEntry(value)
+        LuaDirEntry(value)
     }
 }
 
 #[mlua::userdata_impl]
-impl LuaFsDirEntry {
+impl LuaDirEntry {
     #[lua(infallible)]
-    pub(crate) fn path(&self) -> PathBuf {
-        self.0.path()
+    pub(crate) fn path(&self) -> LuaPath {
+        self.0.path().into()
     }
 
     #[lua(infallible)]
-    pub(crate) fn metadata(&self) -> mlua::Result<LuaFsMetadata> {
+    pub(crate) fn metadata(&self) -> mlua::Result<LuaMetadata> {
         self.0
             .metadata()
             .map(|m| m.into())
@@ -296,7 +341,7 @@ impl LuaFsDirEntry {
     }
 
     #[lua(infallible)]
-    pub(crate) fn file_type(&self) -> mlua::Result<LuaFsFileType> {
+    pub(crate) fn file_type(&self) -> mlua::Result<LuaFileType> {
         self.0
             .file_type()
             .map(|ft| ft.into())
@@ -311,7 +356,7 @@ impl LuaFsDirEntry {
 
 #[cfg(unix)]
 #[mlua::userdata_impl]
-impl LuaFsDirEntry {
+impl LuaDirEntry {
     #[lua(infallible)]
     pub(crate) fn ino(&self) -> u64 {
         self.0.ino()
@@ -319,27 +364,21 @@ impl LuaFsDirEntry {
 }
 
 #[derive(mlua::UserData)]
-pub(crate) struct LuaFsReadDir(fs::ReadDir);
+pub(crate) struct LuaReadDir(fs::ReadDir);
 
-impl From<fs::ReadDir> for LuaFsReadDir {
+impl From<fs::ReadDir> for LuaReadDir {
     fn from(value: fs::ReadDir) -> Self {
-        LuaFsReadDir(value)
+        LuaReadDir(value)
     }
 }
 
 #[mlua::userdata_impl]
-impl LuaFsReadDir {
-    pub(crate) fn next(&mut self) -> mlua::Result<Option<LuaFsDirEntry>> {
+impl LuaReadDir {
+    pub(crate) fn next(&mut self) -> mlua::Result<Option<LuaDirEntry>> {
         self.0
             .next()
             .transpose()
             .map(|v| v.map(|d| d.into()))
             .map_err(mlua::Error::external)
     }
-}
-
-pub(crate) fn fs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
-    let table = lua.create_table()?;
-
-    Ok(table)
 }
