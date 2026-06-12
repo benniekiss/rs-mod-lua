@@ -1,11 +1,11 @@
 use std::{
     fs,
-    io::{Read, Seek, SeekFrom, Write},
+    io::{BufRead, Read, Seek, SeekFrom, Write},
     time::{Duration, SystemTime},
 };
 
 use crate::{
-    fs::{LuaMetadata, LuaOpenOptions, LuaPermissions},
+    fs::{LuaLines, LuaMetadata, LuaOpenOptions, LuaPermissions, LuaSplit},
     path::LuaPath,
 };
 
@@ -60,6 +60,20 @@ impl LuaFile {
         let s = lua.create_string(buf)?;
 
         Ok((s, n_read))
+    }
+
+    pub(crate) fn split(&self, byte: u8) -> mlua::Result<LuaSplit> {
+        let file = self.try_clone()?;
+        let buf = std::io::BufReader::new(file.0);
+
+        Ok(buf.split(byte).into())
+    }
+
+    pub(crate) fn lines(&self) -> mlua::Result<LuaLines> {
+        let file = self.try_clone()?;
+        let buf = std::io::BufReader::new(file.0);
+
+        Ok(buf.lines().into())
     }
 
     pub(crate) fn write(&mut self, buf: &[u8]) -> mlua::Result<usize> {

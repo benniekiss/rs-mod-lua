@@ -5,6 +5,7 @@ use std::os::windows::fs::{FileTypeExt, MetadataExt, OpenOptionsExt};
 use std::{
     ffi::OsString,
     fs,
+    io::{BufReader, Lines, Split},
     sync::{Arc, Mutex},
     time::SystemTime,
 };
@@ -557,5 +558,42 @@ impl LuaOpenOptions {
             .map_err(mlua::Error::runtime)?
             .security_qos_flags(flags);
         lua.create_userdata(self.clone())
+    }
+}
+
+#[derive(mlua::UserData)]
+pub(crate) struct LuaLines(Lines<BufReader<fs::File>>);
+
+impl From<Lines<BufReader<fs::File>>> for LuaLines {
+    fn from(value: Lines<BufReader<fs::File>>) -> Self {
+        LuaLines(value)
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaLines {
+    pub(crate) fn next(&mut self) -> mlua::Result<Option<String>> {
+        self.0.next().transpose().map_err(mlua::Error::external)
+    }
+}
+
+#[derive(mlua::UserData)]
+pub(crate) struct LuaSplit(Split<BufReader<fs::File>>);
+
+impl From<Split<BufReader<fs::File>>> for LuaSplit {
+    fn from(value: Split<BufReader<fs::File>>) -> Self {
+        LuaSplit(value)
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaSplit {
+    pub(crate) fn next(&mut self, lua: &mlua::Lua) -> mlua::Result<Option<mlua::String>> {
+        self.0
+            .next()
+            .transpose()
+            .map_err(mlua::Error::external)?
+            .map(|v| lua.create_string(v))
+            .transpose()
     }
 }

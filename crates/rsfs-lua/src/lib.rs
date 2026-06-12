@@ -18,7 +18,7 @@ use std::time::{Duration, SystemTime};
 
 use crate::{
     file::LuaFile,
-    fs::{LuaMetadata, LuaPermissions, LuaReadDir},
+    fs::{LuaMetadata, LuaOpenOptions, LuaPermissions, LuaReadDir},
     path::LuaPath,
 };
 
@@ -36,6 +36,8 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set("Path", lua.create_proxy::<LuaPath>()?)?;
 
     table.set("File", lua.create_proxy::<LuaFile>()?)?;
+
+    table.set("OpenOptions", lua.create_proxy::<LuaOpenOptions>()?)?;
 
     table.set(
         "canonicalize",
@@ -84,18 +86,26 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     )?;
 
     table.set(
-        "soft_link",
+        "symlink_file",
         lua.create_function(
             |_, (original, link): (LuaPath, LuaPath)| -> mlua::Result<()> {
                 let res = cfg_select! {
                     unix => std::os::unix::fs::symlink(original, link),
-                    windows => {
-                        if original.is_dir() {
-                            std::os::windows::fs::symlink_dir(orginal, link)
-                        } else {
-                            std::os::windows::fs::symlink_file(orginal, link)
-                        }
-                    }
+                    windows => std::os::windows::fs::symlink_file(orginal, link),
+                };
+
+                res.map_err(mlua::Error::external)
+            },
+        )?,
+    )?;
+
+    table.set(
+        "symlink_dir",
+        lua.create_function(
+            |_, (original, link): (LuaPath, LuaPath)| -> mlua::Result<()> {
+                let res = cfg_select! {
+                    unix => std::os::unix::fs::symlink(original, link),
+                    windows => std::os::windows::fs::symlink_dir(orginal, link),
                 };
 
                 res.map_err(mlua::Error::external)
