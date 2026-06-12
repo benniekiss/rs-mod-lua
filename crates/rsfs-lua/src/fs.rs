@@ -1,10 +1,15 @@
 #[cfg(unix)]
-use std::os::unix::fs::{DirEntryExt, FileTypeExt, MetadataExt, PermissionsExt};
+use std::os::unix::fs::{DirEntryExt, FileTypeExt, MetadataExt, OpenOptionsExt, PermissionsExt};
 #[cfg(windows)]
-use std::os::windows::fs::{FileTypeExt, MetadataExt};
-use std::{ffi::OsString, fs, time::SystemTime};
+use std::os::windows::fs::{FileTypeExt, MetadataExt, OpenOptionsExt};
+use std::{
+    ffi::OsString,
+    fs,
+    sync::{Arc, Mutex},
+    time::SystemTime,
+};
 
-use crate::path::LuaPath;
+use crate::{file::LuaFile, path::LuaPath};
 
 #[derive(mlua::UserData)]
 pub(crate) struct LuaMetadata(fs::Metadata);
@@ -380,5 +385,177 @@ impl LuaReadDir {
             .transpose()
             .map(|v| v.map(|d| d.into()))
             .map_err(mlua::Error::external)
+    }
+}
+
+#[derive(mlua::UserData, Clone)]
+pub(crate) struct LuaOpenOptions(Arc<Mutex<fs::OpenOptions>>);
+
+impl From<fs::OpenOptions> for LuaOpenOptions {
+    fn from(value: fs::OpenOptions) -> Self {
+        LuaOpenOptions(Arc::new(Mutex::new(value)))
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaOpenOptions {
+    #[lua(infallible)]
+    pub(crate) fn new() -> Self {
+        fs::OpenOptions::new().into()
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn read(&self, lua: &mlua::Lua, read: bool) -> mlua::Result<mlua::AnyUserData> {
+        self.0.lock().map_err(mlua::Error::runtime)?.read(read);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn write(&self, lua: &mlua::Lua, write: bool) -> mlua::Result<mlua::AnyUserData> {
+        self.0.lock().map_err(mlua::Error::runtime)?.write(write);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn append(&self, lua: &mlua::Lua, append: bool) -> mlua::Result<mlua::AnyUserData> {
+        self.0.lock().map_err(mlua::Error::runtime)?.append(append);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn truncate(
+        &self,
+        lua: &mlua::Lua,
+        truncate: bool,
+    ) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .truncate(truncate);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn create(&self, lua: &mlua::Lua, create: bool) -> mlua::Result<mlua::AnyUserData> {
+        self.0.lock().map_err(mlua::Error::runtime)?.create(create);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn create_new(
+        &self,
+        lua: &mlua::Lua,
+        create_new: bool,
+    ) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .create_new(create_new);
+        lua.create_userdata(self.clone())
+    }
+
+    pub(crate) fn open(&mut self, path: LuaPath) -> mlua::Result<LuaFile> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .open(path)
+            .map(|f| f.into())
+            .map_err(mlua::Error::external)
+    }
+}
+
+#[cfg(unix)]
+#[mlua::userdata_impl]
+impl LuaOpenOptions {
+    #[lua(infallible)]
+    pub(crate) fn mode(
+        &self,
+        lua: &mlua::Lua,
+        mode: LuaPermissions,
+    ) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .mode(mode.mode());
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn custom_flags(
+        &self,
+        lua: &mlua::Lua,
+        flags: i32,
+    ) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .custom_flags(flags);
+        lua.create_userdata(self.clone())
+    }
+}
+
+#[cfg(windows)]
+#[mlua::userdata_impl]
+impl LuaOpenOptions {
+    #[cfg(not(unix))]
+    #[lua(infallible)]
+    pub(crate) fn custom_flags(
+        &self,
+        lua: &mlua::Lua,
+        flags: u32,
+    ) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .custom_flags(flags);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn access_mode(
+        &self,
+        lua: &mlua::Lua,
+        mode: u32,
+    ) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .access_mode(mode);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn share_mode(&self, lua: &mlua::Lua, mode: u32) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .access_mode(mode);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn attributes(
+        &self,
+        lua: &mlua::Lua,
+        attributes: u32,
+    ) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .attributes(mode);
+        lua.create_userdata(self.clone())
+    }
+
+    #[lua(infallible)]
+    pub(crate) fn security_qos_flags(
+        &self,
+        lua: &mlua::Lua,
+        flags: u32,
+    ) -> mlua::Result<mlua::AnyUserData> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .security_qos_flags(flags);
+        lua.create_userdata(self.clone())
     }
 }
