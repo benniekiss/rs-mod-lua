@@ -10,12 +10,14 @@
     time_saturating_systemtime
 )]
 
+mod file;
 mod fs;
 mod path;
 
 use std::time::{Duration, SystemTime};
 
 use crate::{
+    file::LuaFile,
     fs::{LuaMetadata, LuaPermissions, LuaReadDir},
     path::LuaPath,
 };
@@ -32,6 +34,8 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     )?;
 
     table.set("Path", lua.create_proxy::<LuaPath>()?)?;
+
+    table.set("File", lua.create_proxy::<LuaFile>()?)?;
 
     table.set(
         "canonicalize",
@@ -75,6 +79,26 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         lua.create_function(
             |_, (original, link): (LuaPath, LuaPath)| -> mlua::Result<()> {
                 std::fs::hard_link(original, link).map_err(mlua::Error::external)
+            },
+        )?,
+    )?;
+
+    table.set(
+        "soft_link",
+        lua.create_function(
+            |_, (original, link): (LuaPath, LuaPath)| -> mlua::Result<()> {
+                let res = cfg_select! {
+                    unix => std::os::unix::fs::symlink(original, link),
+                    windows => {
+                        if original.is_dir() {
+                            std::os::windows::fs::symlink_dir(orginal, link)
+                        } else {
+                            std::os::windows::fs::symlink_file(orginal, link)
+                        }
+                    }
+                };
+
+                res.map_err(mlua::Error::external)
             },
         )?,
     )?;
@@ -172,21 +196,23 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "set_times",
         lua.create_function(
             |_, (path, atime, mtime): (LuaPath, Option<u64>, Option<u64>)| -> mlua::Result<()> {
-                let now = SystemTime::now();
+                let times = std::fs::FileTimes::new();
 
-                let mtime = match mtime {
-                    Some(t) => SystemTime::UNIX_EPOCH.saturating_add(Duration::from_secs(t)),
-                    None => now,
+                let times = match mtime {
+                    Some(t) => {
+                        let mtime = SystemTime::UNIX_EPOCH.saturating_add(Duration::from_secs(t));
+                        times.set_modified(mtime)
+                    },
+                    None => times,
                 };
 
-                let atime = match atime {
-                    Some(t) => SystemTime::UNIX_EPOCH.saturating_add(Duration::from_secs(t)),
-                    None => now,
+                let times = match atime {
+                    Some(t) => {
+                        let atime = SystemTime::UNIX_EPOCH.saturating_add(Duration::from_secs(t));
+                        times.set_accessed(atime)
+                    },
+                    None => times,
                 };
-
-                let times = std::fs::FileTimes::new()
-                    .set_modified(mtime)
-                    .set_accessed(atime);
 
                 std::fs::set_times(path, times).map_err(mlua::Error::external)
             },
