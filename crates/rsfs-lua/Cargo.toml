@@ -25,6 +25,8 @@ module = ["mlua/module"]
 
 [dependencies]
 mlua = { version = "0.12.0-rc.2", features = ["macros"] }
+tempfile = { version = "3.27.0" }
+walkdir = "2.5.0"
 
 [profile.release]
 strip = true
