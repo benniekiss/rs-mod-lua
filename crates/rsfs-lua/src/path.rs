@@ -50,7 +50,7 @@ impl mlua::FromLua for LuaPath {
     fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
         match value {
             mlua::Value::UserData(ud) => ud.take(),
-            mlua::Value::String(s) => Ok(LuaPath::new(Some(s.to_str()?.to_string()))),
+            mlua::Value::String(s) => Ok(LuaPath::from(s.to_str()?.to_string())),
             _ => Err(mlua::Error::FromLuaConversionError {
                 from: value.type_name(),
                 to: "LuaPath".to_string(),
@@ -68,13 +68,13 @@ impl LuaPath {
     }
 
     #[lua(infallible)]
-    pub(crate) fn new(path: Option<String>) -> Self {
-        let buf = match path {
-            Some(p) => path::PathBuf::from(p),
-            None => path::PathBuf::new(),
-        };
+    pub(crate) fn new() -> Self {
+        path::PathBuf::new().into()
+    }
 
-        buf.into()
+    #[lua(infallible)]
+    pub(crate) fn from(path: String) -> Self {
+        path::PathBuf::from(path).into()
     }
 
     #[lua(infallible)]
