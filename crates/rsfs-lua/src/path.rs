@@ -1,4 +1,7 @@
-use std::{ffi::OsString, path};
+use std::{
+    ffi::{OsStr, OsString},
+    path,
+};
 
 use crate::fs::{LuaMetadata, LuaReadDir};
 
@@ -37,6 +40,12 @@ impl AsRef<path::Path> for LuaPath {
     }
 }
 
+impl AsRef<OsStr> for LuaPath {
+    fn as_ref(&self) -> &OsStr {
+        self.0.as_os_str()
+    }
+}
+
 impl mlua::FromLua for LuaPath {
     fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
         match value {
@@ -65,7 +74,7 @@ impl LuaPath {
             None => path::PathBuf::new(),
         };
 
-        LuaPath(buf)
+        buf.into()
     }
 
     #[lua(infallible)]
