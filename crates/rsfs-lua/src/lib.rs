@@ -13,6 +13,8 @@
 mod file;
 mod fs;
 mod path;
+mod temp;
+mod walk;
 
 use std::time::{Duration, SystemTime};
 
@@ -20,6 +22,7 @@ use crate::{
     file::LuaFile,
     fs::{LuaMetadata, LuaOpenOptions, LuaPermissions, LuaReadDir},
     path::LuaPath,
+    temp::temp_lua,
 };
 
 #[cfg_attr(feature = "module", mlua::lua_module(name = "rsfs"))]
@@ -38,6 +41,8 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set("File", lua.create_proxy::<LuaFile>()?)?;
 
     table.set("OpenOptions", lua.create_proxy::<LuaOpenOptions>()?)?;
+
+    table.set("temp", temp_lua(lua)?)?;
 
     table.set(
         "canonicalize",
