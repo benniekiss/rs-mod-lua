@@ -49,11 +49,11 @@ impl AsRef<OsStr> for LuaPath {
 impl mlua::FromLua for LuaPath {
     fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
         match value {
-            mlua::Value::UserData(ud) => Ok(ud.borrow::<Self>()?.clone()),
+            mlua::Value::UserData(ud) => ud.take(),
             mlua::Value::String(s) => Ok(LuaPath::new(Some(s.to_str()?.to_string()))),
             _ => Err(mlua::Error::FromLuaConversionError {
                 from: value.type_name(),
-                to: "Path".to_string(),
+                to: "LuaPath".to_string(),
                 message: Some("could not convert to Path".to_string()),
             }),
         }
