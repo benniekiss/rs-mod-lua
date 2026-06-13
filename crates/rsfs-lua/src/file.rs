@@ -18,6 +18,25 @@ impl From<fs::File> for LuaFile {
     }
 }
 
+impl From<LuaFile> for fs::File {
+    fn from(value: LuaFile) -> Self {
+        value.0
+    }
+}
+
+impl mlua::FromLua for LuaFile {
+    fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
+        match value {
+            mlua::Value::UserData(ud) => ud.take(),
+            _ => Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "LuaFile".to_string(),
+                message: Some("could not convert to File".to_string()),
+            }),
+        }
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaFile {
     pub(crate) fn read(

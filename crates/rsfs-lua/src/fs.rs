@@ -247,6 +247,12 @@ impl From<fs::Permissions> for LuaPermissions {
     }
 }
 
+impl From<LuaPermissions> for fs::Permissions {
+    fn from(value: LuaPermissions) -> Self {
+        value.0
+    }
+}
+
 impl AsRef<fs::Permissions> for LuaPermissions {
     fn as_ref(&self) -> &fs::Permissions {
         &self.0
@@ -256,7 +262,7 @@ impl AsRef<fs::Permissions> for LuaPermissions {
 impl mlua::FromLua for LuaPermissions {
     fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
         match value {
-            mlua::Value::UserData(ud) => Ok(ud.borrow::<Self>()?.clone()),
+            mlua::Value::UserData(ud) => ud.take(),
             mlua::Value::String(s) => Ok(LuaPermissions::from_perms(s.to_str()?.to_string())?),
             mlua::Value::Integer(int) => Ok(LuaPermissions::from_mode(
                 u32::try_from(int).map_err(mlua::Error::external)?,
