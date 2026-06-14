@@ -242,8 +242,8 @@ mod test {
             .unwrap();
 
         // Note that `get()` is 1-indexed
-        assert_eq!(c.get(1).unwrap().text, "abc123def");
-        assert_eq!(c.get(2).unwrap().text, "123");
+        assert_eq!(c.lua_get(1).unwrap().text, "abc123def");
+        assert_eq!(c.lua_get(2).unwrap().text, "123");
     }
 
     #[test]
