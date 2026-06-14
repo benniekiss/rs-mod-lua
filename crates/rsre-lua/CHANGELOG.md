@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.2.7...rsre-lua-v0.3.0) - 2026-06-14
+
+### Added
+
+- feat!(rsre-lua): migrate to `#[derive(mlua::UserData)]`
+- [**breaking**] update to mlua v0.12
+
+### Fixed
+
+- *(rsre-lua)* use correct method in tests
+- *(rsre-lua)* update captures test
+
+### Other
+
+- *(rsre-lua)* cleanup userdata impl
+
 ## [0.2.7](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.2.6...rsre-lua-v0.2.7) - 2026-06-11
 
 ### Other

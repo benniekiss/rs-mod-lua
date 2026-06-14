@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.27...minijinja-lua-v0.2.0) - 2026-06-14
+
+### Added
+
+- *(minijinja-lua)* migrate Environment to macro userdata
+- [**breaking**] update to mlua v0.12
+
+### Fixed
+
+- *(minijinja-lua)* remove deprecated tests
+- *(minijinja-lua)* set correct method name
+- *(minijinja-lua)* fix `state` userdata type test
+
+### Other
+
+- *(minijinja-lua)* cleanup userdata impl
+
 ## [0.1.27](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.26...minijinja-lua-v0.1.27) - 2026-06-11
 
 ### Other

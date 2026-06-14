@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.3.5...rsjson-lua-v0.4.0) - 2026-06-14
+
+### Added
+
+- *(rsjson-lua)* [**breaking**] migrate to `#[derive(mlua::UserData)]`
+- [**breaking**] update to mlua v0.12
+
+### Fixed
+
+- *(rsjson-lua)* use correct imports in benchmarks
+
+### Other
+
+- *(rsjson-lua)* add benchmark deps to test dependencies
+- *(rsjson-lua)* micro-optimize for no encode config
+
 ## [0.3.5](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.3.4...rsjson-lua-v0.3.5) - 2026-06-11
 
 ### Other
