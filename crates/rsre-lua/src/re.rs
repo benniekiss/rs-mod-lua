@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, ops::Deref};
 
 use fancy_regex as regex;
 
@@ -26,14 +26,14 @@ impl From<regex::Match<'_>> for LuaMatch {
 
 #[mlua::userdata_impl]
 impl LuaMatch {
-    #[lua(infallible)]
-    pub(crate) fn range(&self) -> (usize, usize) {
-        (self.start, self.stop)
+    #[lua(meta, name = "__tostring", infallible)]
+    pub(crate) fn lua_tostring(&self) -> String {
+        self.text.clone()
     }
 
-    #[lua(meta, name = "__tostring", infallible)]
-    pub(crate) fn tostring(&self) -> String {
-        self.text.clone()
+    #[lua(name = "range", infallible)]
+    pub(crate) fn lua_range(&self) -> (usize, usize) {
+        (self.start, self.stop)
     }
 }
 
@@ -60,6 +60,11 @@ impl From<regex::Captures<'_>> for LuaCaptures {
 #[mlua::userdata_impl]
 impl LuaCaptures {
     #[lua(skip)]
+    pub(crate) fn get(&self, index: usize) -> Option<LuaMatch> {
+        self.matches.get(index)?.clone()
+    }
+
+    #[lua(skip)]
     pub(crate) fn set_names(&mut self, names: Vec<Option<String>>) {
         for (i, name) in names.into_iter().enumerate() {
             if let Some(n) = name {
@@ -68,79 +73,96 @@ impl LuaCaptures {
         }
     }
 
-    #[lua(infallible)]
-    pub(crate) fn get(&self, index: usize) -> Option<LuaMatch> {
+    #[lua(name = "get", infallible)]
+    pub(crate) fn lua_get(&self, index: usize) -> Option<LuaMatch> {
         self.matches.get(index.saturating_sub(1))?.clone()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn name(&self, name: &str) -> Option<LuaMatch> {
+    #[lua(name = "name", infallible)]
+    pub(crate) fn lua_name(&self, name: &str) -> Option<LuaMatch> {
         if let Some(index) = self.names.get(name) {
-            self.get(index.saturating_add(1))
+            self.get(*index)
         } else {
             None
         }
     }
 
-    #[lua(infallible)]
-    pub(crate) fn len(&self) -> usize {
+    #[lua(name = "len", infallible)]
+    pub(crate) fn lua_len(&self) -> usize {
         self.matches.len()
     }
 }
 
-#[derive(mlua::UserData)]
-pub(crate) struct LuaRegex {
-    #[lua(skip)]
-    re: regex::Regex,
+#[derive(mlua::UserData, Clone)]
+pub(crate) struct LuaRegex(regex::Regex);
+
+impl From<regex::Regex> for LuaRegex {
+    fn from(value: regex::Regex) -> Self {
+        LuaRegex(value)
+    }
+}
+
+impl From<LuaRegex> for regex::Regex {
+    fn from(value: LuaRegex) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaRegex {
+    type Target = regex::Regex;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 #[mlua::userdata_impl]
 impl LuaRegex {
     pub(crate) fn new(patt: &str) -> mlua::Result<Self> {
         regex::Regex::new(patt)
-            .map(|re| Self { re })
+            .map(|re| re.into())
             .map_err(mlua::Error::external)
     }
 
     #[lua(meta, name = "__tostring", infallible)]
-    pub(crate) fn tostring(&self) -> String {
-        self.re.as_str().to_string()
+    pub(crate) fn lua_tostring(&self) -> String {
+        self.0.as_str().to_string()
     }
 
     #[lua(name = "match")]
-    pub(crate) fn is_match(&self, hay: String) -> mlua::Result<bool> {
-        self.re.is_match(&hay).map_err(mlua::Error::external)
+    pub(crate) fn lua_is_match(&self, hay: String) -> mlua::Result<bool> {
+        self.0.is_match(&hay).map_err(mlua::Error::external)
     }
 
     #[lua(name = "find")]
-    pub(crate) fn find_from_pos(
+    pub(crate) fn lua_find_from_pos(
         &self,
         hay: String,
         start: Option<usize>,
     ) -> mlua::Result<Option<LuaMatch>> {
         let start = start.unwrap_or(1).saturating_sub(1);
-        self.re
+        self.0
             .find_from_pos(&hay, start)
             .map(|r| r.map(LuaMatch::from))
             .map_err(mlua::Error::external)
     }
 
     #[lua(name = "captures")]
-    pub(crate) fn captures_from_pos(
+    pub(crate) fn lua_captures_from_pos(
         &self,
         hay: String,
         start: Option<usize>,
     ) -> mlua::Result<Option<LuaCaptures>> {
         let start = start.unwrap_or(1);
         let mut captures = self
-            .re
+            .0
             .captures_from_pos(&hay, start - 1)
             .map(|r| r.map(LuaCaptures::from))
             .map_err(mlua::Error::external)?;
 
         if let Some(ref mut c) = captures {
             c.set_names(
-                self.re
+                self.0
                     .capture_names()
                     .map(|v| v.map(|s| s.to_string()))
                     .collect::<Vec<Option<String>>>(),
@@ -151,30 +173,34 @@ impl LuaRegex {
     }
 
     #[lua(name = "replace")]
-    pub(crate) fn try_replacen(
+    pub(crate) fn lua_try_replacen(
         &self,
         text: String,
         rep: String,
         limit: Option<usize>,
     ) -> mlua::Result<String> {
         let limit = limit.unwrap_or(0);
-        self.re
+        self.0
             .try_replacen(&text, limit, rep)
             .map(|s| s.to_string())
             .map_err(mlua::Error::external)
     }
 
     #[lua(name = "split")]
-    pub(crate) fn splitn(&self, target: String, limit: Option<usize>) -> mlua::Result<Vec<String>> {
+    pub(crate) fn lua_splitn(
+        &self,
+        target: String,
+        limit: Option<usize>,
+    ) -> mlua::Result<Vec<String>> {
         match limit {
             Some(l) => self
-                .re
+                .0
                 .splitn(&target, l)
                 .map(|r| r.map(|s| s.to_string()))
                 .collect::<Result<Vec<String>, _>>()
                 .map_err(mlua::Error::external),
             None => self
-                .re
+                .0
                 .split(&target)
                 .map(|r| r.map(|s| s.to_string()))
                 .collect::<Result<Vec<String>, _>>()
@@ -230,7 +256,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert!(c.name("digits").is_none());
+        assert!(c.lua_name("digits").is_none());
 
         c.set_names(
             re.capture_names()
@@ -238,7 +264,7 @@ mod test {
                 .collect::<Vec<Option<String>>>(),
         );
 
-        assert_eq!(c.name("digits").unwrap().text, "123");
+        assert_eq!(c.lua_name("digits").unwrap().text, "123");
     }
 
     #[test]
@@ -251,6 +277,6 @@ mod test {
             .unwrap()
             .unwrap();
 
-        assert_eq!(c.len(), 2);
+        assert_eq!(c.lua_len(), 2);
     }
 }
