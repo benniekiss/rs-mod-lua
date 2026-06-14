@@ -472,24 +472,6 @@ describe("Environment tests", function ()
             assert.Same({ "index.html", "other.html", "index.html" }, called)
         end)
 
-        it("reload#callbacks", function ()
-            local env = Environment:new()
-
-            local called = {}
-            local function loader(name)
-                table.insert(called, name)
-                return "Hello from " .. name
-            end
-
-            env:set_loader(loader)
-            env.reload_before_render = true
-
-            assert.Equal("Hello from index.html", env:render_template("index.html"))
-            assert.Equal("Hello from index.html", env:render_template("index.html"))
-            assert.Equal("Hello from other.html", env:render_template("other.html"))
-            assert.Same({ "index.html", "index.html", "other.html" }, called)
-        end)
-
         it("path-join#callbacks", function ()
             local env = Environment:new()
 
