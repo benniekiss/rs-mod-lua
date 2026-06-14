@@ -1,9 +1,15 @@
 use std::{
+    ffi::{OsStr, OsString},
     io::{Read, Seek, SeekFrom, Write},
     ops::Deref,
+    path,
 };
 
-use crate::{file::LuaFile, fs::LuaPermissions, path::LuaPath};
+use crate::{
+    file::LuaFile,
+    fs::{LuaMetadata, LuaPermissions, LuaReadDir},
+    path::LuaPath,
+};
 
 #[derive(mlua::UserData)]
 pub(crate) struct LuaTempPath(tempfile::TempPath);
@@ -20,6 +26,26 @@ impl From<LuaTempPath> for tempfile::TempPath {
     }
 }
 
+impl AsRef<path::Path> for LuaTempPath {
+    fn as_ref(&self) -> &path::Path {
+        &self.0
+    }
+}
+
+impl AsRef<OsStr> for LuaTempPath {
+    fn as_ref(&self) -> &OsStr {
+        self.0.as_os_str()
+    }
+}
+
+impl Deref for LuaTempPath {
+    type Target = tempfile::TempPath;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl mlua::FromLua for LuaTempPath {
     fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
         match value {
@@ -27,7 +53,7 @@ impl mlua::FromLua for LuaTempPath {
             _ => Err(mlua::Error::FromLuaConversionError {
                 from: value.type_name(),
                 to: "LuaTempPath".to_string(),
-                message: Some("could not convert to TempPath".to_string()),
+                message: Some("could not convert to LuaTempPath".to_string()),
             }),
         }
     }
@@ -72,6 +98,8 @@ impl LuaTempPath {
             .map_err(mlua::Error::external)
     }
 }
+
+lua_path_methods!(LuaTempPath);
 
 #[derive(mlua::UserData)]
 pub(crate) struct LuaTempDir(tempfile::TempDir);
@@ -369,8 +397,8 @@ impl LuaTempBuilder {
     #[lua(name = "new", infallible)]
     pub(crate) fn lua_new() -> Self {
         Self {
-            prefix: LuaPath::new(),
-            suffix: LuaPath::new(),
+            prefix: LuaPath::lua_new(),
+            suffix: LuaPath::lua_new(),
             rand_bytes: 6,
             append: false,
             permissions: None,
