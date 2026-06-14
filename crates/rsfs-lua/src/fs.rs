@@ -6,13 +6,13 @@ use std::{
     ffi::OsString,
     fs,
     io::{BufReader, Lines, Split},
-    sync::{Arc, Mutex},
+    ops::Deref,
     time::SystemTime,
 };
 
 use crate::{file::LuaFile, path::LuaPath};
 
-#[derive(mlua::UserData)]
+#[derive(mlua::UserData, Clone)]
 pub(crate) struct LuaMetadata(fs::Metadata);
 
 impl From<fs::Metadata> for LuaMetadata {
@@ -21,53 +21,70 @@ impl From<fs::Metadata> for LuaMetadata {
     }
 }
 
+impl From<LuaMetadata> for fs::Metadata {
+    fn from(value: LuaMetadata) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaMetadata {
+    type Target = fs::Metadata;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaMetadata {
-    #[lua(infallible)]
-    pub(crate) fn file_type(&self) -> LuaFileType {
+    #[lua(name = "file_type", infallible)]
+    pub(crate) fn lua_file_type(&self) -> LuaFileType {
         self.0.file_type().into()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_dir(&self) -> bool {
+    #[lua(name = "is_dir", infallible)]
+    pub(crate) fn lua_is_dir(&self) -> bool {
         self.0.is_dir()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_file(&self) -> bool {
+    #[lua(name = "is_file", infallible)]
+    pub(crate) fn lua_is_file(&self) -> bool {
         self.0.is_file()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_symlink(&self) -> bool {
+    #[lua(name = "is_symlink", infallible)]
+    pub(crate) fn lua_is_symlink(&self) -> bool {
         self.0.is_symlink()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn len(&self) -> u64 {
+    #[lua(name = "len", infallible)]
+    pub(crate) fn lua_len(&self) -> u64 {
         self.0.len()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn permissions(&self) -> LuaPermissions {
+    #[lua(name = "permissions", infallible)]
+    pub(crate) fn lua_permissions(&self) -> LuaPermissions {
         self.0.permissions().into()
     }
 
-    pub(crate) fn modified(&self) -> mlua::Result<u64> {
+    #[lua(name = "modified")]
+    pub(crate) fn lua_modified(&self) -> mlua::Result<u64> {
         let time = self.0.modified().map_err(mlua::Error::external)?;
         time.duration_since(SystemTime::UNIX_EPOCH)
             .map(|d| d.as_secs())
             .map_err(mlua::Error::external)
     }
 
-    pub(crate) fn accessed(&self) -> mlua::Result<u64> {
+    #[lua(name = "accessed")]
+    pub(crate) fn lua_accessed(&self) -> mlua::Result<u64> {
         let time = self.0.accessed().map_err(mlua::Error::external)?;
         time.duration_since(SystemTime::UNIX_EPOCH)
             .map(|d| d.as_secs())
             .map_err(mlua::Error::external)
     }
 
-    pub(crate) fn created(&self) -> mlua::Result<u64> {
+    #[lua(name = "created")]
+    pub(crate) fn lua_created(&self) -> mlua::Result<u64> {
         let time = self.0.created().map_err(mlua::Error::external)?;
         time.duration_since(SystemTime::UNIX_EPOCH)
             .map(|d| d.as_secs())
@@ -78,68 +95,68 @@ impl LuaMetadata {
 #[cfg(unix)]
 #[mlua::userdata_impl]
 impl LuaMetadata {
-    #[lua(infallible)]
-    pub(crate) fn dev(&self) -> u64 {
+    #[lua(name = "dev", infallible)]
+    pub(crate) fn lua_dev(&self) -> u64 {
         self.0.dev()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn ino(&self) -> u64 {
+    #[lua(name = "ino", infallible)]
+    pub(crate) fn lua_ino(&self) -> u64 {
         self.0.ino()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn mode(&self) -> u32 {
+    #[lua(name = "mode", infallible)]
+    pub(crate) fn lua_mode(&self) -> u32 {
         self.0.mode()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn nlink(&self) -> u64 {
+    #[lua(name = "nlink", infallible)]
+    pub(crate) fn lua_nlink(&self) -> u64 {
         self.0.nlink()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn uid(&self) -> u32 {
+    #[lua(name = "uid", infallible)]
+    pub(crate) fn lua_uid(&self) -> u32 {
         self.0.uid()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn gid(&self) -> u32 {
+    #[lua(name = "gid", infallible)]
+    pub(crate) fn lua_gid(&self) -> u32 {
         self.0.gid()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn rdev(&self) -> u64 {
+    #[lua(name = "rdev", infallible)]
+    pub(crate) fn lua_rdev(&self) -> u64 {
         self.0.rdev()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn size(&self) -> u64 {
+    #[lua(name = "size", infallible)]
+    pub(crate) fn lua_size(&self) -> u64 {
         self.0.size()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn atime(&self) -> i64 {
+    #[lua(name = "atime", infallible)]
+    pub(crate) fn lua_atime(&self) -> i64 {
         self.0.atime()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn mtime(&self) -> i64 {
+    #[lua(name = "mtime", infallible)]
+    pub(crate) fn lua_mtime(&self) -> i64 {
         self.0.mtime()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn ctime(&self) -> i64 {
+    #[lua(name = "ctime", infallible)]
+    pub(crate) fn lua_ctime(&self) -> i64 {
         self.0.ctime()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn blksize(&self) -> u64 {
+    #[lua(name = "blksize", infallible)]
+    pub(crate) fn lua_blksize(&self) -> u64 {
         self.0.blksize()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn blocks(&self) -> u64 {
+    #[lua(name = "blocks", infallible)]
+    pub(crate) fn lua_blocks(&self) -> u64 {
         self.0.blocks()
     }
 }
@@ -147,33 +164,33 @@ impl LuaMetadata {
 #[cfg(windows)]
 #[mlua::userdata_impl]
 impl LuaMetadata {
-    #[lua(infallible)]
-    pub(crate) fn file_attributes(&self) -> u32 {
+    #[lua(name = "file_attributes", infallible)]
+    pub(crate) fn lua_file_attributes(&self) -> u32 {
         self.0.file_attributes()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn creation_time(&self) -> u64 {
+    #[lua(name = "creation_time", infallible)]
+    pub(crate) fn lua_creation_time(&self) -> u64 {
         self.0.creation_time()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn last_access_time(&self) -> u64 {
+    #[lua(name = "last_access_time", infallible)]
+    pub(crate) fn lua_last_access_time(&self) -> u64 {
         self.0.last_access_time()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn last_write_time(&self) -> u64 {
+    #[lua(name = "last_write_time", infallible)]
+    pub(crate) fn lua_last_write_time(&self) -> u64 {
         self.0.last_write_time()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn file_size(&self) -> u64 {
+    #[lua(name = "file_size", infallible)]
+    pub(crate) fn lua_file_size(&self) -> u64 {
         self.0.file_size()
     }
 }
 
-#[derive(mlua::UserData)]
+#[derive(mlua::UserData, Clone)]
 pub(crate) struct LuaFileType(fs::FileType);
 
 impl From<fs::FileType> for LuaFileType {
@@ -182,20 +199,34 @@ impl From<fs::FileType> for LuaFileType {
     }
 }
 
+impl From<LuaFileType> for fs::FileType {
+    fn from(value: LuaFileType) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaFileType {
+    type Target = fs::FileType;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaFileType {
-    #[lua(infallible)]
-    pub(crate) fn is_dir(&self) -> bool {
+    #[lua(name = "is_dir", infallible)]
+    pub(crate) fn lua_is_dir(&self) -> bool {
         self.0.is_dir()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_file(&self) -> bool {
+    #[lua(name = "is_file", infallible)]
+    pub(crate) fn lua_is_file(&self) -> bool {
         self.0.is_file()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_symlink(&self) -> bool {
+    #[lua(name = "is_symlink", infallible)]
+    pub(crate) fn lua_is_symlink(&self) -> bool {
         self.0.is_symlink()
     }
 }
@@ -203,23 +234,23 @@ impl LuaFileType {
 #[cfg(unix)]
 #[mlua::userdata_impl]
 impl LuaFileType {
-    #[lua(infallible)]
-    pub(crate) fn is_block_device(&self) -> bool {
+    #[lua(name = "is_block_device", infallible)]
+    pub(crate) fn lua_is_block_device(&self) -> bool {
         self.0.is_block_device()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_char_device(&self) -> bool {
+    #[lua(name = "is_char_device", infallible)]
+    pub(crate) fn lua_is_char_device(&self) -> bool {
         self.0.is_char_device()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_fifo(&self) -> bool {
+    #[lua(name = "is_fifo", infallible)]
+    pub(crate) fn lua_is_fifo(&self) -> bool {
         self.0.is_fifo()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_socket(&self) -> bool {
+    #[lua(name = "is_socket", infallible)]
+    pub(crate) fn lua_is_socket(&self) -> bool {
         self.0.is_fifo()
     }
 }
@@ -227,13 +258,13 @@ impl LuaFileType {
 #[cfg(windows)]
 #[mlua::userdata_impl]
 impl LuaFileType {
-    #[lua(infallible)]
-    pub(crate) fn is_symlink_dir(&self) -> bool {
+    #[lua(name = "is_symlink_dir", infallible)]
+    pub(crate) fn lua_is_symlink_dir(&self) -> bool {
         self.0.is_symlink_dir()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn is_symlink_file(&self) -> bool {
+    #[lua(name = "is_symlink_file", infallible)]
+    pub(crate) fn lua_is_symlink_file(&self) -> bool {
         self.0.is_symlink_file()
     }
 }
@@ -259,12 +290,20 @@ impl AsRef<fs::Permissions> for LuaPermissions {
     }
 }
 
+impl Deref for LuaPermissions {
+    type Target = fs::Permissions;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl mlua::FromLua for LuaPermissions {
     fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
         match value {
-            mlua::Value::UserData(ud) => ud.take(),
-            mlua::Value::String(s) => Ok(LuaPermissions::from_perms(s.to_str()?.to_string())?),
-            mlua::Value::Integer(int) => Ok(LuaPermissions::from_mode(
+            mlua::Value::UserData(ud) => ud.borrow::<LuaPermissions>().map(|r| r.clone()),
+            mlua::Value::String(s) => Ok(LuaPermissions::lua_from_perms(s.to_str()?.to_string())?),
+            mlua::Value::Integer(int) => Ok(LuaPermissions::lua_from_mode(
                 u32::try_from(int).map_err(mlua::Error::external)?,
             )),
             _ => Err(mlua::Error::FromLuaConversionError {
@@ -278,13 +317,13 @@ impl mlua::FromLua for LuaPermissions {
 
 #[mlua::userdata_impl]
 impl LuaPermissions {
-    #[lua(infallible)]
-    pub(crate) fn readonly(&self) -> bool {
+    #[lua(name = "readonly", infallible)]
+    pub(crate) fn lua_readonly(&self) -> bool {
         self.0.readonly()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn set_readonly(&mut self, readonly: bool) {
+    #[lua(name = "set_readonly", infallible)]
+    pub(crate) fn lua_set_readonly(&mut self, readonly: bool) {
         self.0.set_readonly(readonly);
     }
 }
@@ -292,35 +331,35 @@ impl LuaPermissions {
 #[cfg(unix)]
 #[mlua::userdata_impl]
 impl LuaPermissions {
-    #[lua(infallible)]
-    pub(crate) fn from_mode(mode: u32) -> LuaPermissions {
+    #[lua(name = "from_mode", infallible)]
+    pub(crate) fn lua_from_mode(mode: u32) -> LuaPermissions {
         fs::Permissions::from_mode(mode).into()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn mode(&self) -> u32 {
+    #[lua(name = "mode", infallible)]
+    pub(crate) fn lua_mode(&self) -> u32 {
         self.0.mode()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn set_mode(&mut self, mode: u32) {
+    #[lua(name = "set_mode", infallible)]
+    pub(crate) fn lua_set_mode(&mut self, mode: u32) {
         self.0.set_mode(mode);
     }
 
-    #[lua(infallible)]
-    pub(crate) fn from_perms(perms: String) -> mlua::Result<LuaPermissions> {
+    #[lua(name = "from_perms", infallible)]
+    pub(crate) fn lua_from_perms(perms: String) -> mlua::Result<LuaPermissions> {
         let mode = u32::from_str_radix(&perms, 8).map_err(mlua::Error::external)?;
 
         Ok(fs::Permissions::from_mode(mode).into())
     }
 
-    #[lua(infallible)]
-    pub(crate) fn perms(&self) -> String {
+    #[lua(name = "perms", infallible)]
+    pub(crate) fn lua_perms(&self) -> String {
         format!("{:o}", self.0.mode())
     }
 
-    #[lua(infallible)]
-    pub(crate) fn set_perms(&mut self, perms: String) -> mlua::Result<()> {
+    #[lua(name = "set_perms", infallible)]
+    pub(crate) fn lua_set_perms(&mut self, perms: String) -> mlua::Result<()> {
         let mode = u32::from_str_radix(&perms, 8).map_err(mlua::Error::external)?;
         self.0.set_mode(mode);
 
@@ -337,31 +376,45 @@ impl From<fs::DirEntry> for LuaDirEntry {
     }
 }
 
+impl From<LuaDirEntry> for fs::DirEntry {
+    fn from(value: LuaDirEntry) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaDirEntry {
+    type Target = fs::DirEntry;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaDirEntry {
-    #[lua(infallible)]
-    pub(crate) fn path(&self) -> LuaPath {
+    #[lua(name = "path", infallible)]
+    pub(crate) fn lua_path(&self) -> LuaPath {
         self.0.path().into()
     }
 
-    #[lua(infallible)]
-    pub(crate) fn metadata(&self) -> mlua::Result<LuaMetadata> {
+    #[lua(name = "metadata")]
+    pub(crate) fn lua_metadata(&self) -> mlua::Result<LuaMetadata> {
         self.0
             .metadata()
             .map(|m| m.into())
             .map_err(mlua::Error::external)
     }
 
-    #[lua(infallible)]
-    pub(crate) fn file_type(&self) -> mlua::Result<LuaFileType> {
+    #[lua(name = "file_type")]
+    pub(crate) fn lua_file_type(&self) -> mlua::Result<LuaFileType> {
         self.0
             .file_type()
             .map(|ft| ft.into())
             .map_err(mlua::Error::external)
     }
 
-    #[lua(infallible)]
-    pub(crate) fn file_name(&self) -> OsString {
+    #[lua(name = "file_name", infallible)]
+    pub(crate) fn lua_file_name(&self) -> OsString {
         self.0.file_name()
     }
 }
@@ -369,8 +422,8 @@ impl LuaDirEntry {
 #[cfg(unix)]
 #[mlua::userdata_impl]
 impl LuaDirEntry {
-    #[lua(infallible)]
-    pub(crate) fn ino(&self) -> u64 {
+    #[lua(name = "ino", infallible)]
+    pub(crate) fn lua_ino(&self) -> u64 {
         self.0.ino()
     }
 }
@@ -384,9 +437,24 @@ impl From<fs::ReadDir> for LuaReadDir {
     }
 }
 
+impl From<LuaReadDir> for fs::ReadDir {
+    fn from(value: LuaReadDir) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaReadDir {
+    type Target = fs::ReadDir;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaReadDir {
-    pub(crate) fn next(&mut self) -> mlua::Result<Option<LuaDirEntry>> {
+    #[lua(name = "next")]
+    pub(crate) fn lua_next(&mut self) -> mlua::Result<Option<LuaDirEntry>> {
         self.0
             .next()
             .transpose()
@@ -396,61 +464,74 @@ impl LuaReadDir {
 }
 
 #[derive(mlua::UserData, Clone)]
-pub(crate) struct LuaOpenOptions(Arc<Mutex<fs::OpenOptions>>);
+pub(crate) struct LuaOpenOptions(fs::OpenOptions);
 
 impl From<fs::OpenOptions> for LuaOpenOptions {
     fn from(value: fs::OpenOptions) -> Self {
-        LuaOpenOptions(Arc::new(Mutex::new(value)))
+        LuaOpenOptions(value)
+    }
+}
+
+impl From<LuaOpenOptions> for fs::OpenOptions {
+    fn from(value: LuaOpenOptions) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaOpenOptions {
+    type Target = fs::OpenOptions;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
 #[mlua::userdata_impl]
 impl LuaOpenOptions {
-    #[lua(infallible)]
-    pub(crate) fn new() -> Self {
+    #[lua(name = "new", infallible)]
+    pub(crate) fn lua_new() -> Self {
         fs::OpenOptions::new().into()
     }
 
-    pub(crate) fn read(&self, read: bool) -> mlua::Result<Self> {
-        self.0.lock().map_err(mlua::Error::runtime)?.read(read);
-        Ok(self.clone())
+    #[lua(name = "read", infallible)]
+    pub(crate) fn lua_read(&mut self, read: bool) -> Self {
+        self.0.read(read);
+        self.clone()
     }
 
-    pub(crate) fn write(&self, write: bool) -> mlua::Result<Self> {
-        self.0.lock().map_err(mlua::Error::runtime)?.write(write);
-        Ok(self.clone())
+    #[lua(name = "write", infallible)]
+    pub(crate) fn lua_write(&mut self, write: bool) -> Self {
+        self.0.write(write);
+        self.clone()
     }
 
-    pub(crate) fn append(&self, append: bool) -> mlua::Result<Self> {
-        self.0.lock().map_err(mlua::Error::runtime)?.append(append);
-        Ok(self.clone())
+    #[lua(name = "append", infallible)]
+    pub(crate) fn lua_append(&mut self, append: bool) -> Self {
+        self.0.append(append);
+        self.clone()
     }
 
-    pub(crate) fn truncate(&self, truncate: bool) -> mlua::Result<Self> {
+    #[lua(name = "truncate", infallible)]
+    pub(crate) fn lua_truncate(&mut self, truncate: bool) -> Self {
+        self.0.truncate(truncate);
+        self.clone()
+    }
+
+    #[lua(name = "create", infallible)]
+    pub(crate) fn lua_create(&mut self, create: bool) -> Self {
+        self.0.create(create);
+        self.clone()
+    }
+
+    #[lua(name = "create_new", infallible)]
+    pub(crate) fn lua_create_new(&mut self, create_new: bool) -> Self {
+        self.0.create_new(create_new);
+        self.clone()
+    }
+
+    #[lua(name = "open")]
+    pub(crate) fn lua_open(&mut self, path: LuaPath) -> mlua::Result<LuaFile> {
         self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .truncate(truncate);
-        Ok(self.clone())
-    }
-
-    pub(crate) fn create(&self, create: bool) -> mlua::Result<Self> {
-        self.0.lock().map_err(mlua::Error::runtime)?.create(create);
-        Ok(self.clone())
-    }
-
-    pub(crate) fn create_new(&self, create_new: bool) -> mlua::Result<Self> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .create_new(create_new);
-        Ok(self.clone())
-    }
-
-    pub(crate) fn open(&mut self, path: LuaPath) -> mlua::Result<LuaFile> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
             .open(path)
             .map(|f| f.into())
             .map_err(mlua::Error::external)
@@ -460,21 +541,17 @@ impl LuaOpenOptions {
 #[cfg(unix)]
 #[mlua::userdata_impl]
 impl LuaOpenOptions {
-    pub(crate) fn mode(&self, mode: LuaPermissions) -> mlua::Result<Self> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .mode(mode.mode());
+    #[lua(name = "mode", infallible)]
+    pub(crate) fn lua_mode(&mut self, mode: LuaPermissions) -> Self {
+        self.0.mode(mode.mode());
 
-        Ok(self.clone())
+        self.clone()
     }
 
-    pub(crate) fn custom_flags(&self, flags: i32) -> mlua::Result<Self> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .custom_flags(flags);
-        Ok(self.clone())
+    #[lua(name = "custom_flags", infallible)]
+    pub(crate) fn lua_custom_flags(&mut self, flags: i32) -> Self {
+        self.0.custom_flags(flags);
+        self.clone()
     }
 }
 
@@ -482,44 +559,34 @@ impl LuaOpenOptions {
 #[mlua::userdata_impl]
 impl LuaOpenOptions {
     #[cfg(not(unix))]
-    pub(crate) fn custom_flags(&self, flags: u32) -> mlua::Result<Self> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .custom_flags(flags);
-        Ok(self.clone())
+    #[lua(name = "custom_flags", infallible)]
+    pub(crate) fn lua_custom_flags(&mut self, flags: u32) -> Self {
+        self.0.custom_flags(flags);
+        self.clone()
     }
 
-    pub(crate) fn access_mode(&self, mode: u32) -> mlua::Result<Self> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .access_mode(mode);
-        Ok(self.clone())
+    #[lua(name = "access_mode", infallible)]
+    pub(crate) fn lua_access_mode(&mut self, mode: u32) -> Self {
+        self.0.access_mode(mode);
+        self.clone()
     }
 
-    pub(crate) fn share_mode(&self, mode: u32) -> mlua::Result<Self> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .access_mode(mode);
-        Ok(self.clone())
+    #[lua(name = "share_mode", infallible)]
+    pub(crate) fn lua_share_mode(&mut self, mode: u32) -> Self {
+        self.0.access_mode(mode);
+        self.clone()
     }
 
-    pub(crate) fn attributes(&self, attributes: u32) -> mlua::Result<Self> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .attributes(mode);
-        Ok(self.clone())
+    #[lua(name = "attributes", infallible)]
+    pub(crate) fn lua_attributes(&mut self, attributes: u32) -> Self {
+        self.0.attributes(mode);
+        self.clone()
     }
 
-    pub(crate) fn security_qos_flags(&self, flags: u32) -> mlua::Result<Self> {
-        self.0
-            .lock()
-            .map_err(mlua::Error::runtime)?
-            .security_qos_flags(flags);
-        Ok(self.clone())
+    #[lua(name = "security_qos_flags", infallible)]
+    pub(crate) fn lua_security_qos_flags(&mut self, flags: u32) -> Self {
+        self.0.security_qos_flags(flags);
+        self.clone()
     }
 }
 
@@ -532,9 +599,24 @@ impl From<Lines<BufReader<fs::File>>> for LuaLines {
     }
 }
 
+impl From<LuaLines> for Lines<BufReader<fs::File>> {
+    fn from(value: LuaLines) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaLines {
+    type Target = Lines<BufReader<fs::File>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaLines {
-    pub(crate) fn next(&mut self) -> mlua::Result<Option<String>> {
+    #[lua(name = "next")]
+    pub(crate) fn lua_next(&mut self) -> mlua::Result<Option<String>> {
         self.0.next().transpose().map_err(mlua::Error::external)
     }
 }
@@ -548,9 +630,24 @@ impl From<Split<BufReader<fs::File>>> for LuaSplit {
     }
 }
 
+impl From<LuaSplit> for Split<BufReader<fs::File>> {
+    fn from(value: LuaSplit) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaSplit {
+    type Target = Split<BufReader<fs::File>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaSplit {
-    pub(crate) fn next(&mut self, lua: &mlua::Lua) -> mlua::Result<Option<mlua::String>> {
+    #[lua(name = "next")]
+    pub(crate) fn lua_next(&mut self, lua: &mlua::Lua) -> mlua::Result<Option<mlua::String>> {
         self.0
             .next()
             .transpose()

@@ -91,7 +91,7 @@ impl LuaTempPath {
         self.0.disable_cleanup(disable_cleanup)
     }
 
-    #[lua(name = "try_from_path", infallible)]
+    #[lua(name = "try_from_path")]
     pub(crate) fn lua_try_from_path(path: LuaPath) -> mlua::Result<Self> {
         tempfile::TempPath::try_from_path(&path)
             .map(|tp| tp.into())
@@ -107,6 +107,20 @@ pub(crate) struct LuaTempDir(tempfile::TempDir);
 impl From<tempfile::TempDir> for LuaTempDir {
     fn from(value: tempfile::TempDir) -> Self {
         Self(value)
+    }
+}
+
+impl From<LuaTempDir> for tempfile::TempDir {
+    fn from(value: LuaTempDir) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaTempDir {
+    type Target = tempfile::TempDir;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -181,6 +195,20 @@ pub(crate) struct LuaNamedTempFile(tempfile::NamedTempFile);
 impl From<tempfile::NamedTempFile> for LuaNamedTempFile {
     fn from(value: tempfile::NamedTempFile) -> Self {
         Self(value)
+    }
+}
+
+impl From<LuaNamedTempFile> for tempfile::NamedTempFile {
+    fn from(value: LuaNamedTempFile) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaNamedTempFile {
+    type Target = tempfile::NamedTempFile;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -305,6 +333,12 @@ pub(crate) struct LuaSpooledTempfile(tempfile::SpooledTempFile);
 impl From<tempfile::SpooledTempFile> for LuaSpooledTempfile {
     fn from(value: tempfile::SpooledTempFile) -> Self {
         Self(value)
+    }
+}
+
+impl From<LuaSpooledTempfile> for tempfile::SpooledTempFile {
+    fn from(value: LuaSpooledTempfile) -> Self {
+        value.0
     }
 }
 
@@ -538,6 +572,20 @@ pub(crate) fn temp_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Ok(tempfile::spooled_tempfile_in(max_size, dir).into())
             },
         )?,
+    )?;
+
+    table.set(
+        "named_tempfile",
+        lua.create_function(|_, _: ()| -> mlua::Result<LuaNamedTempFile> {
+            LuaNamedTempFile::lua_new()
+        })?,
+    )?;
+
+    table.set(
+        "named_tempfile_in",
+        lua.create_function(|_, dir: LuaPath| -> mlua::Result<LuaNamedTempFile> {
+            LuaNamedTempFile::lua_new_in(dir)
+        })?,
     )?;
 
     table.set(

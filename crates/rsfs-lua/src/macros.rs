@@ -155,12 +155,12 @@ macro_rules! lua_path_methods {
             }
 
             #[lua(name = "starts_with", infallible)]
-            pub(crate) fn lua_starts_with(&self, base: String) -> bool {
+            pub(crate) fn lua_starts_with(&self, base: LuaPath) -> bool {
                 self.0.starts_with(base)
             }
 
             #[lua(name = "ends_with", infallible)]
-            pub(crate) fn lua_ends_with(&self, base: String) -> bool {
+            pub(crate) fn lua_ends_with(&self, base: LuaPath) -> bool {
                 self.0.ends_with(base)
             }
 
@@ -200,7 +200,7 @@ macro_rules! lua_path_methods {
             }
 
             #[lua(name = "join", infallible)]
-            pub(crate) fn lua_join(&self, path: String) -> LuaPath {
+            pub(crate) fn lua_join(&self, path: LuaPath) -> LuaPath {
                 self.0.join(path).into()
             }
 

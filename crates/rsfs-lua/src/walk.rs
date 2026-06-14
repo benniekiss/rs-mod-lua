@@ -1,16 +1,30 @@
-use std::ffi::OsString;
+use std::{ffi::OsString, ops::Deref};
 
 use crate::{
     fs::{LuaFileType, LuaMetadata},
     path::LuaPath,
 };
 
-#[derive(mlua::UserData)]
+#[derive(mlua::UserData, Clone)]
 pub(crate) struct LuaWalkDirEntry(walkdir::DirEntry);
 
 impl From<walkdir::DirEntry> for LuaWalkDirEntry {
     fn from(value: walkdir::DirEntry) -> Self {
         Self(value)
+    }
+}
+
+impl From<LuaWalkDirEntry> for walkdir::DirEntry {
+    fn from(value: LuaWalkDirEntry) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaWalkDirEntry {
+    type Target = walkdir::DirEntry;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -59,6 +73,20 @@ impl From<walkdir::IntoIter> for LuaWalkIter {
     }
 }
 
+impl From<LuaWalkIter> for walkdir::IntoIter {
+    fn from(value: LuaWalkIter) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaWalkIter {
+    type Target = walkdir::IntoIter;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaWalkIter {
     #[lua(name = "skip_current_dir", infallible)]
@@ -93,6 +121,20 @@ pub(crate) struct LuaWalkDir(walkdir::WalkDir);
 impl From<walkdir::WalkDir> for LuaWalkDir {
     fn from(value: walkdir::WalkDir) -> Self {
         Self(value)
+    }
+}
+
+impl From<LuaWalkDir> for walkdir::WalkDir {
+    fn from(value: LuaWalkDir) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaWalkDir {
+    type Target = walkdir::WalkDir;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
