@@ -1,4 +1,7 @@
-use std::ops::Deref;
+use std::{
+    io::{Read, Seek, SeekFrom, Write},
+    ops::Deref,
+};
 
 use crate::{file::LuaFile, fs::LuaPermissions, path::LuaPath};
 
@@ -264,6 +267,10 @@ impl LuaNamedTempFile {
     }
 }
 
+lua_read_methods!(LuaNamedTempFile);
+
+lua_write_methods!(LuaNamedTempFile);
+
 #[derive(mlua::UserData)]
 pub(crate) struct LuaSpooledTempfile(tempfile::SpooledTempFile);
 
@@ -316,6 +323,10 @@ impl LuaSpooledTempfile {
             .map_err(mlua::Error::external)
     }
 }
+
+lua_read_methods!(LuaSpooledTempfile);
+
+lua_write_methods!(LuaSpooledTempfile);
 
 #[derive(mlua::UserData, Clone)]
 pub(crate) struct LuaTempBuilder {

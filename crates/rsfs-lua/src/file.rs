@@ -39,48 +39,6 @@ impl mlua::FromLua for LuaFile {
 
 #[mlua::userdata_impl]
 impl LuaFile {
-    pub(crate) fn read(
-        &mut self,
-        lua: &mlua::Lua,
-        chunk: Option<usize>,
-    ) -> mlua::Result<(mlua::String, usize)> {
-        let size = chunk.unwrap_or(16);
-        let mut buf = vec![0u8; size];
-        let n_read = self.0.read(&mut buf).map_err(mlua::Error::external)?;
-
-        let s = lua.create_string(buf)?;
-
-        Ok((s, n_read))
-    }
-
-    pub(crate) fn read_exact(
-        &mut self,
-        lua: &mlua::Lua,
-        size: usize,
-    ) -> mlua::Result<(mlua::String, usize)> {
-        let mut buf = vec![0u8; size];
-
-        self.0.read_exact(&mut buf).map_err(mlua::Error::external)?;
-
-        let s = lua.create_string(buf)?;
-
-        Ok((s, size))
-    }
-
-    pub(crate) fn read_to_end(&mut self, lua: &mlua::Lua) -> mlua::Result<(mlua::String, usize)> {
-        let size = self.metadata()?.size();
-        let mut buf = Vec::with_capacity(size as usize);
-
-        let n_read = self
-            .0
-            .read_to_end(&mut buf)
-            .map_err(mlua::Error::external)?;
-
-        let s = lua.create_string(buf)?;
-
-        Ok((s, n_read))
-    }
-
     pub(crate) fn split(&self, byte: u8) -> mlua::Result<LuaSplit> {
         let file = self.try_clone()?;
         let buf = std::io::BufReader::new(file.0);
@@ -93,40 +51,6 @@ impl LuaFile {
         let buf = std::io::BufReader::new(file.0);
 
         Ok(buf.lines().into())
-    }
-
-    pub(crate) fn write(&mut self, buf: &[u8]) -> mlua::Result<usize> {
-        self.0.write(buf).map_err(mlua::Error::external)
-    }
-
-    pub(crate) fn write_all(&mut self, buf: &[u8]) -> mlua::Result<()> {
-        self.0.write_all(buf).map_err(mlua::Error::external)
-    }
-
-    pub(crate) fn seek(
-        &mut self,
-        offset: Option<i64>,
-        whence: Option<String>,
-    ) -> mlua::Result<u64> {
-        let offset = offset.unwrap_or_default();
-
-        let whence = match whence {
-            Some(s) if s == "start" => {
-                SeekFrom::Start(u64::try_from(offset).map_err(mlua::Error::external)?)
-            },
-            Some(s) if s == "end" => SeekFrom::End(offset),
-            Some(s) if s == "current" => SeekFrom::Current(offset),
-            None => SeekFrom::Current(offset),
-            Some(s) => Err(mlua::Error::runtime(format!(
-                "invalid option. Must be one of `start`, `end`, or `current`: {s}"
-            )))?,
-        };
-
-        self.0.seek(whence).map_err(mlua::Error::external)
-    }
-
-    pub(crate) fn flush(&mut self) -> mlua::Result<()> {
-        self.0.flush().map_err(mlua::Error::external)
     }
 
     pub(crate) fn open(path: LuaPath) -> mlua::Result<LuaFile> {
@@ -234,3 +158,7 @@ impl LuaFile {
         self.0.set_times(times).map_err(mlua::Error::external)
     }
 }
+
+lua_read_methods!(LuaFile);
+
+lua_write_methods!(LuaFile);
