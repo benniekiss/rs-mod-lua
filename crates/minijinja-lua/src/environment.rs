@@ -107,7 +107,7 @@ impl LuaEnvironment {
         self.0.lstrip_blocks()
     }
 
-    #[lua(name = "set_lstrip_blocks", setter, infallible)]
+    #[lua(name = "lstrip_blocks", setter, infallible)]
     pub(crate) fn lua_set_lstrip_blocks(&mut self, val: bool) {
         self.0.set_lstrip_blocks(val)
     }
