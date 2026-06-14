@@ -10,7 +10,7 @@ pub(crate) fn encode(
     lua: &mlua::Lua,
     value: &mlua::Value,
     config: Option<EncodeConfig>,
-) -> Result<mlua::String, mlua::Error> {
+) -> mlua::Result<mlua::String> {
     let obj = match &config {
         Some(conf) => value
             .to_serializable()

@@ -212,7 +212,7 @@ pub(crate) fn decode(
     lua: &mlua::Lua,
     json: &[u8],
     config: Option<DecodeConfig>,
-) -> Result<mlua::Value, mlua::Error> {
+) -> mlua::Result<mlua::Value> {
     let config = config.unwrap_or_default();
 
     let mut de = serde_json::Deserializer::from_slice(json);

@@ -21,7 +21,7 @@ pub fn rsjson_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "encode",
         lua.create_function(
             |lua, (value, config): (mlua::Value, Option<EncodeConfig>)| {
-                encode::encode(lua, &value, config).map_err(mlua::Error::external)
+                encode::encode(lua, &value, config)
             },
         )?,
     )?;
@@ -30,7 +30,7 @@ pub fn rsjson_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "decode",
         lua.create_function(
             |lua, (json, config): (mlua::String, Option<DecodeConfig>)| {
-                decode::decode(lua, &json.as_bytes(), config).map_err(mlua::Error::external)
+                decode::decode(lua, &json.as_bytes(), config)
             },
         )?,
     )?;
