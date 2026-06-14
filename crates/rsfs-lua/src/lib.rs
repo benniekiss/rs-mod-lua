@@ -26,6 +26,7 @@ use crate::{
     fs::{LuaMetadata, LuaOpenOptions, LuaPermissions, LuaReadDir},
     path::LuaPath,
     temp::temp_lua,
+    walk::LuaWalkDir,
 };
 
 #[cfg_attr(feature = "module", mlua::lua_module(name = "rsfs"))]
@@ -46,6 +47,13 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set("OpenOptions", lua.create_proxy::<LuaOpenOptions>()?)?;
 
     table.set("temp", temp_lua(lua)?)?;
+
+    table.set(
+        "walk",
+        lua.create_function(|_, root: LuaPath| -> mlua::Result<LuaWalkDir> {
+            Ok(LuaWalkDir::lua_new(root))
+        })?,
+    )?;
 
     table.set(
         "canonicalize",
