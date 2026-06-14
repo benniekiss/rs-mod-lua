@@ -78,7 +78,7 @@ impl Deref for LuaPath {
 impl mlua::FromLua for LuaPath {
     fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
         match value {
-            mlua::Value::UserData(ud) => ud.take(),
+            mlua::Value::UserData(ud) => ud.borrow::<LuaPath>().map(|r| r.clone()),
             mlua::Value::String(s) => Ok(s.into()),
             _ => Err(mlua::Error::FromLuaConversionError {
                 from: value.type_name(),
@@ -107,7 +107,7 @@ impl LuaPath {
     }
 
     #[lua(name = "push", infallible)]
-    pub(crate) fn lua_push(&mut self, path: String) {
+    pub(crate) fn lua_push(&mut self, path: LuaPath) {
         self.0.push(path)
     }
 
@@ -117,17 +117,17 @@ impl LuaPath {
     }
 
     #[lua(name = "set_file_name", infallible)]
-    pub(crate) fn lua_set_file_name(&mut self, file_name: String) {
+    pub(crate) fn lua_set_file_name(&mut self, file_name: OsString) {
         self.0.set_file_name(file_name)
     }
 
     #[lua(name = "set_extension", infallible)]
-    pub(crate) fn lua_set_extension(&mut self, extension: String) -> bool {
+    pub(crate) fn lua_set_extension(&mut self, extension: OsString) -> bool {
         self.0.set_extension(extension)
     }
 
     #[lua(name = "add_extension", infallible)]
-    pub(crate) fn lua_add_extension(&mut self, extension: String) -> bool {
+    pub(crate) fn lua_add_extension(&mut self, extension: OsString) -> bool {
         self.0.add_extension(extension)
     }
 }
