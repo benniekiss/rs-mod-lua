@@ -616,8 +616,20 @@ impl Deref for LuaLines {
 #[mlua::userdata_impl]
 impl LuaLines {
     #[lua(name = "next")]
-    pub(crate) fn lua_next(&mut self) -> mlua::Result<Option<String>> {
-        self.0.next().transpose().map_err(mlua::Error::external)
+    pub(crate) fn lua_next(&mut self, lua: &mlua::Lua) -> mlua::Result<Option<mlua::String>> {
+        self.0
+            .next()
+            .transpose()
+            .map_err(mlua::Error::external)?
+            .map(|v| lua.create_string(v))
+            .transpose()
+    }
+
+    #[lua(name = "iter")]
+    pub(crate) fn lua_iter(mut self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
+        lua.create_function_mut(move |lua, _: ()| -> mlua::Result<Option<mlua::String>> {
+            self.lua_next(lua)
+        })
     }
 }
 
@@ -654,5 +666,12 @@ impl LuaSplit {
             .map_err(mlua::Error::external)?
             .map(|v| lua.create_string(v))
             .transpose()
+    }
+
+    #[lua(name = "iter")]
+    pub(crate) fn lua_iter(mut self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
+        lua.create_function_mut(move |lua, _: ()| -> mlua::Result<Option<mlua::String>> {
+            self.lua_next(lua)
+        })
     }
 }
