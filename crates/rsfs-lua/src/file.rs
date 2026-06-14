@@ -120,7 +120,6 @@ impl LuaFile {
             .map_err(mlua::Error::external)
     }
 
-    #[lua(infallible)]
     pub(crate) fn try_clone(&self) -> mlua::Result<LuaFile> {
         self.0
             .try_clone()
@@ -128,14 +127,12 @@ impl LuaFile {
             .map_err(mlua::Error::external)
     }
 
-    #[lua(infallible)]
     pub(crate) fn set_permissions(&self, perm: LuaPermissions) -> mlua::Result<()> {
         self.0
             .set_permissions(perm.as_ref().clone())
             .map_err(mlua::Error::external)
     }
 
-    #[lua(infallible)]
     pub(crate) fn set_times(&self, mtime: Option<u64>, atime: Option<u64>) -> mlua::Result<()> {
         let times = std::fs::FileTimes::new();
 
