@@ -11,26 +11,27 @@ pub(crate) fn encode(
     value: &mlua::Value,
     config: Option<EncodeConfig>,
 ) -> Result<mlua::String, mlua::Error> {
-    let config = config.unwrap_or_default();
-
-    let obj = value
-        .to_serializable()
-        .sort_keys(config.sort_keys)
-        .encode_empty_tables_as_array(config.empty_table_as_array)
-        .detect_mixed_tables(config.detect_mixed_tables)
-        .deny_unsupported_types(config.error_unsupported)
-        .deny_recursive_tables(config.error_cycles);
+    let obj = match &config {
+        Some(conf) => value
+            .to_serializable()
+            .sort_keys(conf.sort_keys)
+            .encode_empty_tables_as_array(conf.empty_table_as_array)
+            .detect_mixed_tables(conf.detect_mixed_tables)
+            .deny_unsupported_types(conf.error_unsupported)
+            .deny_recursive_tables(conf.error_cycles),
+        None => value.to_serializable(),
+    };
 
     let mut writer: Vec<u8> = Vec::new();
 
-    match config.indent {
-        Some(n) => {
-            let prefix = config.prefix.repeat(n);
+    match config {
+        Some(conf) if let Some(n) = conf.indent => {
+            let prefix = conf.prefix.repeat(n);
             let formatter = PrettyFormatter::with_indent(prefix.as_bytes());
             let mut ser = Serializer::with_formatter(&mut writer, formatter);
             obj.serialize(&mut ser).map_err(mlua::Error::external)?;
         },
-        None => {
+        _ => {
             let mut ser = Serializer::new(&mut writer);
             obj.serialize(&mut ser).map_err(mlua::Error::external)?;
         },
