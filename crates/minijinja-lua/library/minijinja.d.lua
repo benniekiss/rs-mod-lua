@@ -151,7 +151,6 @@ local minijinja = {}
 ---
 ---@class (exact) minijinja.Environment: userdata
 ---
----@field reload_before_render  boolean                     Reload templates before each render.
 ---@field keep_trailing_newline boolean                     Preserve trailing newlines at the end of templates.
 ---@field trim_blocks           boolean                     Remove the first newline after a block.
 ---@field lstrip_blocks         boolean                     Remove leading spaces and tabs from the start of a line to a block.
@@ -159,7 +158,6 @@ local minijinja = {}
 ---@field fuel                  number | nil                Sets the fuel of the engine. If `nil`, fuel usage is disabled.
 ---@field recursion_limit       number                      Reconfigures the runtime recursion limit. Default is 500.
 ---@field undefined_behavior    minijinja.UndefinedBehavior Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
----@field pycompat              boolean                     Enable python compatibility for object methods.
 ---
 minijinja.Environment = {}
 
@@ -211,6 +209,17 @@ function minijinja.Environment:set_path_join_callback(callback) end
 ---
 ---@param callback minijinja.UnknownMethodCallback
 function minijinja.Environment:set_unknown_method_callback(callback) end
+
+--- Enable python compatibility for object methods.
+---
+--- This sets [`Environment:set_unknown_method_callback()`](lua-minijinja.Environment:set_unknown_method_callback)
+--- with a callback that enables some python object methods to increase compatibility
+--- with Jinja templates.
+---
+--- See: https://docs.rs/minijinja-contrib/latest/minijinja_contrib/pycompat/fn.unknown_method_callback.html
+---
+---@param enable? boolean
+function minijinja.Environment:set_pycompat(enable) end
 
 --- Sets a callback to select the default auto escaping behavior.
 ---

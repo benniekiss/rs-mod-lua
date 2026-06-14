@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-use std::{
-    borrow::Cow,
-    fmt,
-    sync::atomic::{AtomicBool, Ordering},
-};
+use std::{borrow::Cow, fmt, ops::Deref};
 
 use minijinja::{
     Environment,
@@ -33,19 +29,25 @@ use crate::{
 /// A wrapper around a [`minijinja::Environment`]. This wrapper can be serialized into
 /// an [`mlua::UserData`] object for use within mlua::Lua.
 #[derive(mlua::UserData, Debug)]
-pub struct LuaEnvironment {
-    #[lua(skip)]
-    env: Environment<'static>,
-    #[lua(skip)]
-    reload_before_render: AtomicBool,
-    #[cfg(feature = "minijinja-contrib")]
-    #[lua(skip)]
-    pycompat: AtomicBool,
+pub struct LuaEnvironment(Environment<'static>);
+
+impl From<Environment<'static>> for LuaEnvironment {
+    fn from(value: Environment<'static>) -> Self {
+        LuaEnvironment(value)
+    }
 }
 
-impl Default for LuaEnvironment {
-    fn default() -> Self {
-        Self::new()
+impl From<LuaEnvironment> for Environment<'static> {
+    fn from(value: LuaEnvironment) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaEnvironment {
+    type Target = Environment<'static>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -58,8 +60,8 @@ impl fmt::Display for LuaEnvironment {
 #[mlua::userdata_impl]
 impl LuaEnvironment {
     /// Get a new environment
-    #[lua(infallible)]
-    pub(crate) fn new() -> Self {
+    #[lua(name = "new", infallible)]
+    pub(crate) fn lua_new() -> Self {
         let mut env = Environment::new();
 
         #[cfg(feature = "minijinja-contrib")]
@@ -71,170 +73,127 @@ impl LuaEnvironment {
         #[cfg(feature = "datetime")]
         crate::contrib::datetime::add_to_environment(&mut env);
 
-        Self {
-            env,
-            reload_before_render: AtomicBool::new(false),
-            pycompat: AtomicBool::new(false),
-        }
+        env.into()
     }
 
     /// Get a new empty environment
-    #[lua(infallible)]
-    pub(crate) fn empty() -> Self {
-        let env = Environment::empty();
-
-        Self {
-            env,
-            reload_before_render: AtomicBool::new(false),
-            pycompat: AtomicBool::new(false),
-        }
+    #[lua(name = "empty", infallible)]
+    pub(crate) fn lua_empty() -> Self {
+        Environment::empty().into()
     }
 
-    #[lua(getter, infallible)]
-    pub(crate) fn reload_before_render(&self) -> bool {
-        self.reload_before_render.load(Ordering::Relaxed)
+    #[lua(name = "keep_trailing_newline", getter, infallible)]
+    pub(crate) fn lua_keep_trailing_newline(&self) -> bool {
+        self.0.keep_trailing_newline()
     }
 
-    #[lua(setter, name = "reload_before_render", infallible)]
-    pub(crate) fn set_reload_before_render(&self, val: bool) {
-        self.reload_before_render.store(val, Ordering::Relaxed);
+    #[lua(name = "keep_trailing_newline", setter, infallible)]
+    pub(crate) fn lua_set_keep_trailing_newline(&mut self, val: bool) {
+        self.0.set_keep_trailing_newline(val)
     }
 
-    #[cfg(feature = "minijinja-contrib")]
-    #[lua(getter, infallible)]
-    pub(crate) fn pycompat(&self) -> bool {
-        self.pycompat.load(Ordering::Relaxed)
+    #[lua(name = "trim_blocks", getter, infallible)]
+    pub(crate) fn lua_trim_blocks(&self) -> bool {
+        self.0.trim_blocks()
     }
 
-    #[cfg(feature = "minijinja-contrib")]
-    #[lua(setter, name = "pycompat", infallible)]
-    pub(crate) fn set_pycompat(&mut self, val: bool) {
-        self.pycompat.store(val, Ordering::Relaxed);
-
-        match val {
-            true => self
-                .env
-                .set_unknown_method_callback(minijinja_contrib::pycompat::unknown_method_callback),
-            false => self.env.set_unknown_method_callback(|_, _, _, _| {
-                Err(JinjaError::from(JinjaErrorKind::UnknownMethod))
-            }),
-        }
+    #[lua(name = "trim_blocks", setter, infallible)]
+    pub(crate) fn lua_set_trim_blocks(&mut self, val: bool) {
+        self.0.set_trim_blocks(val)
     }
 
-    #[lua(getter, infallible)]
-    pub(crate) fn keep_trailing_newline(&self) -> bool {
-        self.env.keep_trailing_newline()
+    #[lua(name = "lstrip_blocks", getter, infallible)]
+    pub(crate) fn lua_lstrip_blocks(&self) -> bool {
+        self.0.lstrip_blocks()
     }
 
-    #[lua(setter, name = "keep_trailing_newline", infallible)]
-    pub(crate) fn set_keep_trailing_newline(&mut self, val: bool) {
-        self.env.set_keep_trailing_newline(val)
+    #[lua(name = "set_lstrip_blocks", setter, infallible)]
+    pub(crate) fn lua_set_lstrip_blocks(&mut self, val: bool) {
+        self.0.set_lstrip_blocks(val)
     }
 
-    #[lua(getter, infallible)]
-    pub(crate) fn trim_blocks(&self) -> bool {
-        self.env.trim_blocks()
+    #[lua(name = "debug", getter, infallible)]
+    pub(crate) fn lua_debug(&self) -> bool {
+        self.0.debug()
     }
 
-    #[lua(setter, name = "trim_blocks", infallible)]
-    pub(crate) fn set_trim_blocks(&mut self, val: bool) {
-        self.env.set_trim_blocks(val)
+    #[lua(name = "debug", setter, infallible)]
+    pub(crate) fn lua_set_debug(&mut self, val: bool) {
+        self.0.set_debug(val)
     }
 
-    #[lua(getter, infallible)]
-    pub(crate) fn lstrip_blocks(&self) -> bool {
-        self.env.lstrip_blocks()
+    #[lua(name = "fuel", getter, infallible)]
+    pub(crate) fn lua_fuel(&self) -> Option<u64> {
+        self.0.fuel()
     }
 
-    #[lua(setter, name = "lstrip_blocks", infallible)]
-    pub(crate) fn set_lstrip_blocks(&mut self, val: bool) {
-        self.env.set_lstrip_blocks(val)
+    #[lua(name = "fuel", setter, infallible)]
+    pub(crate) fn lua_set_fuel(&mut self, val: Option<u64>) {
+        self.0.set_fuel(val)
     }
 
-    #[lua(getter, infallible)]
-    pub(crate) fn debug(&self) -> bool {
-        self.env.debug()
+    #[lua(name = "recursion_limit", getter, infallible)]
+    pub(crate) fn lua_recursion_limit(&self) -> usize {
+        self.0.recursion_limit()
     }
 
-    #[lua(setter, name = "debug", infallible)]
-    pub(crate) fn set_debug(&mut self, val: bool) {
-        self.env.set_debug(val)
+    #[lua(name = "recursion_limit", setter, infallible)]
+    pub(crate) fn lua_set_recursion_limit(&mut self, val: usize) {
+        self.0.set_recursion_limit(val)
     }
 
-    #[lua(getter, infallible)]
-    pub(crate) fn fuel(&self) -> Option<u64> {
-        self.env.fuel()
-    }
-
-    #[lua(setter, name = "fuel", infallible)]
-    pub(crate) fn set_fuel(&mut self, val: Option<u64>) {
-        self.env.set_fuel(val)
-    }
-
-    #[lua(getter, infallible)]
-    pub(crate) fn recursion_limit(&self) -> usize {
-        self.env.recursion_limit()
-    }
-
-    #[lua(setter, name = "recursion_limit", infallible)]
-    pub(crate) fn set_recursion_limit(&mut self, val: usize) {
-        self.env.set_recursion_limit(val)
-    }
-
-    #[lua(getter, infallible)]
-    pub(crate) fn undefined_behavior(&self) -> Option<String> {
-        let ub = self.env.undefined_behavior();
+    #[lua(name = "undefined_behavior", getter, infallible)]
+    pub(crate) fn lua_undefined_behavior(&self) -> Option<String> {
+        let ub = self.0.undefined_behavior();
 
         undefined_behavior_to_lua(ub)
     }
 
-    #[lua(setter, name = "undefined_behavior")]
-    pub(crate) fn set_undefined_behavior(&mut self, val: String) -> mlua::Result<()> {
+    #[lua(name = "undefined_behavior", setter)]
+    pub(crate) fn lua_set_undefined_behavior(&mut self, val: String) -> mlua::Result<()> {
         let ub = lua_to_undefined_behavior(&val)?;
 
-        self.env.set_undefined_behavior(ub);
+        self.0.set_undefined_behavior(ub);
 
         Ok(())
     }
 
-    pub(crate) fn add_template(
+    #[lua(name = "add_template", infallible)]
+    pub(crate) fn lua_add_template(
         &mut self,
         lua: &mlua::Lua,
         name: String,
         source: String,
     ) -> mlua::Result<()> {
         bind_lua(lua, || {
-            self.env
+            self.0
                 .add_template_owned(name, source)
                 .map_err(mlua::Error::external)
         })
     }
 
-    #[lua(infallible)]
-    pub(crate) fn remove_template(&mut self, lua: &mlua::Lua, name: String) {
-        bind_lua(lua, || self.env.remove_template(&name))
+    #[lua(name = "remove_template", infallible)]
+    pub(crate) fn lua_remove_template(&mut self, lua: &mlua::Lua, name: String) {
+        bind_lua(lua, || self.0.remove_template(&name))
     }
 
-    #[lua(infallible)]
-    pub(crate) fn clear_templates(&mut self, lua: &mlua::Lua) {
-        bind_lua(lua, || self.env.clear_templates())
+    #[lua(name = "clear_templates", infallible)]
+    pub(crate) fn lua_clear_templates(&mut self, lua: &mlua::Lua) {
+        bind_lua(lua, || self.0.clear_templates())
     }
 
-    pub(crate) fn undeclared_variables(
+    #[lua(name = "undeclared_variables")]
+    pub(crate) fn lua_undeclared_variables(
         &mut self,
         lua: &mlua::Lua,
         name: String,
         nested: Option<bool>,
     ) -> mlua::Result<mlua::Value> {
         bind_lua(lua, || {
-            if self.reload_before_render() {
-                self.env.clear_templates();
-            }
-
             let nested = nested.unwrap_or(false);
 
             let vars = self
-                .env
+                .0
                 .get_template(&name)
                 .map_err(mlua::Error::external)?
                 .undeclared_variables(nested);
@@ -243,7 +202,8 @@ impl LuaEnvironment {
         })
     }
 
-    pub(crate) fn set_loader(
+    #[lua(name = "set_loader")]
+    pub(crate) fn lua_set_loader(
         &mut self,
         lua: &mlua::Lua,
         callback: mlua::Function,
@@ -251,7 +211,7 @@ impl LuaEnvironment {
         let key = lua.create_registry_value(callback)?;
         let func = LuaFunctionObject::new(key);
 
-        self.env.set_loader(move |name| {
+        self.0.set_loader(move |name| {
             let source = func.with_func(args!(name), None)?;
             Ok(source.and_then(|v| {
                 // If the lua function returns nil, i.e., no path found
@@ -268,7 +228,8 @@ impl LuaEnvironment {
         Ok(())
     }
 
-    pub(crate) fn set_path_join_callback(
+    #[lua(name = "set_path_join_callback")]
+    pub(crate) fn lua_set_path_join_callback(
         &mut self,
         lua: &mlua::Lua,
         callback: mlua::Function,
@@ -276,7 +237,7 @@ impl LuaEnvironment {
         let key = lua.create_registry_value(callback)?;
         let func = LuaFunctionObject::new(key);
 
-        self.env.set_path_join_callback(move |name, parent| {
+        self.0.set_path_join_callback(move |name, parent| {
             func.with_func(args!(name, parent), None)
                 .ok()
                 .flatten()
@@ -287,7 +248,8 @@ impl LuaEnvironment {
         Ok(())
     }
 
-    pub(crate) fn set_unknown_method_callback(
+    #[lua(name = "set_unknown_method_callback")]
+    pub(crate) fn lua_set_unknown_method_callback(
         &mut self,
         lua: &mlua::Lua,
         callback: mlua::Function,
@@ -296,7 +258,7 @@ impl LuaEnvironment {
         let mut func = LuaFunctionObject::new(key);
         func.set_pass_state(true);
 
-        self.env
+        self.0
             .set_unknown_method_callback(move |state, value, method, args| {
                 func.with_func(args!(value, method, ..args), Some(state))
                     .map(|v| v.unwrap_or(JinjaValue::UNDEFINED))
@@ -305,7 +267,21 @@ impl LuaEnvironment {
         Ok(())
     }
 
-    pub(crate) fn set_auto_escape_callback(
+    #[cfg(feature = "minijinja-contrib")]
+    #[lua(name = "set_pycompat", infallible)]
+    pub(crate) fn lua_set_pycompat(&mut self, enable: Option<bool>) {
+        match enable {
+            Some(true) | None => self
+                .0
+                .set_unknown_method_callback(minijinja_contrib::pycompat::unknown_method_callback),
+            Some(false) => self.0.set_unknown_method_callback(|_, _, _, _| {
+                Err(JinjaError::from(JinjaErrorKind::UnknownMethod))
+            }),
+        }
+    }
+
+    #[lua(name = "set_auto_escape_callback")]
+    pub(crate) fn lua_set_auto_escape_callback(
         &mut self,
         lua: &mlua::Lua,
         callback: mlua::Function,
@@ -313,7 +289,7 @@ impl LuaEnvironment {
         let key = lua.create_registry_value(callback)?;
         let func = LuaFunctionObject::new(key);
 
-        self.env.set_auto_escape_callback(move |name| {
+        self.0.set_auto_escape_callback(move |name| {
             func.with_func(args!(name), None)
                 .ok()
                 .flatten()
@@ -327,7 +303,8 @@ impl LuaEnvironment {
         Ok(())
     }
 
-    pub(crate) fn set_formatter(
+    #[lua(name = "set_formatter")]
+    pub(crate) fn lua_set_formatter(
         &mut self,
         lua: &mlua::Lua,
         callback: mlua::Function,
@@ -336,7 +313,7 @@ impl LuaEnvironment {
         let mut func = LuaFunctionObject::new(key);
         func.set_pass_state(true);
 
-        self.env.set_formatter(move |out, state, value| {
+        self.0.set_formatter(move |out, state, value| {
             let Some(val) = func.with_func(args!(value), Some(state)).ok().flatten() else {
                 return Ok(());
             };
@@ -355,29 +332,27 @@ impl LuaEnvironment {
         Ok(())
     }
 
-    pub(crate) fn set_syntax(&mut self, syntax: mlua::Table) -> mlua::Result<()> {
+    #[lua(name = "set_syntax")]
+    pub(crate) fn lua_set_syntax(&mut self, syntax: mlua::Table) -> mlua::Result<()> {
         let config = lua_to_syntax_config(syntax).map_err(mlua::Error::external)?;
-        self.env.set_syntax(config);
+        self.0.set_syntax(config);
 
         Ok(())
     }
 
-    pub(crate) fn render_template(
+    #[lua(name = "render_template")]
+    pub(crate) fn lua_render_template(
         &mut self,
         lua: &mlua::Lua,
         name: String,
         ctx: Option<mlua::Table>,
     ) -> mlua::Result<String> {
-        if self.reload_before_render() {
-            self.env.clear_templates();
-        }
-
         let ctx = ctx.unwrap_or(lua.create_table()?);
 
         let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
 
         bind_lua(lua, || {
-            self.env
+            self.0
                 .get_template(&name)
                 .map_err(mlua::Error::external)?
                 .render(context)
@@ -385,7 +360,8 @@ impl LuaEnvironment {
         })
     }
 
-    pub(crate) fn render_str(
+    #[lua(name = "render_str")]
+    pub(crate) fn lua_render_str(
         &self,
         lua: &mlua::Lua,
         source: String,
@@ -398,23 +374,20 @@ impl LuaEnvironment {
         let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
 
         bind_lua(lua, || {
-            self.env
+            self.0
                 .render_named_str(&name, &source, context)
                 .map_err(mlua::Error::external)
         })
     }
 
-    pub(crate) fn render_captured(
+    #[lua(name = "render_captured")]
+    pub(crate) fn lua_render_captured(
         &mut self,
         lua: &mlua::Lua,
         name: String,
         ctx: Option<mlua::Table>,
         callback: mlua::Function,
     ) -> mlua::Result<mlua::MultiValue> {
-        if self.reload_before_render() {
-            self.env.clear_templates();
-        }
-
         let key = lua.create_registry_value(callback)?;
         let mut func = LuaFunctionObject::new(key);
         func.set_pass_state(true);
@@ -425,7 +398,7 @@ impl LuaEnvironment {
 
         bind_lua(lua, || {
             let mut captured = self
-                .env
+                .0
                 .get_template(&name)
                 .map_err(mlua::Error::external)?
                 .render_captured(context)
@@ -448,7 +421,8 @@ impl LuaEnvironment {
         })
     }
 
-    pub(crate) fn eval(
+    #[lua(name = "eval")]
+    pub(crate) fn lua_eval(
         &self,
         lua: &mlua::Lua,
         source: String,
@@ -460,7 +434,7 @@ impl LuaEnvironment {
 
         bind_lua(lua, || {
             let expr = self
-                .env
+                .0
                 .compile_expression(&source)
                 .map_err(mlua::Error::external)?
                 .eval(&context)
@@ -472,7 +446,8 @@ impl LuaEnvironment {
         })
     }
 
-    pub(crate) fn add_filter(
+    #[lua(name = "add_filter")]
+    pub(crate) fn lua_add_filter(
         &mut self,
         lua: &mlua::Lua,
         name: String,
@@ -483,7 +458,7 @@ impl LuaEnvironment {
         let mut func = LuaFunctionObject::new(key);
         func.set_pass_state(pass_state.unwrap_or(true));
 
-        self.env
+        self.0
             .add_filter(name, move |state: &State, args: JinjaRest<JinjaValue>| {
                 func.with_func(&args, Some(state))
             });
@@ -491,12 +466,13 @@ impl LuaEnvironment {
         Ok(())
     }
 
-    #[lua(infallible)]
-    pub(crate) fn remove_filter(&mut self, name: String) {
-        self.env.remove_filter(&name)
+    #[lua(name = "remove_filter", infallible)]
+    pub(crate) fn lua_remove_filter(&mut self, name: String) {
+        self.0.remove_filter(&name)
     }
 
-    pub(crate) fn add_test(
+    #[lua(name = "add_test")]
+    pub(crate) fn lua_add_test(
         &mut self,
         lua: &mlua::Lua,
         name: String,
@@ -507,7 +483,7 @@ impl LuaEnvironment {
         let mut func = LuaFunctionObject::new(key);
         func.set_pass_state(pass_state.unwrap_or(true));
 
-        self.env
+        self.0
             .add_test(name, move |state: &State, args: JinjaRest<JinjaValue>| {
                 func.with_func(&args, Some(state))
             });
@@ -515,11 +491,12 @@ impl LuaEnvironment {
         Ok(())
     }
 
-    #[lua(infallible)]
-    pub(crate) fn remove_test(&mut self, name: String) {
-        self.env.remove_test(&name)
+    #[lua(name = "remove_test", infallible)]
+    pub(crate) fn lua_remove_test(&mut self, name: String) {
+        self.0.remove_test(&name)
     }
 
+    #[lua(name = "add_global")]
     pub(crate) fn add_global(
         &mut self,
         lua: &mlua::Lua,
@@ -533,26 +510,27 @@ impl LuaEnvironment {
                 let mut func = LuaFunctionObject::new(key);
                 func.set_pass_state(pass_state.unwrap_or(true));
 
-                self.env
+                self.0
                     .add_function(name, move |state: &State, args: JinjaRest<JinjaValue>| {
                         func.with_func(&args, Some(state))
                     })
             },
-            _ => self.env.add_global(name, lua_to_minijinja(lua, &val)),
+            _ => self.0.add_global(name, lua_to_minijinja(lua, &val)),
         };
 
         Ok(())
     }
 
-    #[lua(infallible)]
-    pub(crate) fn remove_global(&mut self, name: String) {
-        self.env.remove_global(&name)
+    #[lua(name = "remove_global", infallible)]
+    pub(crate) fn lua_remove_global(&mut self, name: String) {
+        self.0.remove_global(&name)
     }
 
-    pub(crate) fn globals(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
+    #[lua(name = "globals")]
+    pub(crate) fn lua_globals(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         let table = lua.create_table()?;
 
-        for (name, value) in self.env.globals() {
+        for (name, value) in self.0.globals() {
             let val = minijinja_to_lua(lua, &value);
             table.set(name, val)?;
         }

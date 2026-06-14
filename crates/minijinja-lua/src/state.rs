@@ -2,6 +2,7 @@
 
 use std::{
     fmt,
+    ops::{Deref, DerefMut},
     sync::atomic::{AtomicPtr, Ordering},
 };
 
@@ -28,20 +29,35 @@ trait LuaState<'env, 'render> {
 /// filters and other callbacks in the Jinja environment. It can only be
 /// initialized within an [`mlua::Lua::scope`] callback, as it is not `'static`
 #[derive(Debug)]
-pub struct LuaStateRef<'scope, 'env, 'render> {
-    state: &'scope minijinja::State<'env, 'render>,
+pub struct LuaStateRef<'scope, 'env, 'render>(&'scope minijinja::State<'env, 'render>);
+
+impl<'scope, 'env, 'render> From<&'scope minijinja::State<'env, 'render>>
+    for LuaStateRef<'scope, 'env, 'render>
+{
+    fn from(value: &'scope minijinja::State<'env, 'render>) -> Self {
+        LuaStateRef(value)
+    }
 }
 
-impl<'scope, 'env, 'render> LuaStateRef<'scope, 'env, 'render> {
-    /// Get a new state
-    pub(crate) fn new(state: &'scope minijinja::State<'env, 'render>) -> Self {
-        Self { state }
+impl<'scope, 'env, 'render> From<LuaStateRef<'scope, 'env, 'render>>
+    for &'scope minijinja::State<'env, 'render>
+{
+    fn from(value: LuaStateRef<'scope, 'env, 'render>) -> Self {
+        value.0
+    }
+}
+
+impl<'scope, 'env, 'render> Deref for LuaStateRef<'scope, 'env, 'render> {
+    type Target = minijinja::State<'env, 'render>;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
     }
 }
 
 impl<'scope, 'env, 'render> LuaState<'env, 'render> for LuaStateRef<'scope, 'env, 'render> {
     fn state(&self) -> &minijinja::State<'env, 'render> {
-        self.state
+        self.0
     }
 }
 
@@ -65,24 +81,47 @@ impl<'scope, 'env, 'render> mlua::UserData for LuaStateRef<'scope, 'env, 'render
 /// the callback provided to [`LuaEnvironment.render_captured`](crate::environment::LuaEnvironment).
 /// It can only be initialized within an [`mlua::Lua::scope`] callback, as it is not `'static`
 #[derive(Debug)]
-pub struct LuaStateMut<'scope, 'env, 'render> {
-    state: &'scope mut minijinja::State<'env, 'render>,
-}
+pub struct LuaStateMut<'scope, 'env, 'render>(&'scope mut minijinja::State<'env, 'render>);
 
 impl<'scope, 'env, 'render> LuaStateMut<'scope, 'env, 'render> {
-    /// Get a new state
-    pub(crate) fn new(state: &'scope mut minijinja::State<'env, 'render>) -> Self {
-        Self { state }
-    }
-
     fn state_mut(&mut self) -> &mut minijinja::State<'env, 'render> {
-        self.state
+        self.0
+    }
+}
+
+impl<'scope, 'env, 'render> From<&'scope mut minijinja::State<'env, 'render>>
+    for LuaStateMut<'scope, 'env, 'render>
+{
+    fn from(value: &'scope mut minijinja::State<'env, 'render>) -> Self {
+        LuaStateMut(value)
+    }
+}
+
+impl<'scope, 'env, 'render> From<LuaStateMut<'scope, 'env, 'render>>
+    for &'scope mut minijinja::State<'env, 'render>
+{
+    fn from(value: LuaStateMut<'scope, 'env, 'render>) -> Self {
+        value.0
+    }
+}
+
+impl<'scope, 'env, 'render> Deref for LuaStateMut<'scope, 'env, 'render> {
+    type Target = minijinja::State<'env, 'render>;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
+}
+
+impl<'scope, 'env, 'render> DerefMut for LuaStateMut<'scope, 'env, 'render> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.0
     }
 }
 
 impl<'scope, 'env, 'render> LuaState<'env, 'render> for LuaStateMut<'scope, 'env, 'render> {
     fn state(&self) -> &minijinja::State<'env, 'render> {
-        self.state
+        self.0
     }
 }
 
@@ -120,14 +159,14 @@ where
     'render: 'env,
 {
     // The name of the current template
-    methods.add_method("name", |_, this, _: mlua::Value| -> mlua::Result<String> {
+    methods.add_method("name", |_, this, _: ()| -> mlua::Result<String> {
         Ok(this.state().name().to_string())
     });
 
     // The current auto escape flag
     methods.add_method(
         "auto_escape",
-        |_, this, _: mlua::Value| -> mlua::Result<Option<String>> {
+        |_, this, _: ()| -> mlua::Result<Option<String>> {
             Ok(auto_escape_to_lua(this.state().auto_escape()))
         },
     );
@@ -135,7 +174,7 @@ where
     // The current undefined behavior
     methods.add_method(
         "undefined_behavior",
-        |_, this, _: mlua::Value| -> mlua::Result<Option<String>> {
+        |_, this, _: ()| -> mlua::Result<Option<String>> {
             Ok(undefined_behavior_to_lua(this.state().undefined_behavior()))
         },
     );
@@ -143,7 +182,7 @@ where
     // The name of the current block
     methods.add_method(
         "current_block",
-        |_, this, _: mlua::Value| -> mlua::Result<Option<String>> {
+        |_, this, _: ()| -> mlua::Result<Option<String>> {
             Ok(this.state().current_block().map(|s| s.to_string()))
         },
     );
@@ -174,22 +213,19 @@ where
     );
 
     // A list of exported variables
-    methods.add_method(
-        "exports",
-        |_, this, _: mlua::Value| -> mlua::Result<Vec<String>> {
-            Ok(this
-                .state()
-                .exports()
-                .into_iter()
-                .map(|i| i.to_string())
-                .collect())
-        },
-    );
+    methods.add_method("exports", |_, this, _: ()| -> mlua::Result<Vec<String>> {
+        Ok(this
+            .state()
+            .exports()
+            .into_iter()
+            .map(|i| i.to_string())
+            .collect())
+    });
 
     // A list of all known variables
     methods.add_method(
         "known_variables",
-        |_, this, _: mlua::Value| -> mlua::Result<Vec<String>> {
+        |_, this, _: ()| -> mlua::Result<Vec<String>> {
             Ok(this
                 .state()
                 .known_variables()
@@ -242,7 +278,7 @@ where
     // A tuple of the current and remaining fuel usage
     methods.add_method(
         "fuel_levels",
-        |lua, this, _: mlua::Value| -> mlua::Result<mlua::Value> {
+        |lua, this, _: ()| -> mlua::Result<mlua::Value> {
             lua.to_value(&this.state().fuel_levels())
         },
     );

@@ -85,7 +85,7 @@ impl LuaFunctionObject {
                 if let Some(st) = state
                     && self.pass_state()
                 {
-                    let userdate = scope.create_userdata(LuaStateRef::new(st))?;
+                    let userdate = scope.create_userdata::<LuaStateRef>(st.into())?;
                     mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
@@ -115,7 +115,7 @@ impl LuaFunctionObject {
                 if let Some(st) = state
                     && self.pass_state()
                 {
-                    let userdate = scope.create_userdata(LuaStateMut::new(st))?;
+                    let userdate = scope.create_userdata::<LuaStateMut>(st.into())?;
                     mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
@@ -279,7 +279,7 @@ impl JinjaObject for LuaTableObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let userdate = scope.create_userdata(LuaStateRef::new(state))?;
+                    let userdate = scope.create_userdata::<LuaStateRef>(state.into())?;
                     mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
@@ -301,7 +301,7 @@ impl JinjaObject for LuaTableObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let userdate = scope.create_userdata(LuaStateRef::new(state))?;
+                    let userdate = scope.create_userdata::<LuaStateRef>(state.into())?;
                     mv.push_front(mlua::Value::UserData(userdate.clone()));
                 };
 
@@ -468,7 +468,7 @@ impl JinjaObject for LuaUserDataObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let ud = scope.create_userdata(LuaStateRef::new(state))?;
+                    let ud = scope.create_userdata::<LuaStateRef>(state.into())?;
                     mv.push_front(mlua::Value::UserData(ud.clone()));
                 };
 
@@ -490,7 +490,7 @@ impl JinjaObject for LuaUserDataObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let ud = scope.create_userdata(LuaStateRef::new(state))?;
+                    let ud = scope.create_userdata::<LuaStateRef>(state.into())?;
                     mv.push_front(mlua::Value::UserData(ud.clone()));
                 };
 

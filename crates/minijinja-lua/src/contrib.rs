@@ -207,7 +207,7 @@ mod test {
     #[test]
     fn test_minijinja_types_environment() {
         let lua = mlua::Lua::new();
-        let env = lua.create_userdata(LuaEnvironment::new()).unwrap();
+        let env = lua.create_userdata(LuaEnvironment::lua_new()).unwrap();
 
         assert_eq!(
             minijinja_types(&mlua::Value::UserData(env)).unwrap(),
@@ -219,10 +219,10 @@ mod test {
     fn test_minijinja_types_state() {
         let lua = mlua::Lua::new();
         let env = minijinja::Environment::new();
-        let state = env.empty_state();
+        let state = &env.empty_state();
 
         lua.scope(|scope| {
-            let ud = scope.create_userdata(LuaStateRef::new(&state)).unwrap();
+            let ud = scope.create_userdata::<LuaStateRef>(state.into()).unwrap();
             assert_eq!(
                 minijinja_types(&mlua::Value::UserData(ud)).unwrap(),
                 "state"
@@ -236,10 +236,10 @@ mod test {
     fn test_minijinja_types_state_mut() {
         let lua = mlua::Lua::new();
         let env = minijinja::Environment::new();
-        let mut state = env.empty_state();
+        let state = &mut env.empty_state();
 
         lua.scope(|scope| {
-            let ud = scope.create_userdata(LuaStateMut::new(&mut state)).unwrap();
+            let ud = scope.create_userdata::<LuaStateMut>(state.into()).unwrap();
             assert_eq!(
                 minijinja_types(&mlua::Value::UserData(ud)).unwrap(),
                 "state"
