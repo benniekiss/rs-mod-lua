@@ -96,3 +96,219 @@ macro_rules! lua_write_methods {
         }
     };
 }
+
+macro_rules! lua_path_methods {
+    ($ud:ident) => {
+        #[mlua::userdata_impl]
+        impl $ud {
+            #[lua(name = "with_file_name", infallible)]
+            pub(crate) fn lua_with_file_name(&self, file_name: String) -> LuaPath {
+                self.0.with_file_name(file_name).into()
+            }
+
+            #[lua(name = "with_extension", infallible)]
+            pub(crate) fn lua_with_extension(&self, extension: String) -> LuaPath {
+                self.0.with_extension(extension).into()
+            }
+
+            #[lua(name = "with_added_extension", infallible)]
+            pub(crate) fn lua_with_added_extension(&self, extension: String) -> LuaPath {
+                self.0.with_added_extension(extension).into()
+            }
+
+            #[lua(name = "is_absolute", infallible)]
+            pub(crate) fn lua_is_absolute(&self) -> bool {
+                self.0.is_absolute()
+            }
+
+            #[lua(name = "is_relative", infallible)]
+            pub(crate) fn lua_is_relative(&self) -> bool {
+                self.0.is_relative()
+            }
+
+            #[lua(name = "has_root", infallible)]
+            pub(crate) fn lua_has_root(&self) -> bool {
+                self.0.has_root()
+            }
+
+            #[lua(name = "parent", infallible)]
+            pub(crate) fn lua_parent(&self) -> Option<LuaPath> {
+                self.0.parent().map(|p| p.into())
+            }
+
+            #[lua(name = "file_name", infallible)]
+            pub(crate) fn lua_file_name(&self) -> Option<OsString> {
+                self.0.file_name().map(|s| s.to_owned())
+            }
+
+            #[lua(name = "strip_prefix")]
+            pub(crate) fn lua_strip_prefix(&self, base: String) -> mlua::Result<LuaPath> {
+                self.0
+                    .strip_prefix(base)
+                    .map(|p| p.into())
+                    .map_err(mlua::Error::external)
+            }
+
+            #[lua(name = "trim_prefix", infallible)]
+            pub(crate) fn lua_trim_prefix(&self, base: String) -> LuaPath {
+                self.0.trim_prefix(base).into()
+            }
+
+            #[lua(name = "starts_with", infallible)]
+            pub(crate) fn lua_starts_with(&self, base: String) -> bool {
+                self.0.starts_with(base)
+            }
+
+            #[lua(name = "ends_with", infallible)]
+            pub(crate) fn lua_ends_with(&self, base: String) -> bool {
+                self.0.ends_with(base)
+            }
+
+            #[lua(name = "is_empty", infallible)]
+            pub(crate) fn lua_is_empty(&self) -> bool {
+                self.0.is_empty()
+            }
+
+            #[lua(name = "file_stem", infallible)]
+            pub(crate) fn lua_file_stem(&self) -> Option<OsString> {
+                self.0.file_stem().map(|s| s.to_owned())
+            }
+
+            #[lua(name = "file_prefix", infallible)]
+            pub(crate) fn lua_file_prefix(&self) -> Option<OsString> {
+                self.0.file_prefix().map(|s| s.to_owned())
+            }
+
+            #[lua(name = "extension", infallible)]
+            pub(crate) fn lua_extension(&self) -> Option<OsString> {
+                self.0.extension().map(|s| s.to_owned())
+            }
+
+            #[lua(name = "has_trailing_sep", infallible)]
+            pub(crate) fn lua_has_trailing_sep(&self) -> bool {
+                self.0.has_trailing_sep()
+            }
+
+            #[lua(name = "with_trailing_sep", infallible)]
+            pub(crate) fn lua_with_trailing_sep(&self) -> LuaPath {
+                self.0.with_trailing_sep().into_owned().into()
+            }
+
+            #[lua(name = "trim_trailing_sep", infallible)]
+            pub(crate) fn lua_trim_trailing_sep(&self) -> LuaPath {
+                self.0.trim_trailing_sep().into()
+            }
+
+            #[lua(name = "join", infallible)]
+            pub(crate) fn lua_join(&self, path: String) -> LuaPath {
+                self.0.join(path).into()
+            }
+
+            #[lua(name = "ancestors", infallible)]
+            pub(crate) fn lua_ancestors(&self) -> Vec<LuaPath> {
+                self.0
+                    .ancestors()
+                    .map(|c| c.into())
+                    .collect::<Vec<LuaPath>>()
+            }
+
+            #[lua(name = "iter_ancestors")]
+            pub(crate) fn lua_iter_ancestors(
+                &self,
+                lua: &mlua::Lua,
+            ) -> mlua::Result<mlua::Function> {
+                let mut comps = self.lua_ancestors().into_iter();
+
+                lua.create_function_mut(move |_, _: ()| Ok(comps.next()))
+            }
+
+            #[lua(name = "components", infallible)]
+            pub(crate) fn lua_components(&self) -> Vec<LuaPath> {
+                self.0
+                    .components()
+                    .map(|c| c.into())
+                    .collect::<Vec<LuaPath>>()
+            }
+
+            #[lua(name = "iter")]
+            pub(crate) fn lua_iter(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
+                let mut comps = self.lua_components().into_iter();
+
+                lua.create_function_mut(move |_, _: ()| Ok(comps.next()))
+            }
+
+            #[lua(name = "metadata")]
+            pub(crate) fn lua_metadata(&self) -> mlua::Result<LuaMetadata> {
+                self.0
+                    .metadata()
+                    .map(|m| m.into())
+                    .map_err(mlua::Error::external)
+            }
+
+            #[lua(name = "symlink_metadata")]
+            pub(crate) fn lua_symlink_metadata(&self) -> mlua::Result<LuaMetadata> {
+                self.0
+                    .symlink_metadata()
+                    .map(|m| m.into())
+                    .map_err(mlua::Error::external)
+            }
+
+            #[lua(name = "canonicalize")]
+            pub(crate) fn lua_canonicalize(&self) -> mlua::Result<LuaPath> {
+                self.0
+                    .canonicalize()
+                    .map(|p| p.into())
+                    .map_err(mlua::Error::external)
+            }
+
+            #[lua(name = "absolute")]
+            pub(crate) fn lua_absolute(&self) -> mlua::Result<LuaPath> {
+                self.0
+                    .absolute()
+                    .map(|p| p.into())
+                    .map_err(mlua::Error::external)
+            }
+
+            #[lua(name = "read_link")]
+            pub(crate) fn lua_read_link(&self) -> mlua::Result<LuaPath> {
+                self.0
+                    .read_link()
+                    .map(|p| p.into())
+                    .map_err(mlua::Error::external)
+            }
+
+            #[lua(name = "read_dir")]
+            pub(crate) fn lua_read_dir(&self) -> mlua::Result<LuaReadDir> {
+                self.0
+                    .read_dir()
+                    .map(|p| p.into())
+                    .map_err(mlua::Error::external)
+            }
+
+            #[lua(name = "exists", infallible)]
+            pub(crate) fn lua_exists(&self) -> bool {
+                self.0.exists()
+            }
+
+            #[lua(name = "try_exists")]
+            pub(crate) fn lua_try_exists(&self) -> mlua::Result<bool> {
+                self.0.try_exists().map_err(mlua::Error::external)
+            }
+
+            #[lua(name = "is_file", infallible)]
+            pub(crate) fn lua_is_file(&self) -> bool {
+                self.0.is_file()
+            }
+
+            #[lua(name = "is_dir", infallible)]
+            pub(crate) fn lua_is_dir(&self) -> bool {
+                self.0.is_dir()
+            }
+
+            #[lua(name = "is_symlink", infallible)]
+            pub(crate) fn lua_is_symlink(&self) -> bool {
+                self.0.is_symlink()
+            }
+        }
+    };
+}
