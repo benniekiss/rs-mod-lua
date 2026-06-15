@@ -44,9 +44,89 @@ local encoding_test = {
          },
       },
    },
+   nested2 = {
+      one = 1,
+      two = "2",
+      three = { 4, 5, 6 },
+      ["four"] = {
+         [1] = "one",
+         [2] = "two",
+         [3] = "three",
+      },
+      nested = {
+         one = 1,
+         two = "2",
+         three = { 4, 5, 6 },
+         ["four"] = {
+            [1] = "one",
+            [2] = "two",
+            [3] = "three",
+         },
+         nested = {
+            one = 1,
+            two = "2",
+            three = { 4, 5, 6 },
+            ["four"] = {
+               [1] = "one",
+               [2] = "two",
+               [3] = "three",
+            },
+            nested = {
+               one = 1,
+               two = "2",
+               three = { 4, 5, 6 },
+               ["four"] = {
+                  [1] = "one",
+                  [2] = "two",
+                  [3] = "three",
+               },
+            },
+         },
+      },
+      nested2 = {
+         one = 1,
+         two = "2",
+         three = { 4, 5, 6 },
+         ["four"] = {
+            [1] = "one",
+            [2] = "two",
+            [3] = "three",
+         },
+         nested = {
+            one = 1,
+            two = "2",
+            three = { 4, 5, 6 },
+            ["four"] = {
+               [1] = "one",
+               [2] = "two",
+               [3] = "three",
+            },
+            nested = {
+               one = 1,
+               two = "2",
+               three = { 4, 5, 6 },
+               ["four"] = {
+                  [1] = "one",
+                  [2] = "two",
+                  [3] = "three",
+               },
+               nested = {
+                  one = 1,
+                  two = "2",
+                  three = { 4, 5, 6 },
+                  ["four"] = {
+                     [1] = "one",
+                     [2] = "two",
+                     [3] = "three",
+                  },
+               },
+            },
+         },
+      },
+   },
 }
 
-local decoding_test = [[{"two":"2","one":1,"nested":{"four":["one","two","three"],"three":[4,5,6],"two":"2","one":1},"four":["one","two","three"],"three":[4,5,6]}]]
+local decoding_test = [[{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"one":1,"nested2":{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"one":1,"nested2":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]}]]
 
 local iters = arg[1] or 100
 
