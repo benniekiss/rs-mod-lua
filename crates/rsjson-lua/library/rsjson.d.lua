@@ -10,6 +10,9 @@ local rsjson = {}
 ---
 ---@alias rsjson.null lightuserdata
 
+---@type rsjson.null
+rsjson.null = nil
+
 ---@class (exact) rsjson.EncodeConfig: userdata
 ---
 ---@field indent               number  The number of `prefix` to indent lines
@@ -22,6 +25,8 @@ local rsjson = {}
 rsjson.EncodeConfig = {}
 
 --- Create a new `rsjson.EncodeConfig`
+---
+---@return rsjson.EncodeConfig
 function rsjson.EncodeConfig:new() end
 
 ---@class (exact) rsjson.DecodeConfig: userdata
@@ -29,8 +34,11 @@ function rsjson.EncodeConfig:new() end
 ---@field null            boolean Convert `nil` to `rsjson.null`
 ---@field cast_u64_to_f64 boolean Convert u64 numbers to f64 if they overflow i64
 ---@field set_array_mt    boolean Set the metatable of JSON array tables to `mlua::Lua::array_metatable`
+rsjson.DecodeConfig = {}
 
 --- Create a new `rsjson.DecodeConfig`
+---
+---@return rsjson.DecodeConfig
 function rsjson.DecodeConfig:new() end
 
 --- Serialize a Lua object into a JSON string
