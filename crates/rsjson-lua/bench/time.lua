@@ -44,16 +44,96 @@ local encoding_test = {
          },
       },
    },
+   nested2 = {
+      one = 1,
+      two = "2",
+      three = { 4, 5, 6 },
+      ["four"] = {
+         [1] = "one",
+         [2] = "two",
+         [3] = "three",
+      },
+      nested = {
+         one = 1,
+         two = "2",
+         three = { 4, 5, 6 },
+         ["four"] = {
+            [1] = "one",
+            [2] = "two",
+            [3] = "three",
+         },
+         nested = {
+            one = 1,
+            two = "2",
+            three = { 4, 5, 6 },
+            ["four"] = {
+               [1] = "one",
+               [2] = "two",
+               [3] = "three",
+            },
+            nested = {
+               one = 1,
+               two = "2",
+               three = { 4, 5, 6 },
+               ["four"] = {
+                  [1] = "one",
+                  [2] = "two",
+                  [3] = "three",
+               },
+            },
+         },
+      },
+      nested2 = {
+         one = 1,
+         two = "2",
+         three = { 4, 5, 6 },
+         ["four"] = {
+            [1] = "one",
+            [2] = "two",
+            [3] = "three",
+         },
+         nested = {
+            one = 1,
+            two = "2",
+            three = { 4, 5, 6 },
+            ["four"] = {
+               [1] = "one",
+               [2] = "two",
+               [3] = "three",
+            },
+            nested = {
+               one = 1,
+               two = "2",
+               three = { 4, 5, 6 },
+               ["four"] = {
+                  [1] = "one",
+                  [2] = "two",
+                  [3] = "three",
+               },
+               nested = {
+                  one = 1,
+                  two = "2",
+                  three = { 4, 5, 6 },
+                  ["four"] = {
+                     [1] = "one",
+                     [2] = "two",
+                     [3] = "three",
+                  },
+               },
+            },
+         },
+      },
+   },
 }
 
-local decoding_test = [[{"two":"2","one":1,"nested":{"four":["one","two","three"],"three":[4,5,6],"two":"2","one":1},"four":["one","two","three"],"three":[4,5,6]}]]
+local decoding_test = [[{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"one":1,"nested2":{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"one":1,"nested2":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]}]]
 
 local iters = arg[1] or 100
 
 local encoding = luamark.compare_time({
    rsjson = function (ctx, p)
       for _ = 1, iters do
-         rsjson.encode(encoding_test)
+         rsjson.encode(encoding_test, ctx.rsjson)
       end
    end,
    dkjson = function (ctx, p)
@@ -68,7 +148,7 @@ local encoding = luamark.compare_time({
    end,
    rapidjson = function (ctx, p)
       for _ = 1, iters do
-         rapidjson.encode(encoding_test)
+         rapidjson.encode(encoding_test, ctx.rapidjson)
       end
    end,
 },
@@ -78,15 +158,18 @@ local encoding = luamark.compare_time({
          local pretty = p.pretty
 
          local rsjson_config = rsjson.EncodeConfig:new()
+         local dkjson_config = { indent = pretty }
+         local rapidjson_config = { pretty = pretty }
+
          if pretty then
             rsjson_config.indent = 4
          end
 
          return {
             rsjson = rsjson_config,
-            dkjson = { indent = pretty },
+            dkjson = dkjson_config,
+            rapidjson = rapidjson_config,
             cjson = {},
-            rapidjson = { pretty = pretty },
          }
       end,
    })
