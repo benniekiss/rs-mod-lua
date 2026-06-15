@@ -8,9 +8,7 @@ local rsjson = {}
 --- This can be used in the place of
 --- `nil` to represent empty values.
 ---
----@alias rsjson.null lightuserdata
-
----@type rsjson.null
+---@class rsjson.null lightuserdata
 rsjson.null = nil
 
 ---@class (exact) rsjson.EncodeConfig: userdata
