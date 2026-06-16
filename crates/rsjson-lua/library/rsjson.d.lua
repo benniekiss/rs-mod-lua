@@ -8,8 +8,16 @@ local rsjson = {}
 --- This can be used in the place of
 --- `nil` to represent empty values.
 ---
----@class rsjson.null lightuserdata
+---@class rsjson.null: lightuserdata
 rsjson.null = nil
+
+--- A metatable attachable to a Lua table to systematically encode
+--- it as Array (instead of Map). As a result, encoded Array will
+--- contain only sequence part of the table, with the same length
+--- as the # operator on that table.
+---
+---@class rsjson.array_mt: table
+rsjson.array_mt = nil
 
 ---@class (exact) rsjson.EncodeConfig: userdata
 ---

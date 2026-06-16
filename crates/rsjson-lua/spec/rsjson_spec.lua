@@ -123,6 +123,29 @@ describe("encode", function ()
         assert.Equal(ex, json.encode(te))
     end)
 
+    it("array_mt#encode", function ()
+        local config = json.EncodeConfig:new()
+
+        local te = { foo = "bar" }
+        local ex = "[]"
+
+        setmetatable(te, json.array_mt)
+
+        local res = json.encode(te, config)
+
+        assert.Equal(ex, res)
+    end)
+
+    it("no_array_mt#encode", function ()
+        local config = json.EncodeConfig:new()
+
+        local te = { foo = "bar" }
+        local ex = '{"foo":"bar"}'
+        local res = json.encode(te, config)
+
+        assert.Equal(ex, res)
+    end)
+
     it("string#encode", function ()
         local te = "a very 'long' string with ∆ unicode ∆"
         local ex = "\"a very 'long' string with ∆ unicode ∆\""
@@ -166,6 +189,34 @@ describe("decode", function ()
         local ex = { "one", 2, "three" }
 
         assert.Same(ex, json.decode(te))
+    end)
+
+    it("array_mt#decode", function ()
+        local config = json.DecodeConfig:new()
+        config.set_array_mt = true
+
+        local te = '["one",2,"three"]'
+        local ex = { "one", 2, "three" }
+
+        local res = json.decode(te, config)
+        local mt = debug.getmetatable(res)
+
+        assert.Same(ex, res)
+        assert.Equal(mt, json.array_mt)
+    end)
+
+    it("no_array_mt#decode", function ()
+        local config = json.DecodeConfig:new()
+        config.set_array_mt = false
+
+        local te = '["one",2,"three"]'
+        local ex = { "one", 2, "three" }
+
+        local res = json.decode(te, config)
+        local mt = debug.getmetatable(res)
+
+        assert.Same(ex, res)
+        assert.Nil(mt)
     end)
 
     it("string#decode", function ()

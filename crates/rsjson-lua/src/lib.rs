@@ -11,6 +11,8 @@ use mlua::LuaSerdeExt;
 pub fn rsjson_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
+    table.set("array_mt", lua.array_metatable())?;
+
     table.set("null", lua.null())?;
 
     table.set("EncodeConfig", lua.create_proxy::<EncodeConfig>()?)?;
@@ -40,6 +42,8 @@ pub fn rsjson_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
 #[cfg(test)]
 mod test {
+    use mlua::ObjectLike;
+
     use super::*;
 
     fn setup_lua() -> mlua::Lua {
@@ -60,12 +64,15 @@ mod test {
         let encode_func: mlua::Value = table.get("encode").unwrap();
         let decode_func: mlua::Value = table.get("decode").unwrap();
         let null_val: mlua::Value = table.get("null").unwrap();
+        let array_mt: mlua::Value = table.get("array_mt").unwrap();
         let enc_conf: mlua::Value = table.get("EncodeConfig").unwrap();
         let dec_conf: mlua::Value = table.get("DecodeConfig").unwrap();
 
         assert!(encode_func.is_function());
         assert!(decode_func.is_function());
         assert!(null_val.is_null());
+        assert!(array_mt.is_table());
+        assert!(array_mt.equals(&lua.array_metatable().to_value()).unwrap());
         assert!(enc_conf.is_userdata());
         assert!(dec_conf.is_userdata());
     }
