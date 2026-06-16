@@ -116,31 +116,32 @@ impl Deref for LuaRegex {
 
 #[mlua::userdata_impl]
 impl LuaRegex {
-    pub(crate) fn new(patt: &str) -> mlua::Result<Self> {
-        fancy_regex::Regex::new(patt)
-            .map(|re| re.into())
-            .map_err(mlua::Error::external)
-    }
-
     #[lua(meta, name = "__tostring", infallible)]
     pub(crate) fn lua_tostring(&self) -> String {
         self.0.as_str().to_string()
     }
 
+    #[lua(name = "new")]
+    pub(crate) fn lua_new(patt: &str) -> mlua::Result<Self> {
+        fancy_regex::Regex::new(patt)
+            .map(|re| re.into())
+            .map_err(mlua::Error::external)
+    }
+
     #[lua(name = "match")]
-    pub(crate) fn lua_is_match(&self, hay: String) -> mlua::Result<bool> {
-        self.0.is_match(&hay).map_err(mlua::Error::external)
+    pub(crate) fn lua_is_match(&self, hay: &str) -> mlua::Result<bool> {
+        self.0.is_match(hay).map_err(mlua::Error::external)
     }
 
     #[lua(name = "find")]
     pub(crate) fn lua_find_from_pos(
         &self,
-        hay: String,
+        hay: &str,
         start: Option<usize>,
     ) -> mlua::Result<Option<LuaMatch>> {
         let start = start.unwrap_or(1).saturating_sub(1);
         self.0
-            .find_from_pos(&hay, start)
+            .find_from_pos(hay, start)
             .map(|r| r.map(LuaMatch::from))
             .map_err(mlua::Error::external)
     }
@@ -148,13 +149,13 @@ impl LuaRegex {
     #[lua(name = "captures")]
     pub(crate) fn lua_captures_from_pos(
         &self,
-        hay: String,
+        hay: &str,
         start: Option<usize>,
     ) -> mlua::Result<Option<LuaCaptures>> {
         let start = start.unwrap_or(1);
         let mut captures = self
             .0
-            .captures_from_pos(&hay, start - 1)
+            .captures_from_pos(hay, start - 1)
             .map(|r| r.map(LuaCaptures::from))
             .map_err(mlua::Error::external)?;
 
@@ -173,13 +174,13 @@ impl LuaRegex {
     #[lua(name = "replace")]
     pub(crate) fn lua_try_replacen(
         &self,
-        text: String,
-        rep: String,
+        text: &str,
+        rep: &str,
         limit: Option<usize>,
     ) -> mlua::Result<String> {
         let limit = limit.unwrap_or(0);
         self.0
-            .try_replacen(&text, limit, rep)
+            .try_replacen(text, limit, rep)
             .map(|s| s.to_string())
             .map_err(mlua::Error::external)
     }
@@ -187,19 +188,19 @@ impl LuaRegex {
     #[lua(name = "split")]
     pub(crate) fn lua_splitn(
         &self,
-        target: String,
+        target: &str,
         limit: Option<usize>,
     ) -> mlua::Result<Vec<String>> {
         match limit {
             Some(l) => self
                 .0
-                .splitn(&target, l)
+                .splitn(target, l)
                 .map(|r| r.map(|s| s.to_string()))
                 .collect::<Result<Vec<String>, _>>()
                 .map_err(mlua::Error::external),
             None => self
                 .0
-                .split(&target)
+                .split(target)
                 .map(|r| r.map(|s| s.to_string()))
                 .collect::<Result<Vec<String>, _>>()
                 .map_err(mlua::Error::external),
