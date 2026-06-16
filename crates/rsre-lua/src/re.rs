@@ -2,8 +2,6 @@
 
 use std::{collections::BTreeMap, ops::Deref};
 
-use fancy_regex as regex;
-
 #[derive(mlua::UserData, Clone)]
 pub(crate) struct LuaMatch {
     #[lua(get)]
@@ -14,8 +12,8 @@ pub(crate) struct LuaMatch {
     text: String,
 }
 
-impl From<regex::Match<'_>> for LuaMatch {
-    fn from(m: regex::Match<'_>) -> Self {
+impl From<fancy_regex::Match<'_>> for LuaMatch {
+    fn from(m: fancy_regex::Match<'_>) -> Self {
         Self {
             start: m.start().saturating_add(1), // since lua is 1-indexed
             stop: m.end().saturating_add(1),    // since lua is 1-indexed
@@ -45,8 +43,8 @@ pub(crate) struct LuaCaptures {
     names: BTreeMap<String, usize>,
 }
 
-impl From<regex::Captures<'_>> for LuaCaptures {
-    fn from(captures: regex::Captures) -> Self {
+impl From<fancy_regex::Captures<'_>> for LuaCaptures {
+    fn from(captures: fancy_regex::Captures) -> Self {
         Self {
             matches: captures
                 .iter()
@@ -94,22 +92,22 @@ impl LuaCaptures {
 }
 
 #[derive(mlua::UserData, Clone)]
-pub(crate) struct LuaRegex(regex::Regex);
+pub(crate) struct LuaRegex(fancy_regex::Regex);
 
-impl From<regex::Regex> for LuaRegex {
-    fn from(value: regex::Regex) -> Self {
+impl From<fancy_regex::Regex> for LuaRegex {
+    fn from(value: fancy_regex::Regex) -> Self {
         LuaRegex(value)
     }
 }
 
-impl From<LuaRegex> for regex::Regex {
+impl From<LuaRegex> for fancy_regex::Regex {
     fn from(value: LuaRegex) -> Self {
         value.0
     }
 }
 
 impl Deref for LuaRegex {
-    type Target = regex::Regex;
+    type Target = fancy_regex::Regex;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -119,7 +117,7 @@ impl Deref for LuaRegex {
 #[mlua::userdata_impl]
 impl LuaRegex {
     pub(crate) fn new(patt: &str) -> mlua::Result<Self> {
-        regex::Regex::new(patt)
+        fancy_regex::Regex::new(patt)
             .map(|re| re.into())
             .map_err(mlua::Error::external)
     }
@@ -215,7 +213,7 @@ mod test {
 
     #[test]
     fn test_match_from() {
-        let re = regex::Regex::new(r"\d{3}").unwrap();
+        let re = fancy_regex::Regex::new(r"\d{3}").unwrap();
 
         let m = re.find("abc123def").map(|r| r.map(LuaMatch::from));
 
@@ -224,7 +222,7 @@ mod test {
 
     #[test]
     fn test_captures_from() {
-        let re = regex::Regex::new(r"\d{3}").unwrap();
+        let re = fancy_regex::Regex::new(r"\d{3}").unwrap();
 
         let c = re.captures("abc123def").map(|r| r.map(LuaCaptures::from));
 
@@ -233,7 +231,7 @@ mod test {
 
     #[test]
     fn test_captures_get() {
-        let re = regex::Regex::new(r".*(?<digits>\d{3}).*").unwrap();
+        let re = fancy_regex::Regex::new(r".*(?<digits>\d{3}).*").unwrap();
 
         let c = re
             .captures("abc123def")
@@ -248,7 +246,7 @@ mod test {
 
     #[test]
     fn test_captures_name() {
-        let re = regex::Regex::new(r".*(?<digits>\d{3}).*").unwrap();
+        let re = fancy_regex::Regex::new(r".*(?<digits>\d{3}).*").unwrap();
 
         let mut c = re
             .captures("abc123def")
@@ -269,7 +267,7 @@ mod test {
 
     #[test]
     fn test_captures_len() {
-        let re = regex::Regex::new(r".*(?<digits>\d{3}).*").unwrap();
+        let re = fancy_regex::Regex::new(r".*(?<digits>\d{3}).*").unwrap();
 
         let c = re
             .captures("abc123def")
