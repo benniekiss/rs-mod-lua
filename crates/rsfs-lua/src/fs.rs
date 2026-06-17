@@ -7,6 +7,7 @@ use std::{
     fs,
     io::{BufReader, Lines, Split},
     ops::Deref,
+    sync::{Arc, Mutex},
     time::SystemTime,
 };
 
@@ -37,36 +38,56 @@ impl Deref for LuaMetadata {
 
 #[mlua::userdata_impl]
 impl LuaMetadata {
+    /// Returns the file type for this metadata.
     #[lua(name = "file_type", infallible)]
     pub(crate) fn lua_file_type(&self) -> LuaFileType {
         self.0.file_type().into()
     }
 
+    /// Returns true if this metadata is for a directory. The result is mutually exclusive to the
+    /// result of Metadata::is_file, and will be false for symlink metadata obtained from
+    /// symlink_metadata.
     #[lua(name = "is_dir", infallible)]
     pub(crate) fn lua_is_dir(&self) -> bool {
         self.0.is_dir()
     }
 
+    /// Returns true if this metadata is for a regular file. The result is mutually exclusive to the
+    /// result of Metadata::is_dir, and will be false for symlink metadata obtained from
+    /// symlink_metadata.
+    ///
+    /// When the goal is simply to read from (or write to) the source, the most
+    /// reliable way to test the source can be read (or written to) is to open it. Only using
+    /// is_file can break workflows like diff <( prog_a ) on a Unix-like system for example. See
+    /// File::open or OpenOptions::open for more information.
     #[lua(name = "is_file", infallible)]
     pub(crate) fn lua_is_file(&self) -> bool {
         self.0.is_file()
     }
 
+    /// Returns true if this metadata is for a symbolic link.
     #[lua(name = "is_symlink", infallible)]
     pub(crate) fn lua_is_symlink(&self) -> bool {
         self.0.is_symlink()
     }
 
+    /// Returns the size of the file, in bytes, this metadata is for.
     #[lua(name = "len", infallible)]
     pub(crate) fn lua_len(&self) -> u64 {
         self.0.len()
     }
 
+    /// Returns the permissions of the file this metadata is for.
     #[lua(name = "permissions", infallible)]
     pub(crate) fn lua_permissions(&self) -> LuaPermissions {
         self.0.permissions().into()
     }
 
+    /// Returns the last modification time listed in this metadata.
+    ///
+    /// The returned value corresponds to the value of the mtime field of stat on Unix platforms and
+    /// the ftLastWriteTime field on Windows platforms as the number of seconds since the Unix
+    /// Epoch
     #[lua(name = "modified")]
     pub(crate) fn lua_modified(&self) -> mlua::Result<u64> {
         let time = self.0.modified().map_err(mlua::Error::external)?;
@@ -75,6 +96,15 @@ impl LuaMetadata {
             .map_err(mlua::Error::external)
     }
 
+    ///Returns the last access time of this metadata.
+    ///
+    /// The returned value corresponds to the value of the atime field of stat on Unix platforms and
+    /// the ftLastAccessTime field on Windows platforms as the number of seconds since the Unix
+    /// Epoch
+    ///
+    /// Note that not all platforms will keep this field update in a file's metadata, for example
+    /// Windows has an option to disable updating this time when files are accessed and Linux
+    /// similarly has noatime.
     #[lua(name = "accessed")]
     pub(crate) fn lua_accessed(&self) -> mlua::Result<u64> {
         let time = self.0.accessed().map_err(mlua::Error::external)?;
@@ -83,6 +113,11 @@ impl LuaMetadata {
             .map_err(mlua::Error::external)
     }
 
+    /// Returns the creation time listed in this metadata.
+    ///
+    /// The returned value corresponds to the value of the btime field of statx on Linux kernel
+    /// starting from to 4.11, the birthtime field of stat on other Unix platforms, and the
+    /// ftCreationTime field on Windows platforms as the number of seconds since the Unix Epoch
     #[lua(name = "created")]
     pub(crate) fn lua_created(&self) -> mlua::Result<u64> {
         let time = self.0.created().map_err(mlua::Error::external)?;
@@ -95,66 +130,81 @@ impl LuaMetadata {
 #[cfg(unix)]
 #[mlua::userdata_impl]
 impl LuaMetadata {
+    /// Returns the ID of the device containing the file.
     #[lua(name = "dev", infallible)]
     pub(crate) fn lua_dev(&self) -> u64 {
         self.0.dev()
     }
 
+    /// Returns the inode number.
     #[lua(name = "ino", infallible)]
     pub(crate) fn lua_ino(&self) -> u64 {
         self.0.ino()
     }
 
+    /// Returns the rights applied to this file.
     #[lua(name = "mode", infallible)]
     pub(crate) fn lua_mode(&self) -> u32 {
         self.0.mode()
     }
 
+    /// Returns the number of hard links pointing to this file.
     #[lua(name = "nlink", infallible)]
     pub(crate) fn lua_nlink(&self) -> u64 {
         self.0.nlink()
     }
 
+    /// Returns the user ID of the owner of this file.
     #[lua(name = "uid", infallible)]
     pub(crate) fn lua_uid(&self) -> u32 {
         self.0.uid()
     }
 
+    /// Returns the group ID of the owner of this file.
     #[lua(name = "gid", infallible)]
     pub(crate) fn lua_gid(&self) -> u32 {
         self.0.gid()
     }
 
+    /// Returns the device ID of this file (if it is a special one).
     #[lua(name = "rdev", infallible)]
     pub(crate) fn lua_rdev(&self) -> u64 {
         self.0.rdev()
     }
 
+    /// Returns the total size of this file in bytes.
     #[lua(name = "size", infallible)]
     pub(crate) fn lua_size(&self) -> u64 {
         self.0.size()
     }
 
+    /// Returns the last access time of the file, in seconds since Unix Epoch.
     #[lua(name = "atime", infallible)]
     pub(crate) fn lua_atime(&self) -> i64 {
         self.0.atime()
     }
 
+    /// Returns the last modification time of the file, in seconds since Unix Epoch.
     #[lua(name = "mtime", infallible)]
     pub(crate) fn lua_mtime(&self) -> i64 {
         self.0.mtime()
     }
 
+    /// Returns the last status change time of the file, in seconds since Unix Epoch.
     #[lua(name = "ctime", infallible)]
     pub(crate) fn lua_ctime(&self) -> i64 {
         self.0.ctime()
     }
 
+    /// Returns the block size for filesystem I/O.
     #[lua(name = "blksize", infallible)]
     pub(crate) fn lua_blksize(&self) -> u64 {
         self.0.blksize()
     }
 
+    /// Returns the number of blocks allocated to the file, in 512-byte units.
+    ///
+    /// Please note that this may be smaller than st_size / 512 when the file has holes.
     #[lua(name = "blocks", infallible)]
     pub(crate) fn lua_blocks(&self) -> u64 {
         self.0.blocks()
@@ -428,38 +478,36 @@ impl LuaDirEntry {
     }
 }
 
-#[derive(mlua::UserData)]
-pub(crate) struct LuaReadDir(fs::ReadDir);
+#[derive(mlua::UserData, mlua::FromLua, Clone)]
+pub(crate) struct LuaReadDir(Arc<Mutex<fs::ReadDir>>);
 
 impl From<fs::ReadDir> for LuaReadDir {
     fn from(value: fs::ReadDir) -> Self {
-        LuaReadDir(value)
-    }
-}
-
-impl From<LuaReadDir> for fs::ReadDir {
-    fn from(value: LuaReadDir) -> Self {
-        value.0
-    }
-}
-
-impl Deref for LuaReadDir {
-    type Target = fs::ReadDir;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        LuaReadDir(Arc::new(Mutex::new(value)))
     }
 }
 
 #[mlua::userdata_impl]
 impl LuaReadDir {
     #[lua(name = "next")]
-    pub(crate) fn lua_next(&mut self) -> mlua::Result<Option<LuaDirEntry>> {
+    pub(crate) fn lua_next(&self) -> mlua::Result<Option<LuaDirEntry>> {
         self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
             .next()
             .transpose()
             .map(|v| v.map(|d| d.into()))
             .map_err(mlua::Error::external)
+    }
+
+    #[lua(name = "iter")]
+    pub(crate) fn lua_iter(&self, lua: &mlua::Lua) -> mlua::Result<(mlua::Function, Self)> {
+        let iter =
+            lua.create_function_mut(|_, this: LuaReadDir| -> mlua::Result<Option<LuaDirEntry>> {
+                this.lua_next()
+            })?;
+
+        Ok((iter, self.clone()))
     }
 }
 
@@ -590,34 +638,22 @@ impl LuaOpenOptions {
     }
 }
 
-#[derive(mlua::UserData)]
-pub(crate) struct LuaLines(Lines<BufReader<fs::File>>);
+#[derive(mlua::UserData, mlua::FromLua, Clone)]
+pub(crate) struct LuaLines(Arc<Mutex<Lines<BufReader<fs::File>>>>);
 
 impl From<Lines<BufReader<fs::File>>> for LuaLines {
     fn from(value: Lines<BufReader<fs::File>>) -> Self {
-        LuaLines(value)
-    }
-}
-
-impl From<LuaLines> for Lines<BufReader<fs::File>> {
-    fn from(value: LuaLines) -> Self {
-        value.0
-    }
-}
-
-impl Deref for LuaLines {
-    type Target = Lines<BufReader<fs::File>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        LuaLines(Arc::new(Mutex::new(value)))
     }
 }
 
 #[mlua::userdata_impl]
 impl LuaLines {
     #[lua(name = "next")]
-    pub(crate) fn lua_next(&mut self, lua: &mlua::Lua) -> mlua::Result<Option<mlua::String>> {
+    pub(crate) fn lua_next(&self, lua: &mlua::Lua) -> mlua::Result<Option<mlua::String>> {
         self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
             .next()
             .transpose()
             .map_err(mlua::Error::external)?
@@ -626,41 +662,31 @@ impl LuaLines {
     }
 
     #[lua(name = "iter")]
-    pub(crate) fn lua_iter(mut self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
-        lua.create_function_mut(move |lua, _: ()| -> mlua::Result<Option<mlua::String>> {
-            self.lua_next(lua)
-        })
+    pub(crate) fn lua_iter(&self, lua: &mlua::Lua) -> mlua::Result<(mlua::Function, Self)> {
+        let iter = lua.create_function_mut(
+            |lua, this: LuaLines| -> mlua::Result<Option<mlua::String>> { this.lua_next(lua) },
+        )?;
+
+        Ok((iter, self.clone()))
     }
 }
 
-#[derive(mlua::UserData)]
-pub(crate) struct LuaSplit(Split<BufReader<fs::File>>);
+#[derive(mlua::UserData, mlua::FromLua, Clone)]
+pub(crate) struct LuaSplit(Arc<Mutex<Split<BufReader<fs::File>>>>);
 
 impl From<Split<BufReader<fs::File>>> for LuaSplit {
     fn from(value: Split<BufReader<fs::File>>) -> Self {
-        LuaSplit(value)
-    }
-}
-
-impl From<LuaSplit> for Split<BufReader<fs::File>> {
-    fn from(value: LuaSplit) -> Self {
-        value.0
-    }
-}
-
-impl Deref for LuaSplit {
-    type Target = Split<BufReader<fs::File>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+        LuaSplit(Arc::new(Mutex::new(value)))
     }
 }
 
 #[mlua::userdata_impl]
 impl LuaSplit {
     #[lua(name = "next")]
-    pub(crate) fn lua_next(&mut self, lua: &mlua::Lua) -> mlua::Result<Option<mlua::String>> {
+    pub(crate) fn lua_next(&self, lua: &mlua::Lua) -> mlua::Result<Option<mlua::String>> {
         self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
             .next()
             .transpose()
             .map_err(mlua::Error::external)?
@@ -669,9 +695,11 @@ impl LuaSplit {
     }
 
     #[lua(name = "iter")]
-    pub(crate) fn lua_iter(mut self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
-        lua.create_function_mut(move |lua, _: ()| -> mlua::Result<Option<mlua::String>> {
-            self.lua_next(lua)
-        })
+    pub(crate) fn lua_iter(&self, lua: &mlua::Lua) -> mlua::Result<(mlua::Function, Self)> {
+        let iter = lua.create_function_mut(
+            |lua, this: LuaSplit| -> mlua::Result<Option<mlua::String>> { this.lua_next(lua) },
+        )?;
+
+        Ok((iter, self.clone()))
     }
 }
