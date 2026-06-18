@@ -261,7 +261,7 @@ impl LuaEnvironment {
         self.0
             .set_unknown_method_callback(move |state, value, method, args| {
                 func.with_func(args!(value, method, ..args), Some(state))
-                    .map(|v| v.unwrap_or(JinjaValue::UNDEFINED))
+                    .map(|v| v.unwrap_or_default())
             });
 
         Ok(())
@@ -404,18 +404,15 @@ impl LuaEnvironment {
                 .render_captured(context)
                 .map_err(mlua::Error::external)?;
 
-            let expr = captured
+            let mut mv = captured
                 .with_state_mut(|state| func.with_func_mut(&[], Some(state)))
                 .map_err(mlua::Error::external)?
                 .and_then(|v| minijinja_to_lua(lua, &v))
-                .unwrap_or_else(|| mlua::Value::Nil);
+                .unwrap_or_default();
 
             let rendered = captured.into_output();
 
-            let mut mv = mlua::MultiValue::new();
-
-            mv.push_back(mlua::Value::String(lua.create_string(rendered)?));
-            mv.push_back(expr);
+            mv.push_front(mlua::Value::String(lua.create_string(rendered)?));
 
             Ok(mv)
         })
@@ -427,7 +424,7 @@ impl LuaEnvironment {
         lua: &mlua::Lua,
         source: String,
         ctx: Option<mlua::Table>,
-    ) -> mlua::Result<mlua::Value> {
+    ) -> mlua::Result<mlua::MultiValue> {
         let ctx = ctx.unwrap_or(lua.create_table()?);
 
         let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
@@ -531,8 +528,8 @@ impl LuaEnvironment {
         let table = lua.create_table()?;
 
         for (name, value) in self.0.globals() {
-            let val = minijinja_to_lua(lua, &value);
-            table.set(name, val)?;
+            minijinja_to_lua(lua, &value)
+                .and_then(|mut v| table.set(name, v.pop_front().unwrap_or_default()).ok());
         }
 
         Ok(table)
