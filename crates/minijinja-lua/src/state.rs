@@ -21,53 +21,53 @@ thread_local! {
     static CURRENT_LUA: AtomicPtr<mlua::Lua> = const { AtomicPtr::new(std::ptr::null_mut()) };
 }
 
-trait LuaState<'env, 'render> {
-    fn state(&self) -> &minijinja::State<'env, 'render>;
+trait LuaState<'template, 'env> {
+    fn state(&self) -> &minijinja::State<'template, 'env>;
 }
 
 /// A [`mlua::UserData`] wrapper around a [`minijinja::State`]. This is passed to
 /// filters and other callbacks in the Jinja environment. It can only be
 /// initialized within an [`mlua::Lua::scope`] callback, as it is not `'static`
 #[derive(Debug)]
-pub struct LuaStateRef<'scope, 'env, 'render>(&'scope minijinja::State<'env, 'render>);
+pub struct LuaStateRef<'scope, 'template, 'env>(&'scope minijinja::State<'template, 'env>);
 
-impl<'scope, 'env, 'render> From<&'scope minijinja::State<'env, 'render>>
-    for LuaStateRef<'scope, 'env, 'render>
+impl<'scope, 'template, 'env> From<&'scope minijinja::State<'template, 'env>>
+    for LuaStateRef<'scope, 'template, 'env>
 {
-    fn from(value: &'scope minijinja::State<'env, 'render>) -> Self {
+    fn from(value: &'scope minijinja::State<'template, 'env>) -> Self {
         LuaStateRef(value)
     }
 }
 
-impl<'scope, 'env, 'render> From<LuaStateRef<'scope, 'env, 'render>>
-    for &'scope minijinja::State<'env, 'render>
+impl<'scope, 'template, 'env> From<LuaStateRef<'scope, 'template, 'env>>
+    for &'scope minijinja::State<'template, 'env>
 {
-    fn from(value: LuaStateRef<'scope, 'env, 'render>) -> Self {
+    fn from(value: LuaStateRef<'scope, 'template, 'env>) -> Self {
         value.0
     }
 }
 
-impl<'scope, 'env, 'render> Deref for LuaStateRef<'scope, 'env, 'render> {
-    type Target = minijinja::State<'env, 'render>;
+impl<'scope, 'template, 'env> Deref for LuaStateRef<'scope, 'template, 'env> {
+    type Target = minijinja::State<'template, 'env>;
 
     fn deref(&self) -> &Self::Target {
         self.0
     }
 }
 
-impl<'scope, 'env, 'render> LuaState<'env, 'render> for LuaStateRef<'scope, 'env, 'render> {
-    fn state(&self) -> &minijinja::State<'env, 'render> {
+impl<'scope, 'template, 'env> LuaState<'template, 'env> for LuaStateRef<'scope, 'template, 'env> {
+    fn state(&self) -> &minijinja::State<'template, 'env> {
         self.0
     }
 }
 
-impl<'scope, 'env, 'render> fmt::Display for LuaStateRef<'scope, 'env, 'render> {
+impl<'scope, 'template, 'env> fmt::Display for LuaStateRef<'scope, 'template, 'env> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "State")
     }
 }
 
-impl<'scope, 'env, 'render> mlua::UserData for LuaStateRef<'scope, 'env, 'render> {
+impl<'scope, 'template, 'env> mlua::UserData for LuaStateRef<'scope, 'template, 'env> {
     fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_meta_field("__name", "state");
     }
@@ -81,57 +81,57 @@ impl<'scope, 'env, 'render> mlua::UserData for LuaStateRef<'scope, 'env, 'render
 /// the callback provided to [`LuaEnvironment.render_captured`](crate::environment::LuaEnvironment).
 /// It can only be initialized within an [`mlua::Lua::scope`] callback, as it is not `'static`
 #[derive(Debug)]
-pub struct LuaStateMut<'scope, 'env, 'render>(&'scope mut minijinja::State<'env, 'render>);
+pub struct LuaStateMut<'scope, 'template, 'env>(&'scope mut minijinja::State<'template, 'env>);
 
-impl<'scope, 'env, 'render> LuaStateMut<'scope, 'env, 'render> {
-    fn state_mut(&mut self) -> &mut minijinja::State<'env, 'render> {
+impl<'scope, 'template, 'env> LuaStateMut<'scope, 'template, 'env> {
+    fn state_mut(&mut self) -> &mut minijinja::State<'template, 'env> {
         self.0
     }
 }
 
-impl<'scope, 'env, 'render> From<&'scope mut minijinja::State<'env, 'render>>
-    for LuaStateMut<'scope, 'env, 'render>
+impl<'scope, 'template, 'env> From<&'scope mut minijinja::State<'template, 'env>>
+    for LuaStateMut<'scope, 'template, 'env>
 {
-    fn from(value: &'scope mut minijinja::State<'env, 'render>) -> Self {
+    fn from(value: &'scope mut minijinja::State<'template, 'env>) -> Self {
         LuaStateMut(value)
     }
 }
 
-impl<'scope, 'env, 'render> From<LuaStateMut<'scope, 'env, 'render>>
-    for &'scope mut minijinja::State<'env, 'render>
+impl<'scope, 'template, 'env> From<LuaStateMut<'scope, 'template, 'env>>
+    for &'scope mut minijinja::State<'template, 'env>
 {
-    fn from(value: LuaStateMut<'scope, 'env, 'render>) -> Self {
+    fn from(value: LuaStateMut<'scope, 'template, 'env>) -> Self {
         value.0
     }
 }
 
-impl<'scope, 'env, 'render> Deref for LuaStateMut<'scope, 'env, 'render> {
-    type Target = minijinja::State<'env, 'render>;
+impl<'scope, 'template, 'env> Deref for LuaStateMut<'scope, 'template, 'env> {
+    type Target = minijinja::State<'template, 'env>;
 
     fn deref(&self) -> &Self::Target {
         self.0
     }
 }
 
-impl<'scope, 'env, 'render> DerefMut for LuaStateMut<'scope, 'env, 'render> {
+impl<'scope, 'template, 'env> DerefMut for LuaStateMut<'scope, 'template, 'env> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.0
     }
 }
 
-impl<'scope, 'env, 'render> LuaState<'env, 'render> for LuaStateMut<'scope, 'env, 'render> {
-    fn state(&self) -> &minijinja::State<'env, 'render> {
+impl<'scope, 'template, 'env> LuaState<'template, 'env> for LuaStateMut<'scope, 'template, 'env> {
+    fn state(&self) -> &minijinja::State<'template, 'env> {
         self.0
     }
 }
 
-impl<'scope, 'env, 'render> fmt::Display for LuaStateMut<'scope, 'env, 'render> {
+impl<'scope, 'template, 'env> fmt::Display for LuaStateMut<'scope, 'template, 'env> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "State")
     }
 }
 
-impl<'scope, 'env, 'render> mlua::UserData for LuaStateMut<'scope, 'env, 'render> {
+impl<'scope, 'template, 'env> mlua::UserData for LuaStateMut<'scope, 'template, 'env> {
     fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_meta_field("__name", "state");
     }
@@ -152,11 +152,11 @@ impl<'scope, 'env, 'render> mlua::UserData for LuaStateMut<'scope, 'env, 'render
 }
 
 /// A helper to add methods shared between [`LuaStateRef`] and [`LuaStateMut`].
-fn add_common_methods<'env, 'render, S, M>(methods: &mut M)
+fn add_common_methods<'template, 'env, S, M>(methods: &mut M)
 where
-    S: LuaState<'env, 'render>,
+    S: LuaState<'template, 'env>,
     M: mlua::UserDataMethods<S>,
-    'render: 'env,
+    'env: 'template,
 {
     // The name of the current template
     methods.add_method("name", |_, this, _: ()| -> mlua::Result<String> {
