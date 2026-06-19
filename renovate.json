@@ -26,6 +26,9 @@
             "before 12pm on monday"
         ]
     },
+    "constraints": {
+        "rust": "nightly"
+    },
     "packageRules": [
         {
             "matchManagers": [
