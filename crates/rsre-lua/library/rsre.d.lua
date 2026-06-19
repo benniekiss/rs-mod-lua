@@ -97,4 +97,12 @@ function rsre.Regex:split(text, limit) end
 ---@return string
 function rsre.Regex:__tostring() end
 
+--- Escapes special characters in text with '\'. Returns a string which,
+--- when interpreted as a regex, matches exactly `text`.
+---
+---@param text string The string to escape
+---
+---@return string
+function rsre.escape(text) end
+
 return rsre

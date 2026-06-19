@@ -202,5 +202,12 @@ describe("api", function ()
 
             assert.Same(ex, re:split(te, 3))
         end)
+
+        it("escape#regex", function ()
+            local te = [=[A $malf(orned) [regex]]=]
+            local ex = [=[A \$malf\(orned\) \[regex\]]=]
+
+            assert.Equal(ex, rsre.escape(te))
+        end)
     end)
 end)
