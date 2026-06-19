@@ -1038,7 +1038,7 @@ mod tests {
 
         let jinja = lua_to_minijinja(&lua, &mlua::Value::UserData(userdata)).unwrap();
         assert_eq!(jinja.kind(), JinjaValueKind::Plain);
-        assert!(jinja.downcast_object_ref::<TestData>().is_some());
+        assert!(jinja.downcast_object_ref::<LuaUserDataObject>().is_some());
 
         let value = minijinja_to_lua(&lua, &jinja).unwrap();
         assert!(value.front().unwrap().is_userdata());
