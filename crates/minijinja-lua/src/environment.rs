@@ -14,14 +14,13 @@ use mlua::LuaSerdeExt;
 
 use crate::{
     convert::{
+        LuaAutoEscape,
         LuaFunctionObject,
         LuaObject,
-        lua_to_auto_escape,
+        LuaSyntaxConfig,
+        LuaUndefinedBehavior,
         lua_to_minijinja,
-        lua_to_syntax_config,
-        lua_to_undefined_behavior,
         minijinja_to_lua,
-        undefined_behavior_to_lua,
     },
     state::bind_lua,
 };
@@ -143,17 +142,16 @@ impl LuaEnvironment {
     }
 
     #[lua(name = "undefined_behavior", getter, infallible)]
-    pub(crate) fn lua_undefined_behavior(&self) -> Option<String> {
-        let ub = self.0.undefined_behavior();
-
-        undefined_behavior_to_lua(ub)
+    pub(crate) fn lua_undefined_behavior(&self) -> LuaUndefinedBehavior {
+        self.0.undefined_behavior().into()
     }
 
     #[lua(name = "undefined_behavior", setter)]
-    pub(crate) fn lua_set_undefined_behavior(&mut self, val: String) -> mlua::Result<()> {
-        let ub = lua_to_undefined_behavior(&val)?;
-
-        self.0.set_undefined_behavior(ub);
+    pub(crate) fn lua_set_undefined_behavior(
+        &mut self,
+        val: LuaUndefinedBehavior,
+    ) -> mlua::Result<()> {
+        self.0.set_undefined_behavior(val.into());
 
         Ok(())
     }
@@ -289,16 +287,15 @@ impl LuaEnvironment {
         let key = lua.create_registry_value(callback)?;
         let func = LuaFunctionObject::new(key);
 
-        self.0.set_auto_escape_callback(move |name| {
-            func.with_func(args!(name), None)
-                .ok()
-                .flatten()
-                .and_then(|v| {
-                    let s = v.as_str()?.to_string();
-                    lua_to_auto_escape(&s).ok()
-                })
-                .unwrap_or(minijinja::AutoEscape::None)
-        });
+        self.0
+            .set_auto_escape_callback(move |name| -> minijinja::AutoEscape {
+                func.with_func(args!(name), None)
+                    .ok()
+                    .flatten()
+                    .and_then(|v| LuaAutoEscape::try_from(v.to_string().as_str()).ok())
+                    .unwrap_or_default()
+                    .into()
+            });
 
         Ok(())
     }
@@ -333,9 +330,8 @@ impl LuaEnvironment {
     }
 
     #[lua(name = "set_syntax")]
-    pub(crate) fn lua_set_syntax(&mut self, syntax: mlua::Table) -> mlua::Result<()> {
-        let config = lua_to_syntax_config(syntax).map_err(mlua::Error::external)?;
-        self.0.set_syntax(config);
+    pub(crate) fn lua_set_syntax(&mut self, syntax: LuaSyntaxConfig) -> mlua::Result<()> {
+        self.0.set_syntax(syntax.into());
 
         Ok(())
     }

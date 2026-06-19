@@ -10,11 +10,11 @@ use minijinja::Value as JinjaValue;
 use mlua::LuaSerdeExt;
 
 use crate::convert::{
-    auto_escape_to_lua,
+    LuaAutoEscape,
+    LuaUndefinedBehavior,
     lua_args_to_minijinja,
     lua_to_minijinja,
     minijinja_to_lua,
-    undefined_behavior_to_lua,
 };
 
 thread_local! {
@@ -166,16 +166,14 @@ where
     // The current auto escape flag
     methods.add_method(
         "auto_escape",
-        |_, this, _: ()| -> mlua::Result<Option<String>> {
-            Ok(auto_escape_to_lua(this.state().auto_escape()))
-        },
+        |_, this, _: ()| -> mlua::Result<LuaAutoEscape> { Ok(this.state().auto_escape().into()) },
     );
 
     // The current undefined behavior
     methods.add_method(
         "undefined_behavior",
-        |_, this, _: ()| -> mlua::Result<Option<String>> {
-            Ok(undefined_behavior_to_lua(this.state().undefined_behavior()))
+        |_, this, _: ()| -> mlua::Result<LuaUndefinedBehavior> {
+            Ok(this.state().undefined_behavior().into())
         },
     );
 
@@ -270,7 +268,7 @@ where
     methods.add_method(
         "format",
         |lua, this, val: mlua::Value| -> mlua::Result<String> {
-            let val = lua_to_minijinja(lua, &val).unwrap_or(JinjaValue::UNDEFINED);
+            let val = lua_to_minijinja(lua, &val).unwrap_or_default();
 
             this.state().format(val).map_err(mlua::Error::external)
         },
