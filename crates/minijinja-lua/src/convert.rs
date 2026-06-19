@@ -535,8 +535,8 @@ impl JinjaObject for LuaUserDataObject {
     }
 }
 
-/// A wrapper around a list of [`minijinja::Value`] to preserve [`mlua::MultiValue`] objects passed
-/// to `minijinja`. This improves the use of returning multiple values from Lua functions.
+/// A wrapper around a list of [`minijinja::Value`] to preserve [`mlua::MultiValue`] characteristics
+/// for Lua functions which return multiple values.
 #[derive(Debug)]
 pub(crate) struct LuaMultiValueObject(Vec<JinjaValue>);
 
@@ -573,9 +573,10 @@ impl JinjaObject for LuaMultiValueObject {
 
 /// Convert an [`mlua::Value`] to a [`minijinja::Value`].
 ///
-/// If the [`mlua::Value`] is an [`mlua::Table`] that is not array-like, it is wrapped in a
-/// [`LuaTableObject`]. Otherwise, the  object is serialized to a [`minijinja::Value`] via
-/// `serde` using [`minijinja::Value::from_serialize`]
+/// If `value` is an [`mlua::Value::Table`], [`mlua::Value::Function`], or
+/// [`mlua::Value::UserData`], it is wrapped in a struct implementing [`minijinja::value::Object`].
+/// Otherwise, the  object is serialized to a [`minijinja::Value`] via `serde` using
+/// [`minijinja::Value::from_serialize`]
 pub(crate) fn lua_to_minijinja(lua: &mlua::Lua, value: &mlua::Value) -> Option<JinjaValue> {
     match value {
         mlua::Value::UserData(userdata) => {
@@ -618,12 +619,18 @@ pub(crate) fn lua_to_minijinja(lua: &mlua::Lua, value: &mlua::Value) -> Option<J
     }
 }
 
+/// Convert an [`mlua::MultiValue`] to a [`minijinja::Value`].
+///
+/// An `mv` passed in with more than 1 value is wrapped in `LuaMultiValueObject` to preserve
+/// multivalue argument semantics going from `minijinja` to Lua.
 pub(crate) fn lua_multi_to_minijinja(
     lua: &mlua::Lua,
     mv: &mut mlua::MultiValue,
 ) -> Option<JinjaValue> {
     match mv.len() {
         0 => Some(JinjaValue::UNDEFINED),
+        // If a function only returns one value, do not wrap it in a `LuaMultiValueObject`.
+        // Otherwise, all Lua return values will be treated as lists by `minijinja`
         1 => lua_to_minijinja(lua, &mv.pop_front().unwrap_or_default()),
         _ => Some(JinjaValue::from_object(LuaMultiValueObject(
             mv.iter()
