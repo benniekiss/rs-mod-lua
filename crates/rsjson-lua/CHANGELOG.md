@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.3.5...rsjson-lua-v0.4.0) - 2026-06-19
+
+### Added
+
+- *(rsjson-lua)* expose `array_metatable` to lua
+- *(rsjson-lua)* [**breaking**] migrate to `#[derive(mlua::UserData)]`
+- [**breaking**] update to mlua v0.12
+
+### Fixed
+
+- *(rsjson-lua)* fix type definitions
+- *(rsjson-lua)* build with `opt-level = 3`
+- *(rsjson-lua)* use correct imports in benchmarks
+
+### Other
+
+- bump package versions
+- *(rsjson-lua)* take arg as `BorrowedBytes`
+- *(rsjson-lua)* update benchmarks
+- *(rsjson-lua)* more rigorous benchmarks
+- *(rsjson-lua)* more rigorous benchmarks
+- *(rsjson-lua)* simpler typing
+- *(rsjson-lua)* reorganize branching in `encode`
+- *(rsjson-lua)* cleanup return types
+- *(rsjson-lua)* add benchmark deps to test dependencies
+- *(rsjson-lua)* micro-optimize for no encode config
+
 ## [0.3.5](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.3.4...rsjson-lua-v0.3.5) - 2026-06-11
 
 ### Other
