@@ -163,10 +163,10 @@ describe("Environment tests", function ()
             assert.Same(x, env:eval("x", { x = x }))
 
             x = false
-            assert.False(x, env:eval("x", { x = x }))
+            assert.False(env:eval("x", { x = x }))
 
             x = nil
-            assert.Nil(x, env:eval("x", { x = x }))
+            assert.Nil(env:eval("x", { x = x }))
 
             x = minijinja.None
             assert.Same(x, env:eval("x", { x = x }))
@@ -220,12 +220,13 @@ describe("Environment tests", function ()
     describe("templates#Environment", function ()
         it("custom-syntax#templates", function ()
             local env = Environment:new()
+            local config = minijinja.SyntaxConfig.builder()
+                :block_delimiters("<%", "%>")
+                :variable_delimiters("${", "}")
+                :comment_delimiters("<!--", "-->")
+                :build()
 
-            env:set_syntax({
-                variable_delimiters = { "${", "}" },
-                block_delimiters = { "<%", "%>" },
-                comment_delimiters = { "<!--", "-->" },
-            })
+            env:set_syntax(config)
 
             local rv = env:render_str("<% if true %>${ value }<% endif %><!-- nothing -->", {
                 value = 42,
@@ -236,10 +237,12 @@ describe("Environment tests", function ()
 
         it("line-statements#templates", function ()
             local env = Environment:new()
-            env:set_syntax({
-                line_statement_prefix = "#",
-                line_comment_prefix = "##",
-            })
+            local config = minijinja.SyntaxConfig.builder()
+                :line_statement_prefix("#")
+                :line_comment_prefix("##")
+                :build()
+
+            env:set_syntax(config)
 
             local rv = env:render_str("# for x in range(3)\n{{ x }}\n# endfor")
             assert.Equal("0\n1\n2\n", rv)

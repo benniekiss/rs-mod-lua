@@ -135,17 +135,35 @@ local minijinja = {}
 ---
 --- It maps to the `minijinja::value::ValueKind::None` variant.
 ---
----@alias minijinja.None lightuserdata
+---@class (exact) minijinja.None: lightuserdata
+minijinja.None = nil
+
+--- The syntax configuration for the environment.
+---
+---@class (exact) minijinja.SyntaxConfig: userdata
+---
+---@field block_delimiters       [string, string] Start and end delimiters
+---@field variable_delimiters    [string, string] Start and end delimiters
+---@field comment_delimiters     [string, string] Start and end delimiters
+---@field line_statement_prefix? string
+---@field line_comment_prefix?   string
+minijinja.SyntaxConfig = {}
+
+--- Get a configuration builder
+---
+---@return minijinja.SyntaxConfigBuilder : userdata
+function minijinja.SyntaxConfig.builder() end
 
 --- Configure the syntax for the environment.
 ---
----@class (exact) minijinja.SyntaxConfig
+---@class (exact) minijinja.SyntaxConfigBuilder
 ---
----@field block_delimiters?      [string, string] Start and end delimiters
----@field variable_delimiters?   [string, string] Start and end delimiters
----@field comment_delimiters?    [string, string] Start and end delimiters
----@field line_statement_prefix? string
----@field line_comment_prefix?   string
+---@field build                 fun(self): minijinja.SyntaxConfig           Build the configuration
+---@field block_delimiters      fun(self, start: string, end: string): self Set the start and end delimiters
+---@field variable_delimiters   fun(self, start: string, end: string): self Set the start and end delimiters
+---@field comment_delimiters    fun(self, start: string, end: string): self Set the start and end delimiters
+---@field line_statement_prefix fun(self, prefix: string): self             Set the line statement prefix
+---@field line_comment_prefix   fun(self, prefix: string): self             Set the line comment prefix
 
 --- A minijinja environment.
 ---

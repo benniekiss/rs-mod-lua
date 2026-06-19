@@ -3,9 +3,11 @@
 use std::{
     cmp,
     fmt,
+    marker::PhantomData,
     ops::{Deref, DerefMut},
     sync::{
         Arc,
+        Mutex,
         atomic::{AtomicBool, Ordering},
     },
 };
@@ -15,7 +17,7 @@ use minijinja::{
     Error as JinjaError,
     ErrorKind as JinjaErrorKind,
     UndefinedBehavior,
-    syntax::SyntaxConfig,
+    syntax::{SyntaxConfig, SyntaxConfigBuilder},
     value::{
         Enumerator,
         Kwargs,
@@ -29,18 +31,49 @@ use mlua::{LuaSerdeExt, ObjectLike};
 
 use crate::state::{LuaStateMut, LuaStateRef, with_lua};
 
-pub(crate) trait LuaObject {
+pub(crate) trait LuaObject: JinjaObject
+where
+    Self: Sized + Clone + 'static,
+{
     /// Create a new wrapper around the [`mlua::Value`] associated with `key`
     fn new(key: mlua::RegistryKey) -> Self;
 
     /// Get the stored `RegistryKey`
     fn key(&self) -> Arc<mlua::RegistryKey>;
 
+    /// Create a wrapper from an [`mlua::Value`]
+    fn from_value(lua: &mlua::Lua, value: &mlua::Value) -> mlua::Result<Self> {
+        lua.create_registry_value(value).map(Self::new)
+    }
+
+    /// Convert the wrapper to an [`mlua::Value`]
+    fn to_value(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.registry_value(&self.key())
+    }
+
+    /// Create a reference to a wrapper from a [`minijinja::Value`]
+    fn from_jinja_ref(value: &JinjaValue) -> Result<&Self, JinjaError> {
+        value
+            .downcast_object_ref::<Self>()
+            .ok_or_else(|| JinjaError::new(JinjaErrorKind::CannotDeserialize, ""))
+    }
+
+    /// Convert the wrapper to a [`minijinja::Value`]
+    fn to_jinja(&self) -> JinjaValue {
+        JinjaValue::from_object(self.clone())
+    }
+
     /// Whether to pass a [`minijinja::State`] to function calls, if provided
     fn pass_state(&self) -> bool;
 
     /// Set whether to pass a [`minijinja::State`] to function calls, if provided
     fn set_pass_state(&mut self, enable: bool);
+
+    /// Whether to treat the wrapper as an array
+    fn array_like(&self) -> bool;
+
+    /// Set whether to treat the wrapper as an array
+    fn set_array_like(&mut self, enable: bool);
 
     /// Execute a callback with [`mlua::mlua::Lua`] and the retrieved [`mlua::Value`] as arguments
     fn with<R, F, T>(&self, f: F) -> Result<R, JinjaError>
@@ -57,13 +90,136 @@ pub(crate) trait LuaObject {
     }
 }
 
+/// Marker for [`mlua::Function`]
+#[derive(Debug, Clone)]
+pub(crate) struct LuaFunctionJinjaObject;
+
+/// Marker for [`mlua::Table`]
+#[derive(Debug, Clone)]
+pub(crate) struct LuaTableJinjaObject;
+
+/// Marker for [`mlua::UserData`]
+#[derive(Debug, Clone)]
+pub(crate) struct LuaUserDataJinjaObject;
+
+#[derive(Debug, Clone)]
+pub(crate) struct LuaJinjaObjectWrapper<V>
+where
+    V: std::fmt::Debug + Clone + Send + Sync + 'static,
+{
+    key: Arc<mlua::RegistryKey>,
+    pass_state: Arc<AtomicBool>,
+    array_like: Arc<AtomicBool>,
+    variant: PhantomData<V>,
+}
+
+impl<V> Drop for LuaJinjaObjectWrapper<V>
+where
+    V: std::fmt::Debug + Clone + Send + Sync + 'static,
+{
+    fn drop(&mut self) {
+        let _ = with_lua(|lua| {
+            lua.expire_registry_values();
+            Ok(())
+        });
+    }
+}
+
+impl<V> From<mlua::RegistryKey> for LuaJinjaObjectWrapper<V>
+where
+    V: std::fmt::Debug + Clone + Send + Sync + 'static,
+{
+    fn from(value: mlua::RegistryKey) -> Self {
+        Self {
+            key: Arc::new(value),
+            pass_state: Arc::new(AtomicBool::new(false)),
+            array_like: Arc::new(AtomicBool::new(false)),
+            variant: PhantomData,
+        }
+    }
+}
+
+impl<V> From<LuaJinjaObjectWrapper<V>> for JinjaValue
+where
+    V: std::fmt::Debug + Clone + Send + Sync + 'static,
+    LuaJinjaObjectWrapper<V>: LuaObject,
+{
+    fn from(value: LuaJinjaObjectWrapper<V>) -> Self {
+        value.to_jinja()
+    }
+}
+
+impl<V> TryFrom<JinjaValue> for LuaJinjaObjectWrapper<V>
+where
+    V: std::fmt::Debug + Clone + Send + Sync + 'static,
+    LuaJinjaObjectWrapper<V>: LuaObject,
+{
+    type Error = JinjaError;
+
+    fn try_from(value: JinjaValue) -> Result<Self, Self::Error> {
+        Self::from_jinja_ref(&value).cloned()
+    }
+}
+
+impl<V> mlua::FromLua for LuaJinjaObjectWrapper<V>
+where
+    V: std::fmt::Debug + Clone + Send + Sync + 'static,
+    LuaJinjaObjectWrapper<V>: LuaObject,
+{
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        LuaJinjaObjectWrapper::from_value(lua, &value)
+    }
+}
+
+impl<V> mlua::IntoLua for LuaJinjaObjectWrapper<V>
+where
+    V: std::fmt::Debug + Clone + Send + Sync + 'static,
+    LuaJinjaObjectWrapper<V>: LuaObject,
+{
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        self.to_value(lua)
+    }
+}
+
+impl<V> LuaObject for LuaJinjaObjectWrapper<V>
+where
+    V: std::fmt::Debug + Clone + Send + Sync + 'static,
+    LuaJinjaObjectWrapper<V>: JinjaObject,
+{
+    fn new(key: mlua::RegistryKey) -> Self {
+        Self::from(key)
+    }
+
+    fn key(&self) -> Arc<mlua::RegistryKey> {
+        self.key.clone()
+    }
+
+    fn pass_state(&self) -> bool {
+        self.pass_state.load(Ordering::Relaxed)
+    }
+
+    fn set_pass_state(&mut self, enable: bool) {
+        self.pass_state.store(enable, Ordering::Relaxed);
+    }
+
+    fn array_like(&self) -> bool {
+        self.array_like.load(Ordering::Relaxed)
+    }
+
+    fn set_array_like(&mut self, enable: bool) {
+        self.array_like.store(enable, Ordering::Relaxed);
+    }
+}
+
 /// A wrapper around an [`mlua::Function`]. It provides access to the [`mlua::Function`]
 /// within a `minijinja` context by dynamically getting the object via the stored
 /// [`mlua::RegistryKey`].
-#[derive(Debug)]
-pub(crate) struct LuaFunctionObject {
-    key: Arc<mlua::RegistryKey>,
-    pass_state: Arc<AtomicBool>,
+pub(crate) type LuaFunctionObject = LuaJinjaObjectWrapper<PhantomData<LuaFunctionJinjaObject>>;
+
+impl fmt::Display for LuaFunctionObject {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<function>")
+    }
 }
 
 impl LuaFunctionObject {
@@ -128,42 +284,6 @@ impl LuaFunctionObject {
     }
 }
 
-impl fmt::Display for LuaFunctionObject {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "<function>")
-    }
-}
-
-impl Drop for LuaFunctionObject {
-    fn drop(&mut self) {
-        let _ = with_lua(|lua| {
-            lua.expire_registry_values();
-            Ok(())
-        });
-    }
-}
-
-impl LuaObject for LuaFunctionObject {
-    fn new(key: mlua::RegistryKey) -> Self {
-        Self {
-            key: Arc::new(key),
-            pass_state: Arc::new(AtomicBool::new(false)),
-        }
-    }
-
-    fn key(&self) -> Arc<mlua::RegistryKey> {
-        Arc::clone(&self.key)
-    }
-
-    fn pass_state(&self) -> bool {
-        self.pass_state.load(Ordering::Relaxed)
-    }
-
-    fn set_pass_state(&mut self, enable: bool) {
-        self.pass_state.store(enable, Ordering::Relaxed);
-    }
-}
-
 impl JinjaObject for LuaFunctionObject {
     fn repr(self: &Arc<Self>) -> JinjaObjectRepr {
         JinjaObjectRepr::Plain
@@ -189,22 +309,7 @@ impl JinjaObject for LuaFunctionObject {
 /// A wrapper around an [`mlua::Table`]. It provides access to the [`mlua::Table`]
 /// within a `minijinja` context by dynamically getting the object via the stored
 /// [`mlua::RegistryKey`].
-#[derive(Debug)]
-pub(crate) struct LuaTableObject {
-    key: Arc<mlua::RegistryKey>,
-    pass_state: Arc<AtomicBool>,
-    array_like: Arc<AtomicBool>,
-}
-
-impl LuaTableObject {
-    fn array_like(&self) -> bool {
-        self.array_like.load(Ordering::Relaxed)
-    }
-
-    fn set_array_like(&mut self, enable: bool) {
-        self.array_like.store(enable, Ordering::Relaxed);
-    }
-}
+pub(crate) type LuaTableObject = LuaJinjaObjectWrapper<PhantomData<LuaTableJinjaObject>>;
 
 impl fmt::Display for LuaTableObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -218,37 +323,6 @@ impl fmt::Display for LuaTableObject {
             Ok(s) => write!(f, "{s}"),
             Err(_) => write!(f, "<table>"),
         }
-    }
-}
-
-impl Drop for LuaTableObject {
-    fn drop(&mut self) {
-        let _ = with_lua(|lua| {
-            lua.expire_registry_values();
-            Ok(())
-        });
-    }
-}
-
-impl LuaObject for LuaTableObject {
-    fn new(key: mlua::RegistryKey) -> Self {
-        Self {
-            key: Arc::new(key),
-            pass_state: Arc::new(AtomicBool::new(false)),
-            array_like: Arc::new(AtomicBool::new(false)),
-        }
-    }
-
-    fn key(&self) -> Arc<mlua::RegistryKey> {
-        Arc::clone(&self.key)
-    }
-
-    fn pass_state(&self) -> bool {
-        self.pass_state.load(Ordering::Relaxed)
-    }
-
-    fn set_pass_state(&mut self, enable: bool) {
-        self.pass_state.store(enable, Ordering::Relaxed);
     }
 }
 
@@ -284,7 +358,7 @@ impl JinjaObject for LuaTableObject {
 
                 let res = &mut table.call(mv)?;
 
-                Ok(lua_multi_to_minijinja(lua, res).unwrap_or(JinjaValue::UNDEFINED))
+                Ok(lua_multi_to_minijinja(lua, res).unwrap_or_default())
             })
         })
     }
@@ -306,7 +380,7 @@ impl JinjaObject for LuaTableObject {
 
                 let res = &mut table.call_method(method, mv)?;
 
-                Ok(lua_multi_to_minijinja(lua, res).unwrap_or(JinjaValue::UNDEFINED))
+                Ok(lua_multi_to_minijinja(lua, res).unwrap_or_default())
             })
         })
         .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::UnknownMethod))
@@ -347,7 +421,7 @@ impl JinjaObject for LuaTableObject {
                     .sequence_values::<mlua::Value>()
                     .map(|v| {
                         let v = v?;
-                        let value = lua_to_minijinja(lua, &v).unwrap_or(JinjaValue::UNDEFINED);
+                        let value = lua_to_minijinja(lua, &v).unwrap_or_default();
 
                         Ok(value)
                     })
@@ -358,7 +432,7 @@ impl JinjaObject for LuaTableObject {
                     .map(|pair| {
                         let (k, _v) = pair?;
 
-                        let key = lua_to_minijinja(lua, &k).unwrap_or(JinjaValue::UNDEFINED);
+                        let key = lua_to_minijinja(lua, &k).unwrap_or_default();
 
                         Ok(key)
                     })
@@ -398,11 +472,7 @@ impl JinjaObject for LuaTableObject {
 /// A wrapper around an [`mlua::UserData`]. It provides access to the [`mlua::UserData`]
 /// within a `minijinja` context by dynamically getting the object via the stored
 /// [`mlua::RegistryKey`].
-#[derive(Debug)]
-pub(crate) struct LuaUserDataObject {
-    key: Arc<mlua::RegistryKey>,
-    pass_state: Arc<AtomicBool>,
-}
+pub(crate) type LuaUserDataObject = LuaJinjaObjectWrapper<PhantomData<LuaUserDataJinjaObject>>;
 
 impl fmt::Display for LuaUserDataObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -412,36 +482,6 @@ impl fmt::Display for LuaUserDataObject {
             Ok(s) => write!(f, "{s}"),
             Err(_) => write!(f, "<userdata>"),
         }
-    }
-}
-
-impl Drop for LuaUserDataObject {
-    fn drop(&mut self) {
-        let _ = with_lua(|lua| {
-            lua.expire_registry_values();
-            Ok(())
-        });
-    }
-}
-
-impl LuaObject for LuaUserDataObject {
-    fn new(key: mlua::RegistryKey) -> Self {
-        Self {
-            key: Arc::new(key),
-            pass_state: Arc::new(AtomicBool::new(false)),
-        }
-    }
-
-    fn key(&self) -> Arc<mlua::RegistryKey> {
-        Arc::clone(&self.key)
-    }
-
-    fn pass_state(&self) -> bool {
-        self.pass_state.load(Ordering::Relaxed)
-    }
-
-    fn set_pass_state(&mut self, enable: bool) {
-        self.pass_state.store(enable, Ordering::Relaxed);
     }
 }
 
@@ -473,7 +513,7 @@ impl JinjaObject for LuaUserDataObject {
 
                 let res = &mut userdata.call(mv)?;
 
-                Ok(lua_multi_to_minijinja(lua, res).unwrap_or(JinjaValue::UNDEFINED))
+                Ok(lua_multi_to_minijinja(lua, res).unwrap_or_default())
             })
         })
     }
@@ -495,7 +535,7 @@ impl JinjaObject for LuaUserDataObject {
 
                 let res = &mut userdata.call_method(method, mv)?;
 
-                Ok(lua_multi_to_minijinja(lua, res).unwrap_or(JinjaValue::UNDEFINED))
+                Ok(lua_multi_to_minijinja(lua, res).unwrap_or_default())
             })
         })
         .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::UnknownMethod))
@@ -571,6 +611,296 @@ impl JinjaObject for LuaMultiValueObject {
     }
 }
 
+#[derive(Clone)]
+pub(crate) struct LuaAutoEscape(AutoEscape);
+
+impl Default for LuaAutoEscape {
+    fn default() -> Self {
+        Self(AutoEscape::None)
+    }
+}
+
+impl Deref for LuaAutoEscape {
+    type Target = AutoEscape;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<AutoEscape> for LuaAutoEscape {
+    fn from(value: AutoEscape) -> Self {
+        LuaAutoEscape(value)
+    }
+}
+
+impl From<LuaAutoEscape> for AutoEscape {
+    fn from(value: LuaAutoEscape) -> Self {
+        value.0
+    }
+}
+
+impl TryFrom<&str> for LuaAutoEscape {
+    type Error = mlua::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "html" => Ok(AutoEscape::Html.into()),
+            "json" => Ok(AutoEscape::Json.into()),
+            "none" => Ok(AutoEscape::None.into()),
+            _ => Err(mlua::Error::FromLuaConversionError {
+                from: "string",
+                to: "AutoEscape".to_string(),
+                message: Some(format!(
+                    "arguments must be one of 'html', 'json', or 'none': {}",
+                    value
+                )),
+            }),
+        }
+    }
+}
+
+impl mlua::FromLua for LuaAutoEscape {
+    fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
+        let autoescape = value.to_string()?;
+        match autoescape.to_lowercase().as_str() {
+            "html" => Ok(AutoEscape::Html.into()),
+            "json" => Ok(AutoEscape::Json.into()),
+            "none" => Ok(AutoEscape::None.into()),
+            _ => Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "AutoEscape".to_string(),
+                message: Some("arguments must be one of 'html', 'json', or 'none'".to_string()),
+            }),
+        }
+    }
+}
+
+impl mlua::IntoLua for LuaAutoEscape {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        match self.deref() {
+            AutoEscape::Html => "html".into_lua(lua),
+            AutoEscape::Json => "json".into_lua(lua),
+            AutoEscape::None => "none".into_lua(lua),
+            AutoEscape::Custom(s) => s.into_lua(lua),
+            _ => Err(mlua::Error::runtime("invalid AutoEscape value")),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct LuaUndefinedBehavior(UndefinedBehavior);
+
+impl Default for LuaUndefinedBehavior {
+    fn default() -> Self {
+        Self(UndefinedBehavior::Lenient)
+    }
+}
+
+impl Deref for LuaUndefinedBehavior {
+    type Target = UndefinedBehavior;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<UndefinedBehavior> for LuaUndefinedBehavior {
+    fn from(value: UndefinedBehavior) -> Self {
+        LuaUndefinedBehavior(value)
+    }
+}
+
+impl From<LuaUndefinedBehavior> for UndefinedBehavior {
+    fn from(value: LuaUndefinedBehavior) -> Self {
+        value.0
+    }
+}
+
+impl TryFrom<&str> for LuaUndefinedBehavior {
+    type Error = mlua::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "chainable" => Ok(UndefinedBehavior::Chainable.into()),
+            "lenient" => Ok(UndefinedBehavior::Lenient.into()),
+            "semi-strict" => Ok(UndefinedBehavior::SemiStrict.into()),
+            "strict" => Ok(UndefinedBehavior::Strict.into()),
+            _ => Err(mlua::Error::FromLuaConversionError {
+                from: "string",
+                to: "UndefinedBehavior".to_string(),
+                message: Some(
+                    "arguments must be one of 'chainable', 'lenient', 'semi-strict', or 'strict'"
+                        .to_string(),
+                ),
+            }),
+        }
+    }
+}
+
+impl mlua::FromLua for LuaUndefinedBehavior {
+    fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
+        let ub = value.to_string()?;
+        match ub.to_lowercase().as_str() {
+            "chainable" => Ok(UndefinedBehavior::Chainable.into()),
+            "lenient" => Ok(UndefinedBehavior::Lenient.into()),
+            "semi-strict" => Ok(UndefinedBehavior::SemiStrict.into()),
+            "strict" => Ok(UndefinedBehavior::Strict.into()),
+            _ => Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "UndefinedBehavior".to_string(),
+                message: Some(
+                    "arguments must be one of 'chainable', 'lenient', 'semi-strict', or 'strict'"
+                        .to_string(),
+                ),
+            }),
+        }
+    }
+}
+
+impl mlua::IntoLua for LuaUndefinedBehavior {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        match self.deref() {
+            UndefinedBehavior::Chainable => "chainable".into_lua(lua),
+            UndefinedBehavior::Lenient => "lenient".into_lua(lua),
+            UndefinedBehavior::SemiStrict => "semi-strict".into_lua(lua),
+            UndefinedBehavior::Strict => "strict".into_lua(lua),
+            _ => Err(mlua::Error::runtime("invalid UndefinedBehavior value")),
+        }
+    }
+}
+
+#[derive(mlua::UserData, mlua::FromLua, Clone)]
+pub(crate) struct LuaSyntaxConfig(SyntaxConfig);
+
+impl From<SyntaxConfig> for LuaSyntaxConfig {
+    fn from(value: SyntaxConfig) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LuaSyntaxConfig> for SyntaxConfig {
+    fn from(value: LuaSyntaxConfig) -> Self {
+        value.0
+    }
+}
+
+impl Deref for LuaSyntaxConfig {
+    type Target = SyntaxConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaSyntaxConfig {
+    #[lua(name = "builder", infallible)]
+    pub(crate) fn lua_builder() -> LuaSyntaxConfigBuilder {
+        SyntaxConfig::builder().into()
+    }
+
+    #[lua(name = "block_delimiters", infallible)]
+    pub(crate) fn lua_block_delimiters(&self) -> (String, String) {
+        let (s, e) = self.0.block_delimiters();
+        (s.to_string(), e.to_string())
+    }
+
+    #[lua(name = "variable_delimiters", infallible)]
+    pub(crate) fn lua_variable_delimiters(&self) -> (String, String) {
+        let (s, e) = self.0.variable_delimiters();
+        (s.to_string(), e.to_string())
+    }
+
+    #[lua(name = "comment_delimiters", infallible)]
+    pub(crate) fn lua_comment_delimiters(&self) -> (String, String) {
+        let (s, e) = self.0.comment_delimiters();
+        (s.to_string(), e.to_string())
+    }
+
+    #[lua(name = "line_statement_prefix", infallible)]
+    pub(crate) fn lua_line_statement_prefix(&self) -> Option<String> {
+        self.0.line_statement_prefix().map(|s| s.to_string())
+    }
+
+    #[lua(name = "line_comment_prefix", infallible)]
+    pub(crate) fn lua_line_comment_prefix(&self) -> Option<String> {
+        self.0.line_comment_prefix().map(|s| s.to_string())
+    }
+}
+
+#[derive(mlua::UserData, mlua::FromLua, Clone)]
+pub(crate) struct LuaSyntaxConfigBuilder(Arc<Mutex<SyntaxConfigBuilder>>);
+
+impl From<SyntaxConfigBuilder> for LuaSyntaxConfigBuilder {
+    fn from(value: SyntaxConfigBuilder) -> Self {
+        Self(Arc::new(Mutex::new(value)))
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaSyntaxConfigBuilder {
+    #[lua(name = "build")]
+    pub(crate) fn lua_build(&self) -> mlua::Result<LuaSyntaxConfig> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .build()
+            .map(|c| c.into())
+            .map_err(mlua::Error::external)
+    }
+
+    #[lua(name = "block_delimiters")]
+    pub(crate) fn lua_block_delimiters(&self, start: String, end: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .block_delimiters(start, end);
+
+        Ok(self.clone())
+    }
+
+    #[lua(name = "variable_delimiters")]
+    pub(crate) fn lua_variable_delimiters(&self, start: String, end: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .variable_delimiters(start, end);
+
+        Ok(self.clone())
+    }
+
+    #[lua(name = "comment_delimiters")]
+    pub(crate) fn lua_comment_delimiters(&self, start: String, end: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .comment_delimiters(start, end);
+
+        Ok(self.clone())
+    }
+
+    #[lua(name = "line_statement_prefix")]
+    pub(crate) fn lua_line_statement_prefix(&self, prefix: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .line_statement_prefix(prefix);
+
+        Ok(self.clone())
+    }
+
+    #[lua(name = "line_comment_prefix")]
+    pub(crate) fn lua_line_comment_prefix(&self, prefix: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .line_comment_prefix(prefix);
+
+        Ok(self.clone())
+    }
+}
+
 /// Convert an [`mlua::Value`] to a [`minijinja::Value`].
 ///
 /// If `value` is an [`mlua::Value::Table`], [`mlua::Value::Function`], or
@@ -579,37 +909,23 @@ impl JinjaObject for LuaMultiValueObject {
 /// [`minijinja::Value::from_serialize`]
 pub(crate) fn lua_to_minijinja(lua: &mlua::Lua, value: &mlua::Value) -> Option<JinjaValue> {
     match value {
-        mlua::Value::UserData(userdata) => {
-            let res = lua.create_registry_value(userdata);
+        mlua::Value::UserData(_) => LuaUserDataObject::from_value(lua, value)
+            .map(|v| v.into())
+            .ok(),
 
-            match res {
-                Ok(key) => Some(JinjaValue::from_object(LuaUserDataObject::new(key))),
-                Err(_) => None,
-            }
-        },
-        mlua::Value::Table(table) => {
-            let res = lua.create_registry_value(table);
+        mlua::Value::Table(table) => LuaTableObject::from_value(lua, value)
+            .map(|mut obj| {
+                if table_is_array_like(table, Some(false)) {
+                    obj.set_array_like(true);
+                };
+                obj
+            })
+            .map(|v| v.into())
+            .ok(),
 
-            match res {
-                Ok(key) => {
-                    let mut obj = LuaTableObject::new(key);
-                    if table_is_array_like(table, Some(false)) {
-                        obj.set_array_like(true);
-                    }
-
-                    Some(JinjaValue::from_object(obj))
-                },
-                Err(_) => None,
-            }
-        },
-        mlua::Value::Function(func) => {
-            let res = lua.create_registry_value(func);
-
-            match res {
-                Ok(key) => Some(JinjaValue::from_object(LuaFunctionObject::new(key))),
-                Err(_) => None,
-            }
-        },
+        mlua::Value::Function(_) => LuaFunctionObject::from_value(lua, value)
+            .map(|v| v.into())
+            .ok(),
         // minijinja::Value::from_serialize converts `mlua::Value::Nil` to
         // `minijinja::Value::None` otherwise. Semantically, `None` is more
         // similar to the `mlua::NULL` value.
@@ -652,15 +968,12 @@ pub(crate) fn minijinja_to_lua(lua: &mlua::Lua, value: &JinjaValue) -> Option<ml
         JinjaValueKind::Undefined => mv.push_back(mlua::Value::Nil),
         JinjaValueKind::None => mv.push_back(mlua::Value::NULL),
         _ => {
-            if let Some(obj) = value.downcast_object_ref::<LuaUserDataObject>() {
-                let userdata = lua.registry_value::<mlua::AnyUserData>(&obj.key).ok()?;
-                mv.push_back(mlua::Value::UserData(userdata))
-            } else if let Some(obj) = value.downcast_object_ref::<LuaTableObject>() {
-                let table = lua.registry_value::<mlua::Table>(&obj.key).ok()?;
-                mv.push_back(mlua::Value::Table(table))
-            } else if let Some(obj) = value.downcast_object_ref::<LuaFunctionObject>() {
-                let func = lua.registry_value::<mlua::Function>(&obj.key).ok()?;
-                mv.push_back(mlua::Value::Function(func))
+            if let Ok(obj) = LuaUserDataObject::from_jinja_ref(value) {
+                mv.push_back(obj.to_value(lua).ok()?)
+            } else if let Ok(obj) = LuaTableObject::from_jinja_ref(value) {
+                mv.push_back(obj.to_value(lua).ok()?)
+            } else if let Ok(obj) = LuaFunctionObject::from_jinja_ref(value) {
+                mv.push_back(obj.to_value(lua).ok()?)
             } else if let Some(obj) = value.downcast_object_ref::<LuaMultiValueObject>() {
                 for val in obj.iter() {
                     mv.append(&mut minijinja_to_lua(lua, val).unwrap_or_default())
@@ -717,12 +1030,12 @@ pub(crate) fn lua_args_to_minijinja(
                     ))
                 })
                 // If for some reason `.as_table()` fails, follow through with a regular conversion.
-                .unwrap_or_else(|| lua_to_minijinja(lua, &v).unwrap_or(JinjaValue::UNDEFINED))
+                .unwrap_or_else(|| lua_to_minijinja(lua, &v).unwrap_or_default())
         });
 
     let mut args = args
         .iter()
-        .map(|v| lua_to_minijinja(lua, v).unwrap_or(JinjaValue::UNDEFINED))
+        .map(|v| lua_to_minijinja(lua, v).unwrap_or_default())
         .collect::<Vec<JinjaValue>>();
 
     if let Some(kw) = kwargs {
@@ -738,159 +1051,6 @@ pub(crate) fn err_to_minijinja_err<T: std::error::Error>(
     kind: JinjaErrorKind,
 ) -> JinjaError {
     JinjaError::new(kind, err.to_string())
-}
-
-/// Convert a [`minijinja::AutoEscape`] variant to a string
-pub(crate) fn auto_escape_to_lua(autoescape: AutoEscape) -> Option<String> {
-    match autoescape {
-        AutoEscape::Html => Some("html".to_string()),
-        AutoEscape::Json => Some("json".to_string()),
-        AutoEscape::None => Some("none".to_string()),
-        AutoEscape::Custom(s) => Some(s.to_string()),
-        _ => None,
-    }
-}
-
-/// Convert a string to a [`minijinja::AutoEscape`] variant
-pub(crate) fn lua_to_auto_escape(autoescape: &str) -> Result<AutoEscape, mlua::Error> {
-    let au = match autoescape.to_lowercase().as_str() {
-        "html" => AutoEscape::Html,
-        "json" => AutoEscape::Json,
-        "none" => AutoEscape::None,
-        _ => return Err(mlua::Error::FromLuaConversionError { from: "auto_escape", to: "minijinja::AutoEscape".to_string(), message: Some("Failed to convert {} to minijinja::AutoEscape. Arguments must be one of 'html', 'json', or 'none'".to_string()) })};
-
-    Ok(au)
-}
-
-/// Convert a [`minijinja::UndefinedBehavior`] variant to a string
-///
-/// The conversion is case-insensitive
-pub(crate) fn undefined_behavior_to_lua(behavior: UndefinedBehavior) -> Option<String> {
-    match behavior {
-        UndefinedBehavior::Chainable => Some("chainable".to_string()),
-        UndefinedBehavior::Lenient => Some("lenient".to_string()),
-        UndefinedBehavior::SemiStrict => Some("semi-strict".to_string()),
-        UndefinedBehavior::Strict => Some("strict".to_string()),
-        _ => None,
-    }
-}
-
-/// Convert a string to a [`minijinja::UndefinedBehavior`] variant.
-///
-/// The conversion is case-insensitive
-pub(crate) fn lua_to_undefined_behavior(behavior: &str) -> Result<UndefinedBehavior, mlua::Error> {
-    let ub = match behavior.to_lowercase().as_str() {
-        "chainable" => UndefinedBehavior::Chainable,
-        "lenient" => UndefinedBehavior::Lenient,
-        "semi-strict" => UndefinedBehavior::SemiStrict,
-        "strict" => UndefinedBehavior::Strict,
-        _ => return Err(mlua::Error::FromLuaConversionError { from: "undefined_behavior", to: "minijinja::UndefinedBehavior".to_string(), message: Some("Failed to convert {} to minijinja::UndefinedBehavior. Arguments must be one of 'chainable', 'lenient', 'semi-strict', or 'strict'".to_string()) })
-    };
-
-    Ok(ub)
-}
-
-/// Convert an [`mlua::Table`] to a [`minijinja::syntax::SyntaxConfig`]
-pub(crate) fn lua_to_syntax_config(syntax: mlua::Table) -> Result<SyntaxConfig, JinjaError> {
-    let defaults = SyntaxConfig::default();
-
-    let (block_s, block_e) =
-        optional_delimiter_pair(&syntax, "block_delimiters")?.unwrap_or_else(|| {
-            let (s, e) = defaults.block_delimiters();
-            (s.to_string(), e.to_string())
-        });
-
-    let (var_s, var_e) =
-        optional_delimiter_pair(&syntax, "variable_delimiters")?.unwrap_or_else(|| {
-            let (s, e) = defaults.variable_delimiters();
-            (s.to_string(), e.to_string())
-        });
-
-    let (com_s, com_e) =
-        optional_delimiter_pair(&syntax, "comment_delimiters")?.unwrap_or_else(|| {
-            let (s, e) = defaults.comment_delimiters();
-            (s.to_string(), e.to_string())
-        });
-
-    let line_statement = optional_string(&syntax, "line_statement_prefix")?
-        .unwrap_or_else(|| defaults.line_statement_prefix().unwrap_or("").to_string());
-
-    let line_comment = optional_string(&syntax, "line_comment_prefix")?
-        .unwrap_or_else(|| defaults.line_comment_prefix().unwrap_or("").to_string());
-
-    SyntaxConfig::builder()
-        .block_delimiters(block_s, block_e)
-        .variable_delimiters(var_s, var_e)
-        .comment_delimiters(com_s, com_e)
-        .line_statement_prefix(line_statement)
-        .line_comment_prefix(line_comment)
-        .build()
-}
-
-/// Returns `Some((start, end))` if the key is present, `None` if absent or
-/// nil, or an error if the value is present but malformed.
-fn optional_delimiter_pair(
-    syntax: &mlua::Table,
-    name: &str,
-) -> Result<Option<(String, String)>, JinjaError> {
-    match syntax.get::<mlua::Value>(name) {
-        Ok(mlua::Value::Nil) | Err(_) => Ok(None),
-        Ok(mlua::Value::Table(table)) => table_to_syntax_args(&table, name).map(Some),
-        Ok(_) => Err(JinjaError::new(
-            JinjaErrorKind::InvalidDelimiter,
-            format!("{name} must be an array-like table of 2 strings"),
-        )),
-    }
-}
-
-/// Returns `Some(string)` if the key is present, `None` if absent or nil.
-fn optional_string(syntax: &mlua::Table, name: &str) -> Result<Option<String>, JinjaError> {
-    match syntax.get::<mlua::Value>(name) {
-        Ok(mlua::Value::Nil) | Err(_) => Ok(None),
-        Ok(mlua::Value::String(s)) => s
-            .to_str()
-            .map(|s| Some(s.to_string()))
-            .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::InvalidDelimiter)),
-        Ok(_) => Err(JinjaError::new(
-            JinjaErrorKind::InvalidDelimiter,
-            format!("{name} must be a string"),
-        )),
-    }
-}
-
-/// Helper to parse an [`mlua::Table`] into [`minijinja::syntax::SyntaxConfig`] setting arguments.
-///
-/// Valid values are array-like tables with only 2 items.
-fn table_to_syntax_args(table: &mlua::Table, name: &str) -> Result<(String, String), JinjaError> {
-    if table_is_array_like(table, None) {
-        match table.len() {
-            Ok(2) => {
-                let a: String = table
-                    .get(1)
-                    .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::InvalidDelimiter))?;
-                let b: String = table
-                    .get(2)
-                    .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::InvalidDelimiter))?;
-
-                Ok((a, b))
-            },
-            Ok(len) => {
-                let message = if len > 2 {
-                    format!("Too many args provided. Expected 2, provided {}", len)
-                } else {
-                    format!("Not enough args provided. Expected 2, provided {}", len)
-                };
-
-                Err(JinjaError::new(JinjaErrorKind::InvalidDelimiter, message))
-            },
-            Err(err) => Err(err_to_minijinja_err(err, JinjaErrorKind::InvalidDelimiter)),
-        }
-    } else {
-        Err(JinjaError::new(
-            JinjaErrorKind::InvalidDelimiter,
-            format!("{} should be an array-like table of 2 strings", name),
-        ))
-    }
 }
 
 /// Check if an [`mlua::Table`] is array-like. That is, check if all of the
@@ -911,6 +1071,8 @@ fn table_is_array_like(table: &mlua::Table, empty_as_array: Option<bool>) -> boo
 
 #[cfg(test)]
 mod tests {
+    use mlua::{FromLua, IntoLua};
+
     use super::*;
 
     fn setup() -> mlua::Lua {
@@ -1156,156 +1318,138 @@ mod tests {
 
     #[test]
     fn test_autoescape_roundtrip_html() {
-        let lua_ae = auto_escape_to_lua(AutoEscape::Html).unwrap();
-        assert_eq!(lua_ae, "html");
+        let lua = setup();
 
-        let jinja_ae: AutoEscape = lua_to_auto_escape(&lua_ae).unwrap();
-        assert_eq!(jinja_ae, AutoEscape::Html);
+        let lua_ae: LuaAutoEscape = AutoEscape::Html.into();
+        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "html");
+
+        let jinja_ae = LuaAutoEscape::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).unwrap();
+        assert_eq!(*jinja_ae, AutoEscape::Html);
     }
 
     #[test]
     fn test_autoescape_roundtrip_json() {
-        let lua_ae = auto_escape_to_lua(AutoEscape::Json).unwrap();
-        assert_eq!(lua_ae, "json");
+        let lua = setup();
 
-        let jinja_ae: AutoEscape = lua_to_auto_escape(&lua_ae).unwrap();
-        assert_eq!(jinja_ae, AutoEscape::Json);
+        let lua_ae: LuaAutoEscape = AutoEscape::Json.into();
+        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "json");
+
+        let jinja_ae = LuaAutoEscape::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).unwrap();
+        assert_eq!(*jinja_ae, AutoEscape::Json);
     }
 
     #[test]
     fn test_autoescape_roundtrip_none() {
-        let lua_ae = auto_escape_to_lua(AutoEscape::None).unwrap();
-        assert_eq!(lua_ae, "none");
+        let lua = setup();
 
-        let jinja_ae: AutoEscape = lua_to_auto_escape(&lua_ae).unwrap();
-        assert_eq!(jinja_ae, AutoEscape::None);
+        let lua_ae: LuaAutoEscape = AutoEscape::None.into();
+        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "none");
+
+        let jinja_ae = LuaAutoEscape::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).unwrap();
+        assert_eq!(*jinja_ae, AutoEscape::None);
     }
 
     #[test]
     fn test_autoescape_custom() {
-        let lua_ae = auto_escape_to_lua(AutoEscape::Custom("test custom")).unwrap();
-        assert_eq!(lua_ae, "test custom");
+        let lua = setup();
 
-        let jinja_ae = lua_to_auto_escape(&lua_ae);
-        assert!(jinja_ae.is_err());
+        let lua_ae: LuaAutoEscape = AutoEscape::Custom("test custom").into();
+        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "test custom");
+
+        assert!(LuaAutoEscape::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).is_err());
     }
 
     #[test]
     fn test_autoescape_roundtrip_invalid() {
-        assert!(lua_to_auto_escape("xml").is_err());
+        let lua = setup();
+
+        assert!(LuaAutoEscape::from_lua("xml".into_lua(&lua).unwrap(), &lua).is_err());
     }
 
     // UNDEFINED BEHAVIOR CONVERSION TESTS //
 
     #[test]
     fn test_undefined_behavior_roundtrip_chainable() {
-        let lua_ae = undefined_behavior_to_lua(UndefinedBehavior::Chainable).unwrap();
-        assert_eq!(lua_ae, "chainable");
+        let lua = setup();
 
-        let jinja_ae: UndefinedBehavior = lua_to_undefined_behavior(&lua_ae).unwrap();
-        assert_eq!(jinja_ae, UndefinedBehavior::Chainable);
+        let lua_ae: LuaUndefinedBehavior = UndefinedBehavior::Chainable.into();
+        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "chainable");
+
+        let jinja_ae =
+            LuaUndefinedBehavior::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).unwrap();
+        assert_eq!(*jinja_ae, UndefinedBehavior::Chainable);
     }
 
     #[test]
     fn test_undefined_behavior_roundtrip_lenient() {
-        let lua_ae = undefined_behavior_to_lua(UndefinedBehavior::Lenient).unwrap();
-        assert_eq!(lua_ae, "lenient");
+        let lua = setup();
 
-        let jinja_ae: UndefinedBehavior = lua_to_undefined_behavior(&lua_ae).unwrap();
-        assert_eq!(jinja_ae, UndefinedBehavior::Lenient);
+        let lua_ae: LuaUndefinedBehavior = UndefinedBehavior::Lenient.into();
+        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "lenient");
+
+        let jinja_ae =
+            LuaUndefinedBehavior::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).unwrap();
+        assert_eq!(*jinja_ae, UndefinedBehavior::Lenient);
     }
 
     #[test]
     fn test_undefined_behavior_roundtrip_semi_strict() {
-        let lua_ae = undefined_behavior_to_lua(UndefinedBehavior::SemiStrict).unwrap();
-        assert_eq!(lua_ae, "semi-strict");
+        let lua = setup();
 
-        let jinja_ae: UndefinedBehavior = lua_to_undefined_behavior(&lua_ae).unwrap();
-        assert_eq!(jinja_ae, UndefinedBehavior::SemiStrict);
+        let lua_ae: LuaUndefinedBehavior = UndefinedBehavior::SemiStrict.into();
+        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "semi-strict");
+
+        let jinja_ae =
+            LuaUndefinedBehavior::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).unwrap();
+        assert_eq!(*jinja_ae, UndefinedBehavior::SemiStrict);
     }
 
     #[test]
     fn test_undefined_behavior_roundtrip_strict() {
-        let lua_ae = undefined_behavior_to_lua(UndefinedBehavior::Strict).unwrap();
-        assert_eq!(lua_ae, "strict");
+        let lua = setup();
 
-        let jinja_ae: UndefinedBehavior = lua_to_undefined_behavior(&lua_ae).unwrap();
-        assert_eq!(jinja_ae, UndefinedBehavior::Strict);
+        let lua_ae: LuaUndefinedBehavior = UndefinedBehavior::Strict.into();
+        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "strict");
+
+        let jinja_ae =
+            LuaUndefinedBehavior::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).unwrap();
+        assert_eq!(*jinja_ae, UndefinedBehavior::Strict);
     }
 
     #[test]
     fn test_undefined_behavior_roundtrip_invalid() {
-        assert!(lua_to_undefined_behavior("none").is_err());
+        let lua = setup();
+
+        assert!(LuaUndefinedBehavior::from_lua("none".into_lua(&lua).unwrap(), &lua).is_err());
     }
 
     // SYNTAX CONFIG TESTS //
 
     #[test]
-    fn test_table_to_syntax_args_valid() {
-        let lua = setup();
-        let args = lua.create_sequence_from(["START", "END"]).unwrap();
-        let (s, e) = table_to_syntax_args(&args, "block_delimiters").unwrap();
-        assert_eq!(s, "START");
-        assert_eq!(e, "END");
-    }
-
-    #[test]
-    fn test_table_to_syntax_args_too_many() {
-        let lua = setup();
-        let args = lua
-            .create_sequence_from(["START", "END", "too many"])
-            .unwrap();
-        assert!(table_to_syntax_args(&args, "block_delimiters").is_err());
-    }
-
-    #[test]
-    fn test_table_to_syntax_args_too_few() {
-        let lua = setup();
-        let args = lua.create_sequence_from(["START"]).unwrap();
-        assert!(table_to_syntax_args(&args, "block_delimiters").is_err());
-    }
-
-    #[test]
-    fn test_table_to_syntax_args_not_array() {
-        let lua = setup();
-        let table = lua.create_table().unwrap();
-        table.set("start", "START").unwrap();
-        table.set("end", "END").unwrap();
-
-        assert!(table_to_syntax_args(&table, "block_delimiters").is_err());
-    }
-
-    #[test]
-    fn test_syntax_config_defaults() {
-        let lua = setup();
-        let table = lua.create_table().unwrap();
-        let config = lua_to_syntax_config(table).unwrap();
-        let defaults = SyntaxConfig::default();
-        assert_eq!(config.block_delimiters(), defaults.block_delimiters());
-        assert_eq!(config.variable_delimiters(), defaults.variable_delimiters());
-        assert_eq!(config.comment_delimiters(), defaults.comment_delimiters());
-        assert_eq!(
-            config.line_statement_prefix(),
-            defaults.line_statement_prefix()
-        );
-        assert_eq!(config.line_comment_prefix(), defaults.line_comment_prefix());
-    }
-
-    #[test]
     fn test_syntax_config() {
-        let lua = setup();
-        let table = lua.create_table().unwrap();
-        table
-            .set("block_delimiters", ["BLOCK_S", "BLOCK_E"])
+        let builder = LuaSyntaxConfig::lua_builder();
+        builder
+            .lua_block_delimiters("BLOCK_S".to_string(), "BLOCK_E".to_string())
             .unwrap();
-        table
-            .set("variable_delimiters", ["VAR_S", "VAR_E"])
+        builder
+            .lua_variable_delimiters("VAR_S".to_string(), "VAR_E".to_string())
             .unwrap();
-        table.set("comment_delimiters", ["COM_S", "COM_E"]).unwrap();
-        table.set("line_statement_prefix", "LS").unwrap();
-        table.set("line_comment_prefix", "LC").unwrap();
+        builder
+            .lua_comment_delimiters("COM_S".to_string(), "COM_E".to_string())
+            .unwrap();
+        builder.lua_line_statement_prefix("LS".to_string()).unwrap();
+        builder.lua_line_comment_prefix("LC".to_string()).unwrap();
 
-        let config = lua_to_syntax_config(table).unwrap();
+        let config = builder.lua_build().unwrap();
+
         assert_eq!(config.block_delimiters(), ("BLOCK_S", "BLOCK_E"));
         assert_eq!(config.variable_delimiters(), ("VAR_S", "VAR_E"));
         assert_eq!(config.comment_delimiters(), ("COM_S", "COM_E"));
