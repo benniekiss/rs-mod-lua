@@ -42,7 +42,7 @@ jobs:
         ) }}
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
         id: filter
@@ -81,7 +81,7 @@ jobs:
         if: contains(matrix.job.target, 'linux')
         run: sudo apt-get -y update && sudo apt-get -y install libreadline-dev
 
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Setup Lux
         uses: lumen-oss/gh-actions-lux@d12a6bdf3a380de5b9d142272e6fd95d28b44b8d # v1
@@ -118,7 +118,7 @@ jobs:
         package: ${{ fromJSON(needs.filters.outputs.packages) }}
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
