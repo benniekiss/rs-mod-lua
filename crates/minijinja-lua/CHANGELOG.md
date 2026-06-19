@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.27...minijinja-lua-v0.2.0) - 2026-06-19
+
+### Added
+
+- *(minijinja-lua)* migrate Environment to macro userdata
+- [**breaking**] update to mlua v0.12
+
+### Fixed
+
+- *(minijinja-lua)* support returning multiple values from lua functions/callbacks ([#25](https://github.com/benniekiss/rs-mod-lua/pull/25))
+- *(minijinja-lua)* remove deprecated tests
+- *(minijinja-lua)* set correct method name
+- *(minijinja-lua)* fix `state` userdata type test
+
+### Other
+
+- bump package versions
+- *(minijinja-lua)* implement newtypes for several structs ([#26](https://github.com/benniekiss/rs-mod-lua/pull/26))
+- *(minijinja-lua)* bump minijinja version
+- *(minijinja-lua)* align lifetime annotation names
+- *(minijinja-lua)* cleanup userdata impl
+
 ## [0.1.27](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.1.26...minijinja-lua-v0.1.27) - 2026-06-11
 
 ### Other
