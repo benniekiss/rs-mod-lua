@@ -1,5 +1,5 @@
 package = "minijinja-lua"
-version = "0.1.27"
+version = "0.2.0"
 lua = ">=5.1"
 
 [description]
