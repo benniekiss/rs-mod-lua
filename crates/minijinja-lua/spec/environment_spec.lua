@@ -201,6 +201,20 @@ describe("Environment tests", function ()
             assert.True(env:eval("'lua' is lua"))
             assert.False(env:eval("'LUA' is lua"))
         end)
+
+        it("multivalue#expressions", function ()
+            local env = Environment:new()
+
+            local test = function (_, val)
+                return 1, 2, { foo = "bar" }
+            end
+
+            local rv1, rv2, rv3 = env:eval("test()", { test = test })
+
+            assert.Equal(1, rv1)
+            assert.Equal(2, rv2)
+            assert.Same(rv3, { foo = "bar" })
+        end)
     end)
 
     describe("templates#Environment", function ()
@@ -445,6 +459,38 @@ describe("Environment tests", function ()
             assert.Equal("I am baz!", rv)
             assert.Equal("baz", cb)
         end)
+
+        it("print_multivalue#templates", function ()
+            local env = Environment:new()
+
+            local ex = [=[[1, 2, {"foo": "bar"}]]=]
+
+            local test = function (_, val)
+                return 1, 2, { foo = "bar" }
+            end
+
+            -- The filter should preserve key order
+            local expr = "{% set val = test() %}{{ val }}"
+            local rv = env:render_str(expr, { test = test })
+
+            assert.Equal(ex, rv)
+        end)
+
+        it("iterate_multivalue#templates", function ()
+            local env = Environment:new()
+
+            local ex = [=[1 2 {"foo": "bar"} ]=]
+
+            local test = function (_, val)
+                return 1, 2, { foo = "bar" }
+            end
+
+            -- The filter should preserve key order
+            local expr = "{% for val in test() %}{{ val }} {% endfor %}"
+            local rv = env:render_str(expr, { test = test })
+
+            assert.Equal(ex, rv)
+        end)
     end)
 
     describe("callbacks#Environment", function ()
@@ -489,7 +535,7 @@ describe("Environment tests", function ()
             assert.Equal("I am baz!", rv)
         end)
 
-        it("uknown-method#callbacks", function ()
+        it("unknown-method#callbacks", function ()
             local env = Environment:new()
 
             local function bar()

@@ -190,21 +190,22 @@ where
     // Lookup a value by key in the current context
     methods.add_method(
         "lookup",
-        |lua, this, name: String| -> mlua::Result<Option<mlua::Value>> {
+        |lua, this, name: String| -> mlua::Result<mlua::MultiValue> {
             // Since the context may contain dynamic objects, convert the returned value
             // through the custom layer before returning.
             Ok(this
                 .state()
                 .lookup(&name)
-                .and_then(|v| minijinja_to_lua(lua, &v)))
+                .and_then(|v| minijinja_to_lua(lua, &v))
+                .unwrap_or_default())
         },
     );
 
     // Call the named macro with the provided args.
     methods.add_method(
         "call_macro",
-        |lua, this, (name, args): (String, mlua::Variadic<mlua::Value>)| -> mlua::Result<String> {
-            let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, args, true);
+        |lua, this, (name, mut args): (String, mlua::MultiValue)| -> mlua::Result<String> {
+            let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, &mut args, true);
 
             this.state()
                 .call_macro(&name, &args)
@@ -240,15 +241,15 @@ where
         "apply_filter",
         |lua,
          this,
-         (filter, args): (String, mlua::Variadic<mlua::Value>)|
-         -> mlua::Result<Option<mlua::Value>> {
-            let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, args, true);
+         (filter, mut args): (String, mlua::MultiValue)|
+         -> mlua::Result<mlua::MultiValue> {
+            let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, &mut args, true);
 
             // Since the context may contain dynamic objects, convert the returned value
             // through the custom layer before returning.
             this.state()
                 .apply_filter(&filter, &args)
-                .map(|v| minijinja_to_lua(lua, &v))
+                .map(|v| minijinja_to_lua(lua, &v).unwrap_or_default())
                 .map_err(mlua::Error::external)
         },
     );
@@ -256,8 +257,8 @@ where
     // Perform the named test with the provided args
     methods.add_method(
         "perform_test",
-        |lua, this, (test, args): (String, mlua::Variadic<mlua::Value>)| -> mlua::Result<bool> {
-            let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, args, true);
+        |lua, this, (test, mut args): (String, mlua::MultiValue)| -> mlua::Result<bool> {
+            let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, &mut args, true);
 
             this.state()
                 .perform_test(&test, &args)
@@ -287,25 +288,27 @@ where
     // See: https://docs.rs/minijinja/latest/minijinja/struct.State.html#method.get_temp
     methods.add_method(
         "get_temp",
-        |lua, this, name: String| -> mlua::Result<Option<mlua::Value>> {
+        |lua, this, name: String| -> mlua::Result<mlua::MultiValue> {
             // Since the context may contain dynamic objects, convert the returned value
             // through the custom layer before returning.
             Ok(this
                 .state()
                 .get_temp(&name)
-                .and_then(|v| minijinja_to_lua(lua, &v)))
+                .and_then(|v| minijinja_to_lua(lua, &v))
+                .unwrap_or_default())
         },
     );
 
     // Set a temp value and return the old value
     methods.add_method(
         "set_temp",
-        |lua, this, (name, val): (String, mlua::Value)| -> mlua::Result<Option<mlua::Value>> {
+        |lua, this, (name, val): (String, mlua::Value)| -> mlua::Result<mlua::MultiValue> {
             if let Some(val) = lua_to_minijinja(lua, &val) {
                 Ok(this
                     .state()
                     .set_temp(&name, val)
-                    .and_then(|v| minijinja_to_lua(lua, &v)))
+                    .and_then(|v| minijinja_to_lua(lua, &v))
+                    .unwrap_or_default())
             } else {
                 Err(mlua::Error::FromLuaConversionError {
                     from: val.type_name(),
@@ -319,7 +322,7 @@ where
     // Get a temp value or call `func` to add the value
     methods.add_method(
         "get_or_set_temp",
-        |lua, this, (name, func): (String, mlua::Function)| -> mlua::Result<Option<mlua::Value>> {
+        |lua, this, (name, func): (String, mlua::Function)| -> mlua::Result<mlua::MultiValue> {
             let val = match this.state().get_temp(&name) {
                 Some(v) => v,
                 None => {
@@ -338,7 +341,7 @@ where
                 },
             };
 
-            Ok(minijinja_to_lua(lua, &val))
+            Ok(minijinja_to_lua(lua, &val).unwrap_or_default())
         },
     );
 }
