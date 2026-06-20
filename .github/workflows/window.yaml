@@ -1,0 +1,86 @@
+name: Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to test'
+        required: false
+        type: choice
+        default: all
+        options:
+          - all
+          - minijinja-lua
+          - rsjson-lua
+          - rsre-lua
+
+env:
+  ALL_PACKAGES: |-
+    [
+      "minijinja-lua",
+      "rsjson-lua",
+      "rsre-lua"
+    ]
+
+jobs:
+  filters:
+    if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
+    runs-on: ubuntu-24.04
+
+    outputs:
+      packages: |-
+        ${{ case(
+          inputs.package == 'all', env.ALL_PACKAGES,
+          inputs.package != '', format('["{0}"]', inputs.package),
+          steps.filter.outputs.changes != '[]', steps.filter.outputs.changes,
+          '[]'
+        ) }}
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        id: filter
+        with:
+          filters: |
+            minijinja-lua: 'crates/minijinja-lua/**'
+            rsjson-lua: 'crates/rsjson-lua/**'
+            rsre-lua: 'crates/rsre-lua/**'
+
+  lx-test:
+    # Do not run if no packages were changed or on release-plz PRs
+    if: needs.filters.outputs.packages != '[]' && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
+    name: ${{ matrix.package }} (${{ matrix.job.target }} - Lua ${{ matrix.lua_version }})
+    runs-on: ${{ matrix.job.os }}
+    needs: filters
+
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { os: windows-2025, target: x86_64-pc-windows-msvc }
+        lua_version:
+          # - 5.1
+          # - 5.2
+          # - 5.3
+          - 5.4
+          # - 5.5
+        package: ${{ fromJSON(needs.filters.outputs.packages) }}
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
+
+      - name: Setup Lux
+        run: |
+          cargo install --git https://github.com/benniekiss/lux --branch windows lux-cli
+
+      - name: Run tests (windows)
+        if: ${{ endsWith(matrix.job.target, '-msvc') }}
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
