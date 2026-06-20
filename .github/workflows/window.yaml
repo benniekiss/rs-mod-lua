@@ -78,6 +78,21 @@ jobs:
         run: |
           cargo install --git https://github.com/benniekiss/lux --branch windows --locked --profile release --no-default-features --features vendored lux-cli
 
+      - name: Locate and inspect rsre.dll
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          lx --lua-version ${{ matrix.lua_version }} build --package ${{ matrix.package }}
+
+          $dll = Get-ChildItem -Path "D:\a\rs-mod-lua\rs-mod-lua\.lux" -Recurse -Filter "rsre.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -eq $dll) {
+            Write-Host "rsre.dll not found yet under .lux — it may not have been built at this point in the workflow."
+          } else {
+            Write-Host "Found: $($dll.FullName)"
+            & "${env:VCToolsInstallDir}bin\Hostx64\x64\dumpbin.exe" /dependents $dll.FullName
+          }
+
       - name: Run tests (windows)
         if: ${{ endsWith(matrix.job.target, '-msvc') }}
         shell: cmd
