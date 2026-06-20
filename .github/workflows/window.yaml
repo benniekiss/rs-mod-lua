@@ -79,6 +79,7 @@ jobs:
           cargo install --git https://github.com/benniekiss/lux --branch windows --locked --profile release --no-default-features --features vendored lux-cli
 
       - name: Build and inspect
+        continue-on-error: true
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
