@@ -96,9 +96,11 @@ jobs:
       - name: Run tests (windows)
         if: ${{ endsWith(matrix.job.target, '-msvc') }}
         shell: cmd
+        env:
+          RUST_BACKTRACE: 1
         run: |
           call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          RUST_BACKTRACE=1 lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
+          lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
 
       - name: Run tests (unix)
         if: ${{ !endsWith(matrix.job.target, '-msvc') }}
