@@ -208,8 +208,7 @@ impl LuaFunctionObject {
             lua.scope(|scope| {
                 if self.pass_state() {
                     let val = state
-                        .map(LuaStateRef::from)
-                        .map(|s| scope.create_userdata::<LuaStateRef>(s))
+                        .map(|s| scope.create_userdata::<LuaStateRef>(s.into()))
                         .transpose()?
                         .map(mlua::Value::UserData)
                         .unwrap_or_default();
@@ -239,8 +238,7 @@ impl LuaFunctionObject {
             lua.scope(|scope| {
                 if self.pass_state() {
                     let val = state
-                        .map(LuaStateMut::from)
-                        .map(|s| scope.create_userdata::<LuaStateMut>(s))
+                        .map(|s| scope.create_userdata::<LuaStateMut>(s.into()))
                         .transpose()?
                         .map(mlua::Value::UserData)
                         .unwrap_or_default();
