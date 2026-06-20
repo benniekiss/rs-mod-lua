@@ -88,6 +88,16 @@ jobs:
         with:
           version: ${{ vars.LUX_VERSION }}
 
+      - name: Inspect (windows)
+        if: ${{ endsWith(matrix.job.target, '-msvc') }}
+        shell: cmd
+        env:
+          RUST_BACKTRACE: 1
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          lx --lua-version ${{ matrix.lua_version }} build --package ${{ matrix.package }}
+          dumpbin /dependents "D:\a\rs-mod-lua\rs-mod-lua\.lux\${{ matrix.lua_version }}\*\lib\rsre.dll"
+
       # The ilammy/msvc-dev-cmd action has not been updated in years, including
       # relying on an outdated node version. To address these issues, setup MSVC
       # directly, as done in:
