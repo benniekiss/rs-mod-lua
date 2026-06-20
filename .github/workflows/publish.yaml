@@ -73,7 +73,7 @@ jobs:
   build-release:
     name: ${{ matrix.job.target }}-${{ matrix.lua_version }}
     runs-on: ${{ matrix.job.os }}
-    needs: [lua-version, upload-luarocks]
+    needs: lua-version
 
     strategy:
       fail-fast: false
