@@ -76,7 +76,7 @@ jobs:
 
       - name: Setup Lux
         run: |
-          cargo install --git https://github.com/benniekiss/lux --branch windows --locked --profile release --no-default-features --features vendored --bin lux-cli
+          cargo install --git https://github.com/benniekiss/lux --branch windows --locked --profile release --no-default-features --features vendored lux-cli
 
       - name: Run tests (windows)
         if: ${{ endsWith(matrix.job.target, '-msvc') }}
