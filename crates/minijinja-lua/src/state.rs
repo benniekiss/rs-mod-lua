@@ -361,6 +361,10 @@ pub(crate) fn with_lua<R, F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>>(
     f: F,
 ) -> Result<R, mlua::Error> {
     CURRENT_LUA.with(|handle| {
+        // SAFETY: The stored Lua pointer is only valid within the context of the `bind_lua` call
+        // on the same thread which stored it. Callers must not attempt or otherwise retain
+        // the `&Lua` reference, or any references to it, that could outlive the scope of the
+        // `bind_lua` call.
         let ptr = unsafe { (handle.load(Ordering::Relaxed) as *const mlua::Lua).as_ref() };
 
         match ptr {
