@@ -97,7 +97,7 @@ jobs:
         if: ${{ endsWith(matrix.job.target, '-msvc') }}
         shell: cmd
         run: |
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
 
       - name: Run tests (unix)
