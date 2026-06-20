@@ -3,6 +3,7 @@
 pub mod contrib;
 mod convert;
 mod environment;
+mod lua;
 mod state;
 
 use mlua::LuaSerdeExt;

@@ -22,7 +22,7 @@ use crate::{
         lua_to_minijinja,
         minijinja_to_lua,
     },
-    state::bind_lua,
+    lua::bind_lua,
 };
 
 /// A wrapper around a [`minijinja::Environment`]. This wrapper can be serialized into

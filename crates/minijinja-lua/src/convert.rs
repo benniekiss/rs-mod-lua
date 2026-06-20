@@ -30,7 +30,10 @@ use minijinja::{
 };
 use mlua::{LuaSerdeExt, ObjectLike};
 
-use crate::state::{LuaStateMut, LuaStateRef, with_lua};
+use crate::{
+    lua::with_lua,
+    state::{LuaStateMut, LuaStateRef},
+};
 
 #[derive(Debug, Clone)]
 pub(crate) struct LuaJinjaObjectWrapper<V> {
