@@ -105,9 +105,8 @@ where
         T: mlua::FromLua,
     {
         with_lua(|lua| {
-            let value = lua.registry_value::<T>(&self.key())?;
-
-            f(lua, value)
+            lua.registry_value::<T>(&self.key())
+                .and_then(|value| f(lua, value))
         })
         .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::InvalidOperation))
     }
@@ -204,16 +203,17 @@ impl LuaFunctionObject {
             // This prevents misuse in lua, such as if the callback assigned the `minijinja::State`
             // to a global variable.
             lua.scope(|scope| {
-                if let Some(st) = state
-                    && self.pass_state()
-                {
-                    let userdate = scope.create_userdata::<LuaStateRef>(st.into())?;
-                    mv.push_front(mlua::Value::UserData(userdate.clone()));
-                };
-
-                let res = &mut func.call(mv)?;
-
-                Ok(lua_multi_to_minijinja(lua, res))
+                if self.pass_state() {
+                    let val = state
+                        .map(LuaStateRef::from)
+                        .map(|s| scope.create_userdata::<LuaStateRef>(s))
+                        .transpose()?
+                        .map(mlua::Value::UserData)
+                        .unwrap_or_default();
+                    mv.push_front(val);
+                }
+                func.call(mv)
+                    .map(|mut v| lua_multi_to_minijinja(lua, &mut v))
             })
         })
     }
@@ -234,16 +234,17 @@ impl LuaFunctionObject {
             // This prevents misuse in lua, such as if the callback assigned the `minijinja::State`
             // to a global variable.
             lua.scope(|scope| {
-                if let Some(st) = state
-                    && self.pass_state()
-                {
-                    let userdate = scope.create_userdata::<LuaStateMut>(st.into())?;
-                    mv.push_front(mlua::Value::UserData(userdate.clone()));
-                };
-
-                let res = &mut func.call(mv)?;
-
-                Ok(lua_multi_to_minijinja(lua, res))
+                if self.pass_state() {
+                    let val = state
+                        .map(LuaStateMut::from)
+                        .map(|s| scope.create_userdata::<LuaStateMut>(s))
+                        .transpose()?
+                        .map(mlua::Value::UserData)
+                        .unwrap_or_default();
+                    mv.push_front(val);
+                }
+                func.call(mv)
+                    .map(|mut v| lua_multi_to_minijinja(lua, &mut v))
             })
         })
     }
@@ -317,13 +318,14 @@ impl JinjaObject for LuaTableObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let userdate = scope.create_userdata::<LuaStateRef>(state.into())?;
-                    mv.push_front(mlua::Value::UserData(userdate.clone()));
-                };
-
-                let res = &mut table.call(mv)?;
-
-                Ok(lua_multi_to_minijinja(lua, res).unwrap_or_default())
+                    let val = scope
+                        .create_userdata::<LuaStateRef>(state.into())
+                        .map(mlua::Value::UserData)?;
+                    mv.push_front(val);
+                }
+                table
+                    .call(mv)
+                    .map(|mut v| lua_multi_to_minijinja(lua, &mut v).unwrap_or_default())
             })
         })
     }
@@ -339,13 +341,14 @@ impl JinjaObject for LuaTableObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let userdate = scope.create_userdata::<LuaStateRef>(state.into())?;
-                    mv.push_front(mlua::Value::UserData(userdate.clone()));
-                };
-
-                let res = &mut table.call_method(method, mv)?;
-
-                Ok(lua_multi_to_minijinja(lua, res).unwrap_or_default())
+                    let val = scope
+                        .create_userdata::<LuaStateRef>(state.into())
+                        .map(mlua::Value::UserData)?;
+                    mv.push_front(val);
+                }
+                table
+                    .call_method(method, mv)
+                    .map(|mut v| lua_multi_to_minijinja(lua, &mut v).unwrap_or_default())
             })
         })
         .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::UnknownMethod))
@@ -380,35 +383,28 @@ impl JinjaObject for LuaTableObject {
     }
 
     fn enumerate(self: &std::sync::Arc<Self>) -> Enumerator {
-        let items = self.with(|lua, table: mlua::Table| {
-            if self.array_like() {
-                table
+        self.with(|lua, table: mlua::Table| {
+            let items = match self.array_like() {
+                true => table
                     .sequence_values::<mlua::Value>()
                     .map(|v| {
-                        let v = v?;
-                        let value = lua_to_minijinja(lua, &v).unwrap_or_default();
-
-                        Ok(value)
+                        let v = v.unwrap_or_default();
+                        lua_to_minijinja(lua, &v).unwrap_or_default()
                     })
-                    .collect::<Result<Vec<JinjaValue>, mlua::Error>>()
-            } else {
-                table
+                    .collect::<Vec<JinjaValue>>(),
+                _ => table
                     .pairs::<mlua::Value, mlua::Value>()
                     .map(|pair| {
-                        let (k, _v) = pair?;
-
-                        let key = lua_to_minijinja(lua, &k).unwrap_or_default();
-
-                        Ok(key)
+                        let k = pair.unwrap_or_default().0;
+                        lua_to_minijinja(lua, &k).unwrap_or_default()
                     })
-                    .collect::<Result<Vec<JinjaValue>, mlua::Error>>()
-            }
-        });
+                    .collect::<Vec<JinjaValue>>(),
+            };
 
-        match items {
-            Ok(items) => Enumerator::Iter(Box::new(items.into_iter())),
-            Err(_) => Enumerator::NonEnumerable,
-        }
+            Ok(items)
+        })
+        .map(|items| Enumerator::Iter(Box::new(items.into_iter())))
+        .unwrap_or(Enumerator::NonEnumerable)
     }
 
     fn custom_cmp(self: &Arc<Self>, other: &minijinja::value::DynObject) -> Option<cmp::Ordering> {
@@ -472,13 +468,14 @@ impl JinjaObject for LuaUserDataObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let ud = scope.create_userdata::<LuaStateRef>(state.into())?;
-                    mv.push_front(mlua::Value::UserData(ud.clone()));
-                };
-
-                let res = &mut userdata.call(mv)?;
-
-                Ok(lua_multi_to_minijinja(lua, res).unwrap_or_default())
+                    let val = scope
+                        .create_userdata::<LuaStateRef>(state.into())
+                        .map(mlua::Value::UserData)?;
+                    mv.push_front(val);
+                }
+                userdata
+                    .call(mv)
+                    .map(|mut v| lua_multi_to_minijinja(lua, &mut v).unwrap_or_default())
             })
         })
     }
@@ -494,13 +491,14 @@ impl JinjaObject for LuaUserDataObject {
 
             lua.scope(move |scope| {
                 if self.pass_state() {
-                    let ud = scope.create_userdata::<LuaStateRef>(state.into())?;
-                    mv.push_front(mlua::Value::UserData(ud.clone()));
-                };
-
-                let res = &mut userdata.call_method(method, mv)?;
-
-                Ok(lua_multi_to_minijinja(lua, res).unwrap_or_default())
+                    let val = scope
+                        .create_userdata::<LuaStateRef>(state.into())
+                        .map(mlua::Value::UserData)?;
+                    mv.push_front(val);
+                }
+                userdata
+                    .call_method(method, mv)
+                    .map(|mut v| lua_multi_to_minijinja(lua, &mut v).unwrap_or_default())
             })
         })
         .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::UnknownMethod))
@@ -508,10 +506,9 @@ impl JinjaObject for LuaUserDataObject {
 
     fn get_value(self: &Arc<Self>, key: &JinjaValue) -> Option<JinjaValue> {
         self.with(|lua, userdata: mlua::AnyUserData| {
-            let key = lua.to_value(key)?;
-            let value = userdata.get(key)?;
-
-            Ok(lua_to_minijinja(lua, &value))
+            lua.to_value(key)
+                .and_then(|k| userdata.get(k))
+                .map(|v| lua_to_minijinja(lua, &v))
         })
         .ok()
         .flatten()
