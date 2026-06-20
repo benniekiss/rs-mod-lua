@@ -28,59 +28,78 @@ use minijinja::{
         ValueKind as JinjaValueKind,
     },
 };
-use mlua::{IntoLua, LuaSerdeExt, ObjectLike};
+use mlua::{LuaSerdeExt, ObjectLike};
 
 use crate::state::{LuaStateMut, LuaStateRef, with_lua};
 
-pub(crate) trait LuaObject: JinjaObject
-where
-    Self: Sized + Clone + 'static,
-{
-    type LuaValue: Clone + mlua::FromLua + mlua::IntoLua;
+#[derive(Debug, Clone)]
+pub(crate) struct LuaJinjaObjectWrapper<V> {
+    key: Arc<mlua::RegistryKey>,
+    pass_state: Arc<AtomicBool>,
+    array_like: Arc<AtomicBool>,
+    lua_type: PhantomData<fn() -> V>,
+}
 
+impl<V> LuaJinjaObjectWrapper<V>
+where
+    V: Clone + mlua::FromLua + mlua::IntoLua + 'static,
+    LuaJinjaObjectWrapper<V>: JinjaObject,
+{
     /// Create a new wrapper around the [`mlua::Value`] associated with `key`
-    fn new(key: mlua::RegistryKey) -> Self;
+    pub(crate) fn new(key: mlua::RegistryKey) -> Self {
+        Self::from(key)
+    }
 
     /// Get the stored `RegistryKey`
-    fn key(&self) -> Arc<mlua::RegistryKey>;
+    pub(crate) fn key(&self) -> Arc<mlua::RegistryKey> {
+        self.key.clone()
+    }
 
     /// Create a wrapper from an [`mlua::Value`]
-    fn from_value(lua: &mlua::Lua, value: &Self::LuaValue) -> mlua::Result<Self> {
+    pub(crate) fn from_value(lua: &mlua::Lua, value: &V) -> mlua::Result<Self> {
         lua.create_registry_value(value.clone()).map(Self::new)
     }
 
     /// Convert the wrapper to an [`mlua::Value`]
-    fn to_value(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        lua.registry_value::<Self::LuaValue>(&self.key())
+    pub(crate) fn to_value(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.registry_value::<V>(&self.key())
             .and_then(|v| v.into_lua(lua))
     }
 
     /// Create a reference to a wrapper from a [`minijinja::Value`]
-    fn from_jinja_ref(value: &JinjaValue) -> Result<&Self, JinjaError> {
+    pub(crate) fn from_jinja_ref(value: &JinjaValue) -> Result<&Self, JinjaError> {
         value
             .downcast_object_ref::<Self>()
             .ok_or_else(|| JinjaError::new(JinjaErrorKind::CannotDeserialize, ""))
     }
 
     /// Convert the wrapper to a [`minijinja::Value`]
-    fn to_jinja(&self) -> JinjaValue {
+    pub(crate) fn to_jinja(&self) -> JinjaValue {
         JinjaValue::from_object(self.clone())
     }
 
     /// Whether to pass a [`minijinja::State`] to function calls, if provided
-    fn pass_state(&self) -> bool;
+    pub(crate) fn pass_state(&self) -> bool {
+        self.pass_state.load(Ordering::Relaxed)
+    }
 
     /// Set whether to pass a [`minijinja::State`] to function calls, if provided
-    fn set_pass_state(&mut self, enable: bool);
+    pub(crate) fn set_pass_state(&mut self, enable: bool) {
+        self.pass_state.store(enable, Ordering::Relaxed);
+    }
 
     /// Whether to treat the wrapper as an array
-    fn array_like(&self) -> bool;
+    pub(crate) fn array_like(&self) -> bool {
+        self.array_like.load(Ordering::Relaxed)
+    }
 
     /// Set whether to treat the wrapper as an array
-    fn set_array_like(&mut self, enable: bool);
+    pub(crate) fn set_array_like(&mut self, enable: bool) {
+        self.array_like.store(enable, Ordering::Relaxed);
+    }
 
     /// Execute a callback with [`mlua::mlua::Lua`] and the retrieved [`mlua::Value`] as arguments
-    fn with<R, F, T>(&self, f: F) -> Result<R, JinjaError>
+    pub(crate) fn with<R, F, T>(&self, f: F) -> Result<R, JinjaError>
     where
         F: FnOnce(&mlua::Lua, T) -> Result<R, mlua::Error>,
         T: mlua::FromLua,
@@ -94,21 +113,7 @@ where
     }
 }
 
-#[derive(Debug, Clone)]
-pub(crate) struct LuaJinjaObjectWrapper<V>
-where
-    V: mlua::FromLua,
-{
-    key: Arc<mlua::RegistryKey>,
-    pass_state: Arc<AtomicBool>,
-    array_like: Arc<AtomicBool>,
-    lua_type: PhantomData<fn() -> V>,
-}
-
-impl<V> Drop for LuaJinjaObjectWrapper<V>
-where
-    V: mlua::FromLua,
-{
+impl<V> Drop for LuaJinjaObjectWrapper<V> {
     fn drop(&mut self) {
         let _ = with_lua(|lua| {
             lua.expire_registry_values();
@@ -117,10 +122,7 @@ where
     }
 }
 
-impl<V> From<mlua::RegistryKey> for LuaJinjaObjectWrapper<V>
-where
-    V: mlua::FromLua,
-{
+impl<V> From<mlua::RegistryKey> for LuaJinjaObjectWrapper<V> {
     fn from(value: mlua::RegistryKey) -> Self {
         Self {
             key: Arc::new(value),
@@ -133,8 +135,8 @@ where
 
 impl<V> From<LuaJinjaObjectWrapper<V>> for JinjaValue
 where
-    V: mlua::FromLua,
-    LuaJinjaObjectWrapper<V>: LuaObject,
+    V: Clone + mlua::FromLua + mlua::IntoLua + 'static,
+    LuaJinjaObjectWrapper<V>: JinjaObject,
 {
     fn from(value: LuaJinjaObjectWrapper<V>) -> Self {
         value.to_jinja()
@@ -143,8 +145,8 @@ where
 
 impl<V> TryFrom<JinjaValue> for LuaJinjaObjectWrapper<V>
 where
-    V: mlua::FromLua,
-    LuaJinjaObjectWrapper<V>: LuaObject,
+    V: Clone + mlua::FromLua + mlua::IntoLua + 'static,
+    LuaJinjaObjectWrapper<V>: JinjaObject,
 {
     type Error = JinjaError;
 
@@ -155,8 +157,8 @@ where
 
 impl<V> mlua::FromLua for LuaJinjaObjectWrapper<V>
 where
-    V: mlua::FromLua + mlua::IntoLua,
-    LuaJinjaObjectWrapper<V>: LuaObject<LuaValue = V>,
+    V: Clone + mlua::FromLua + mlua::IntoLua + 'static,
+    LuaJinjaObjectWrapper<V>: JinjaObject,
 {
     fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
         let value = V::from_lua(value, lua)?;
@@ -166,43 +168,11 @@ where
 
 impl<V> mlua::IntoLua for LuaJinjaObjectWrapper<V>
 where
-    V: mlua::FromLua + mlua::IntoLua,
-    LuaJinjaObjectWrapper<V>: LuaObject,
-{
-    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        self.to_value(lua)
-    }
-}
-
-impl<V> LuaObject for LuaJinjaObjectWrapper<V>
-where
     V: Clone + mlua::FromLua + mlua::IntoLua + 'static,
     LuaJinjaObjectWrapper<V>: JinjaObject,
 {
-    type LuaValue = V;
-
-    fn new(key: mlua::RegistryKey) -> Self {
-        Self::from(key)
-    }
-
-    fn key(&self) -> Arc<mlua::RegistryKey> {
-        self.key.clone()
-    }
-
-    fn pass_state(&self) -> bool {
-        self.pass_state.load(Ordering::Relaxed)
-    }
-
-    fn set_pass_state(&mut self, enable: bool) {
-        self.pass_state.store(enable, Ordering::Relaxed);
-    }
-
-    fn array_like(&self) -> bool {
-        self.array_like.load(Ordering::Relaxed)
-    }
-
-    fn set_array_like(&mut self, enable: bool) {
-        self.array_like.store(enable, Ordering::Relaxed);
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        self.to_value(lua)
     }
 }
 
@@ -913,9 +883,8 @@ pub(crate) fn lua_to_minijinja(lua: &mlua::Lua, value: &mlua::Value) -> Option<J
                 if table_is_array_like(table, Some(false)) {
                     obj.set_array_like(true);
                 };
-                obj
+                obj.into()
             })
-            .map(|v| v.into())
             .ok(),
 
         mlua::Value::Function(func) => LuaFunctionObject::from_value(lua, func)
@@ -1172,9 +1141,7 @@ mod tests {
     #[test]
     fn test_lua_minijinja_roundtrip_function() {
         let lua = setup();
-        let func = lua
-            .create_function(|_: &mlua::Lua, _: mlua::Value| Ok("BOO"))
-            .unwrap();
+        let func = lua.create_function(|_: &mlua::Lua, ()| Ok("BOO")).unwrap();
 
         let jinja = lua_to_minijinja(&lua, &mlua::Value::Function(func)).unwrap();
         assert_eq!(jinja.kind(), JinjaValueKind::Plain);

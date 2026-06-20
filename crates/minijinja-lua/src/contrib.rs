@@ -254,7 +254,7 @@ mod test {
         );
         assert_eq!(
             minijinja_types(mlua::Value::Function(
-                lua.create_function(|_, _: mlua::Value| Ok(())).unwrap()
+                lua.create_function(|_, ()| Ok(())).unwrap()
             ))
             .unwrap(),
             "function"
@@ -277,7 +277,7 @@ mod test {
         );
         assert_eq!(
             minijinja_types(mlua::Value::Thread(
-                lua.create_thread(lua.create_function(|_, _: mlua::Value| Ok(())).unwrap())
+                lua.create_thread(lua.create_function(|_, ()| Ok(())).unwrap())
                     .unwrap()
             ))
             .unwrap(),

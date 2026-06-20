@@ -16,8 +16,8 @@ use crate::{
     convert::{
         LuaAutoEscape,
         LuaFunctionObject,
-        LuaObject,
         LuaSyntaxConfig,
+        LuaTableObject,
         LuaUndefinedBehavior,
         lua_to_minijinja,
         minijinja_to_lua,
@@ -171,8 +171,8 @@ impl LuaEnvironment {
     }
 
     #[lua(name = "remove_template", infallible)]
-    pub(crate) fn lua_remove_template(&mut self, lua: &mlua::Lua, name: String) {
-        bind_lua(lua, || self.0.remove_template(&name))
+    pub(crate) fn lua_remove_template(&mut self, lua: &mlua::Lua, name: &str) {
+        bind_lua(lua, || self.0.remove_template(name))
     }
 
     #[lua(name = "clear_templates", infallible)]
@@ -184,7 +184,7 @@ impl LuaEnvironment {
     pub(crate) fn lua_undeclared_variables(
         &mut self,
         lua: &mlua::Lua,
-        name: String,
+        name: &str,
         nested: Option<bool>,
     ) -> mlua::Result<mlua::Value> {
         bind_lua(lua, || {
@@ -192,7 +192,7 @@ impl LuaEnvironment {
 
             let vars = self
                 .0
-                .get_template(&name)
+                .get_template(name)
                 .map_err(mlua::Error::external)?
                 .undeclared_variables(nested);
 
@@ -206,8 +206,7 @@ impl LuaEnvironment {
         lua: &mlua::Lua,
         callback: mlua::Function,
     ) -> mlua::Result<()> {
-        let key = lua.create_registry_value(callback)?;
-        let func = LuaFunctionObject::new(key);
+        let func = LuaFunctionObject::from_value(lua, &callback)?;
 
         self.0.set_loader(move |name| {
             let source = func.with_func(args!(name), None)?;
@@ -232,8 +231,7 @@ impl LuaEnvironment {
         lua: &mlua::Lua,
         callback: mlua::Function,
     ) -> mlua::Result<()> {
-        let key = lua.create_registry_value(callback)?;
-        let func = LuaFunctionObject::new(key);
+        let func = LuaFunctionObject::from_value(lua, &callback)?;
 
         self.0.set_path_join_callback(move |name, parent| {
             func.with_func(args!(name, parent), None)
@@ -252,8 +250,7 @@ impl LuaEnvironment {
         lua: &mlua::Lua,
         callback: mlua::Function,
     ) -> mlua::Result<()> {
-        let key = lua.create_registry_value(callback)?;
-        let mut func = LuaFunctionObject::new(key);
+        let mut func = LuaFunctionObject::from_value(lua, &callback)?;
         func.set_pass_state(true);
 
         self.0
@@ -284,8 +281,7 @@ impl LuaEnvironment {
         lua: &mlua::Lua,
         callback: mlua::Function,
     ) -> mlua::Result<()> {
-        let key = lua.create_registry_value(callback)?;
-        let func = LuaFunctionObject::new(key);
+        let func = LuaFunctionObject::from_value(lua, &callback)?;
 
         self.0
             .set_auto_escape_callback(move |name| -> minijinja::AutoEscape {
@@ -306,8 +302,7 @@ impl LuaEnvironment {
         lua: &mlua::Lua,
         callback: mlua::Function,
     ) -> mlua::Result<()> {
-        let key = lua.create_registry_value(callback)?;
-        let mut func = LuaFunctionObject::new(key);
+        let mut func = LuaFunctionObject::from_value(lua, &callback)?;
         func.set_pass_state(true);
 
         self.0.set_formatter(move |out, state, value| {
@@ -340,18 +335,18 @@ impl LuaEnvironment {
     pub(crate) fn lua_render_template(
         &mut self,
         lua: &mlua::Lua,
-        name: String,
+        name: &str,
         ctx: Option<mlua::Table>,
     ) -> mlua::Result<String> {
-        let ctx = ctx.unwrap_or(lua.create_table()?);
-
-        let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
+        let ctx: Option<JinjaValue> = ctx
+            .and_then(|t| LuaTableObject::from_value(lua, &t).ok())
+            .map(|obj| obj.into());
 
         bind_lua(lua, || {
             self.0
-                .get_template(&name)
+                .get_template(name)
                 .map_err(mlua::Error::external)?
-                .render(context)
+                .render(ctx)
                 .map_err(mlua::Error::external)
         })
     }
@@ -360,18 +355,19 @@ impl LuaEnvironment {
     pub(crate) fn lua_render_str(
         &self,
         lua: &mlua::Lua,
-        source: String,
+        source: &str,
         ctx: Option<mlua::Table>,
         name: Option<String>,
     ) -> mlua::Result<String> {
-        let ctx = ctx.unwrap_or(lua.create_table()?);
+        let ctx: Option<JinjaValue> = ctx
+            .and_then(|t| LuaTableObject::from_value(lua, &t).ok())
+            .map(|obj| obj.into());
 
         let name = name.unwrap_or("<string>".to_string());
-        let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
 
         bind_lua(lua, || {
             self.0
-                .render_named_str(&name, &source, context)
+                .render_named_str(&name, source, ctx)
                 .map_err(mlua::Error::external)
         })
     }
@@ -380,24 +376,23 @@ impl LuaEnvironment {
     pub(crate) fn lua_render_captured(
         &mut self,
         lua: &mlua::Lua,
-        name: String,
+        name: &str,
         ctx: Option<mlua::Table>,
         callback: mlua::Function,
     ) -> mlua::Result<mlua::MultiValue> {
-        let key = lua.create_registry_value(callback)?;
-        let mut func = LuaFunctionObject::new(key);
+        let mut func = LuaFunctionObject::from_value(lua, &callback)?;
         func.set_pass_state(true);
 
-        let ctx = ctx.unwrap_or(lua.create_table()?);
-
-        let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
+        let ctx: Option<JinjaValue> = ctx
+            .and_then(|t| LuaTableObject::from_value(lua, &t).ok())
+            .map(|obj| obj.into());
 
         bind_lua(lua, || {
             let mut captured = self
                 .0
-                .get_template(&name)
+                .get_template(name)
                 .map_err(mlua::Error::external)?
-                .render_captured(context)
+                .render_captured(ctx)
                 .map_err(mlua::Error::external)?;
 
             let mut mv = captured
@@ -418,19 +413,19 @@ impl LuaEnvironment {
     pub(crate) fn lua_eval(
         &self,
         lua: &mlua::Lua,
-        source: String,
+        source: &str,
         ctx: Option<mlua::Table>,
     ) -> mlua::Result<mlua::MultiValue> {
-        let ctx = ctx.unwrap_or(lua.create_table()?);
-
-        let context = lua_to_minijinja(lua, &mlua::Value::Table(ctx));
+        let ctx: Option<JinjaValue> = ctx
+            .and_then(|t| LuaTableObject::from_value(lua, &t).ok())
+            .map(|obj| obj.into());
 
         bind_lua(lua, || {
             let expr = self
                 .0
-                .compile_expression(&source)
+                .compile_expression(source)
                 .map_err(mlua::Error::external)?
-                .eval(&context)
+                .eval(ctx)
                 .map_err(mlua::Error::external)?;
 
             minijinja_to_lua(lua, &expr).ok_or_else(|| {
@@ -447,8 +442,7 @@ impl LuaEnvironment {
         filter: mlua::Function,
         pass_state: Option<bool>,
     ) -> mlua::Result<()> {
-        let key = lua.create_registry_value(filter)?;
-        let mut func = LuaFunctionObject::new(key);
+        let mut func = LuaFunctionObject::from_value(lua, &filter)?;
         func.set_pass_state(pass_state.unwrap_or(true));
 
         self.0
@@ -472,8 +466,7 @@ impl LuaEnvironment {
         test: mlua::Function,
         pass_state: Option<bool>,
     ) -> mlua::Result<()> {
-        let key = lua.create_registry_value(test)?;
-        let mut func = LuaFunctionObject::new(key);
+        let mut func = LuaFunctionObject::from_value(lua, &test)?;
         func.set_pass_state(pass_state.unwrap_or(true));
 
         self.0
@@ -499,8 +492,7 @@ impl LuaEnvironment {
     ) -> mlua::Result<()> {
         match val {
             mlua::Value::Function(f) => {
-                let key = lua.create_registry_value(f)?;
-                let mut func = LuaFunctionObject::new(key);
+                let mut func = LuaFunctionObject::from_value(lua, &f)?;
                 func.set_pass_state(pass_state.unwrap_or(true));
 
                 self.0
@@ -515,8 +507,8 @@ impl LuaEnvironment {
     }
 
     #[lua(name = "remove_global", infallible)]
-    pub(crate) fn lua_remove_global(&mut self, name: String) {
-        self.0.remove_global(&name)
+    pub(crate) fn lua_remove_global(&mut self, name: &str) {
+        self.0.remove_global(name)
     }
 
     #[lua(name = "globals")]

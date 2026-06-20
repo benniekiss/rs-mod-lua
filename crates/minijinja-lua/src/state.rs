@@ -142,7 +142,7 @@ impl<'scope, 'template, 'env> mlua::UserData for LuaStateMut<'scope, 'template, 
         // Render the named block
         methods.add_method_mut(
             "render_block",
-            |_, this, block: String| -> mlua::Result<String> {
+            |_, this, block: mlua::BorrowedStr| -> mlua::Result<String> {
                 this.state_mut()
                     .render_block(&block)
                     .map_err(mlua::Error::external)
@@ -159,20 +159,20 @@ where
     'env: 'template,
 {
     // The name of the current template
-    methods.add_method("name", |_, this, _: ()| -> mlua::Result<String> {
+    methods.add_method("name", |_, this, ()| -> mlua::Result<String> {
         Ok(this.state().name().to_string())
     });
 
     // The current auto escape flag
     methods.add_method(
         "auto_escape",
-        |_, this, _: ()| -> mlua::Result<LuaAutoEscape> { Ok(this.state().auto_escape().into()) },
+        |_, this, ()| -> mlua::Result<LuaAutoEscape> { Ok(this.state().auto_escape().into()) },
     );
 
     // The current undefined behavior
     methods.add_method(
         "undefined_behavior",
-        |_, this, _: ()| -> mlua::Result<LuaUndefinedBehavior> {
+        |_, this, ()| -> mlua::Result<LuaUndefinedBehavior> {
             Ok(this.state().undefined_behavior().into())
         },
     );
@@ -180,7 +180,7 @@ where
     // The name of the current block
     methods.add_method(
         "current_block",
-        |_, this, _: ()| -> mlua::Result<Option<String>> {
+        |_, this, ()| -> mlua::Result<Option<String>> {
             Ok(this.state().current_block().map(|s| s.to_string()))
         },
     );
@@ -188,7 +188,7 @@ where
     // Lookup a value by key in the current context
     methods.add_method(
         "lookup",
-        |lua, this, name: String| -> mlua::Result<mlua::MultiValue> {
+        |lua, this, name: mlua::BorrowedStr| -> mlua::Result<mlua::MultiValue> {
             // Since the context may contain dynamic objects, convert the returned value
             // through the custom layer before returning.
             Ok(this
@@ -202,7 +202,10 @@ where
     // Call the named macro with the provided args.
     methods.add_method(
         "call_macro",
-        |lua, this, (name, mut args): (String, mlua::MultiValue)| -> mlua::Result<String> {
+        |lua,
+         this,
+         (name, mut args): (mlua::BorrowedStr, mlua::MultiValue)|
+         -> mlua::Result<String> {
             let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, &mut args, true);
 
             this.state()
@@ -212,7 +215,7 @@ where
     );
 
     // A list of exported variables
-    methods.add_method("exports", |_, this, _: ()| -> mlua::Result<Vec<String>> {
+    methods.add_method("exports", |_, this, ()| -> mlua::Result<Vec<String>> {
         Ok(this
             .state()
             .exports()
@@ -224,7 +227,7 @@ where
     // A list of all known variables
     methods.add_method(
         "known_variables",
-        |_, this, _: ()| -> mlua::Result<Vec<String>> {
+        |_, this, ()| -> mlua::Result<Vec<String>> {
             Ok(this
                 .state()
                 .known_variables()
@@ -239,7 +242,7 @@ where
         "apply_filter",
         |lua,
          this,
-         (filter, mut args): (String, mlua::MultiValue)|
+         (filter, mut args): (mlua::BorrowedStr, mlua::MultiValue)|
          -> mlua::Result<mlua::MultiValue> {
             let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, &mut args, true);
 
@@ -255,7 +258,10 @@ where
     // Perform the named test with the provided args
     methods.add_method(
         "perform_test",
-        |lua, this, (test, mut args): (String, mlua::MultiValue)| -> mlua::Result<bool> {
+        |lua,
+         this,
+         (test, mut args): (mlua::BorrowedStr, mlua::MultiValue)|
+         -> mlua::Result<bool> {
             let args: Vec<JinjaValue> = lua_args_to_minijinja(lua, &mut args, true);
 
             this.state()
@@ -277,16 +283,14 @@ where
     // A tuple of the current and remaining fuel usage
     methods.add_method(
         "fuel_levels",
-        |lua, this, _: ()| -> mlua::Result<mlua::Value> {
-            lua.to_value(&this.state().fuel_levels())
-        },
+        |lua, this, ()| -> mlua::Result<mlua::Value> { lua.to_value(&this.state().fuel_levels()) },
     );
 
     // Get a temp value.
     // See: https://docs.rs/minijinja/latest/minijinja/struct.State.html#method.get_temp
     methods.add_method(
         "get_temp",
-        |lua, this, name: String| -> mlua::Result<mlua::MultiValue> {
+        |lua, this, name: mlua::BorrowedStr| -> mlua::Result<mlua::MultiValue> {
             // Since the context may contain dynamic objects, convert the returned value
             // through the custom layer before returning.
             Ok(this
@@ -300,7 +304,10 @@ where
     // Set a temp value and return the old value
     methods.add_method(
         "set_temp",
-        |lua, this, (name, val): (String, mlua::Value)| -> mlua::Result<mlua::MultiValue> {
+        |lua,
+         this,
+         (name, val): (mlua::BorrowedStr, mlua::Value)|
+         -> mlua::Result<mlua::MultiValue> {
             if let Some(val) = lua_to_minijinja(lua, &val) {
                 Ok(this
                     .state()
@@ -320,7 +327,10 @@ where
     // Get a temp value or call `func` to add the value
     methods.add_method(
         "get_or_set_temp",
-        |lua, this, (name, func): (String, mlua::Function)| -> mlua::Result<mlua::MultiValue> {
+        |lua,
+         this,
+         (name, func): (mlua::BorrowedStr, mlua::Function)|
+         -> mlua::Result<mlua::MultiValue> {
             let val = match this.state().get_temp(&name) {
                 Some(v) => v,
                 None => {
