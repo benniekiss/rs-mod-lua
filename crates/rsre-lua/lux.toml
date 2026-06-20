@@ -1,12 +1,12 @@
 package = "rsre-lua"
-version = "0.3.0"
+version = "0.3.1"
 lua = ">=5.1"
 
 [description]
 summary = "a regex lua module using the fancy-regex rust crate"
-homepage = "https://github.com/benniekiss/rsre-lua"
-issues_url = "https://github.com/benniekiss/rsre-lua/issues"
 maintainer = "benniekiss"
+homepage = "https://github.com/benniekiss/rs-mod-lua"
+issues_url = "https://github.com/benniekiss/rs-mod-lua/issues"
 labels = ["regex"]
 license = "MIT"
 
