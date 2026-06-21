@@ -28,11 +28,15 @@ impl<'r> LuaGuard<'r> {
     where
         F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>,
     {
-        let weak = store.borrow();
-        let weak = weak.as_ref().ok_or_else(|| {
-            mlua::Error::runtime("`mlua::Lua` instance accessed outside of a render context")
-        })?;
-        let lua = weak
+        // The borrow from `store` must be dropped before calling `f` to prevent panics in case `f`
+        // itself calls `bind`
+        let lua = store
+            .try_borrow()
+            .map_err(mlua::Error::runtime)?
+            .as_ref()
+            .ok_or_else(|| {
+                mlua::Error::runtime("`mlua::Lua` instance accessed outside of a render context")
+            })?
             .try_upgrade()
             .ok_or_else(|| mlua::Error::runtime("`mlua::Lua` instance is not available"))?;
 
@@ -58,4 +62,20 @@ where
     F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>,
 {
     LUA.with(|store| LuaGuard::with(store, f))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_recursive_bind() {
+        let lua = mlua::Lua::new();
+
+        let res = bind_lua(&lua, || {
+            with_lua(|lua| bind_lua(lua, || with_lua(|lua| bind_lua(lua, || Ok(())))))
+        });
+
+        assert!(res.is_ok())
+    }
 }
