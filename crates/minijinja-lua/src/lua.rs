@@ -1,75 +1,61 @@
-// SPDX-License-Identifier: MIT
+use std::cell::RefCell;
 
-use std::sync::atomic::{AtomicPtr, Ordering};
+thread_local! {
+    static LUA: RefCell<Option<mlua::WeakLua>> = const { RefCell::new(None) };
+}
 
-struct LuaGuard(*mut mlua::Lua);
+struct LuaStore<'r> {
+    prev: Option<mlua::WeakLua>,
+    store: &'r RefCell<Option<mlua::WeakLua>>,
+}
 
-impl LuaGuard {
-    thread_local! {
-        static LUA_POINTER: AtomicPtr<mlua::Lua> = const { AtomicPtr::new(std::ptr::null_mut()) };
+impl<'r> LuaStore<'r> {
+    fn new(lua: &mlua::Lua, store: &'r RefCell<Option<mlua::WeakLua>>) -> Self {
+        let weak = lua.weak();
+        let prev = store.replace(Some(weak));
+        Self { prev, store }
     }
 
-    /// Create a new guard, swapping the stored pointer with a pointer of the provided
-    /// `&mlua::Lua`. The original pointer will be restored when the guard is dropped.
-    fn new(lua: &mlua::Lua) -> Self {
-        let ptr = Self::LUA_POINTER.with(|handle| {
-            handle.swap(lua as *const mlua::Lua as *mut mlua::Lua, Ordering::Relaxed)
-        });
-
-        Self(ptr)
-    }
-
-    /// Invoke a function with access to a reference to the stored Lua pointer.
-    fn with_lua<R, F>(f: F) -> Result<R, mlua::Error>
-    where
-        F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>,
-    {
-        Self::LUA_POINTER.with(|handle| {
-            let ptr = handle.load(Ordering::Relaxed) as *const mlua::Lua;
-
-            // SAFETY: The stored Lua pointer is only valid within the context of the `bind_lua`
-            // call on the same thread which stored it, and the Lua reference must not outlive the
-            // closure.
-            let lua = unsafe { ptr.as_ref() }.ok_or_else(|| {
-                mlua::Error::runtime("mlua::Lua state accessed outside of a render context.")
-            })?;
-
-            f(lua)
-        })
-    }
-
-    /// Store a pointer to an `&mlua::Lua` reference and execute a function
-    fn bind_lua<R, F>(lua: &mlua::Lua, f: F) -> R
+    fn bind<R, F>(lua: &mlua::Lua, store: &'r RefCell<Option<mlua::WeakLua>>, f: F) -> R
     where
         F: FnOnce() -> R,
     {
-        let _guard = Self::new(lua);
+        let _guard = Self::new(lua, store);
         f()
     }
-}
 
-impl Drop for LuaGuard {
-    fn drop(&mut self) {
-        Self::LUA_POINTER.with(|handle| handle.store(self.0, Ordering::Relaxed));
+    fn with<R, F>(store: &'r RefCell<Option<mlua::WeakLua>>, f: F) -> Result<R, mlua::Error>
+    where
+        F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>,
+    {
+        let weak = store.borrow();
+        let weak = weak.as_ref().ok_or_else(|| {
+            mlua::Error::runtime("`mlua::Lua` instance accessed outside of a render context")
+        })?;
+        let lua = weak
+            .try_upgrade()
+            .ok_or_else(|| mlua::Error::runtime("`mlua::Lua` instance is not available"))?;
+
+        f(&lua)
     }
 }
 
-/// Allow access to an [`mlua::Lua`] reference across a `Send + Sync` boundary in module mode.
-///
-/// This code mirrors the [`minijinja-py`](https://github.com/mitsuhiko/minijinja/blob/29ac0b2936eacf83ebf781c52f4f4ffc3add4c52/minijinja-py/src/state.rs) implementation.
-pub(crate) fn with_lua<R, F>(f: F) -> Result<R, mlua::Error>
-where
-    F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>,
-{
-    LuaGuard::with_lua(f)
+impl Drop for LuaStore<'_> {
+    fn drop(&mut self) {
+        self.store.replace(self.prev.take());
+    }
 }
 
-/// Invokes a function with the Lua state stashed away.
-///
-/// This code mirrors the [`minijinja-py`](https://github.com/mitsuhiko/minijinja/blob/29ac0b2936eacf83ebf781c52f4f4ffc3add4c52/minijinja-py/src/state.rs) implementation.
 pub(crate) fn bind_lua<R, F>(lua: &mlua::Lua, f: F) -> R
 where
     F: FnOnce() -> R,
 {
-    LuaGuard::bind_lua(lua, f)
+    LUA.with(|slot| LuaStore::bind(lua, slot, f))
+}
+
+pub(crate) fn with_lua<R, F>(f: F) -> Result<R, mlua::Error>
+where
+    F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>,
+{
+    LUA.with(|store| LuaStore::with(store, f))
 }
