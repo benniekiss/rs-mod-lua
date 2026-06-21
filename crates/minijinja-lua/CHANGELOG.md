@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.2.1...minijinja-lua-v0.3.0) - 2026-06-21
+
+### Added
+
+- *(minijinja-lua)* [**breaking**] bump version
+- remove unsafe usage
+
+### Other
+
+- *(minijinja-lua)* rename struct
+- *(minijinja-lua)* encapsulate lua binding logic
+- *(minijinja-lua)* remove unnecessary map
+- *(minijinja-lua)* move lua code to a dedicated module
+- *(minijinja-lua)* refactor some code for readability
+
 ## [0.2.1](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.2.0...minijinja-lua-v0.2.1) - 2026-06-20
 
 ### Other
