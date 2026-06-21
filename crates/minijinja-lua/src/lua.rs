@@ -4,12 +4,12 @@ thread_local! {
     static LUA: RefCell<Option<mlua::WeakLua>> = const { RefCell::new(None) };
 }
 
-struct LuaStore<'r> {
+struct LuaGuard<'r> {
     prev: Option<mlua::WeakLua>,
     store: &'r RefCell<Option<mlua::WeakLua>>,
 }
 
-impl<'r> LuaStore<'r> {
+impl<'r> LuaGuard<'r> {
     fn new(lua: &mlua::Lua, store: &'r RefCell<Option<mlua::WeakLua>>) -> Self {
         let weak = lua.weak();
         let prev = store.replace(Some(weak));
@@ -40,7 +40,7 @@ impl<'r> LuaStore<'r> {
     }
 }
 
-impl Drop for LuaStore<'_> {
+impl Drop for LuaGuard<'_> {
     fn drop(&mut self) {
         self.store.replace(self.prev.take());
     }
@@ -50,12 +50,12 @@ pub(crate) fn bind_lua<R, F>(lua: &mlua::Lua, f: F) -> R
 where
     F: FnOnce() -> R,
 {
-    LUA.with(|slot| LuaStore::bind(lua, slot, f))
+    LUA.with(|slot| LuaGuard::bind(lua, slot, f))
 }
 
 pub(crate) fn with_lua<R, F>(f: F) -> Result<R, mlua::Error>
 where
     F: FnOnce(&mlua::Lua) -> Result<R, mlua::Error>,
 {
-    LUA.with(|store| LuaStore::with(store, f))
+    LUA.with(|store| LuaGuard::with(store, f))
 }
