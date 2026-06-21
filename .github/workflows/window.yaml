@@ -76,7 +76,7 @@ jobs:
 
       - name: Setup Lux
         run: |
-          cargo install --git https://github.com/benniekiss/lux --branch windows --locked --profile release --no-default-features --features vendored lux-cli
+          cargo install --config target.x86_64-pc-windows-msvc.linker=\"lld-link.exe\" --git https://github.com/benniekiss/lux --branch windows --locked --profile release --no-default-features --features vendored lux-cli
 
       - name: Build and inspect
         continue-on-error: true
