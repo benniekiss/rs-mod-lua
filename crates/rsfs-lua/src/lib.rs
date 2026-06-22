@@ -13,10 +13,14 @@
 #[macro_use]
 mod macros;
 
+#[cfg(feature = "dirs")]
+mod dirs;
 mod file;
 mod fs;
 mod path;
+#[cfg(feature = "tempfile")]
 mod temp;
+#[cfg(feature = "walkdir")]
 mod walk;
 
 use std::time::{Duration, SystemTime};
@@ -25,8 +29,6 @@ use crate::{
     file::LuaFile,
     fs::{LuaMetadata, LuaOpenOptions, LuaPermissions, LuaReadDir},
     path::LuaPath,
-    temp::temp_lua,
-    walk::LuaWalkDir,
 };
 
 #[cfg_attr(feature = "module", mlua::lua_module(name = "rsfs"))]
@@ -46,12 +48,17 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
     table.set("OpenOptions", lua.create_proxy::<LuaOpenOptions>()?)?;
 
-    table.set("temp", temp_lua(lua)?)?;
+    #[cfg(feature = "dirs")]
+    table.set("dirs", dirs::dirs_lua(lua)?)?;
 
+    #[cfg(feature = "tempfile")]
+    table.set("temp", temp::temp_lua(lua)?)?;
+
+    #[cfg(feature = "walkdir")]
     table.set(
         "walk",
-        lua.create_function(|_, root: LuaPath| -> mlua::Result<LuaWalkDir> {
-            Ok(LuaWalkDir::lua_new(root))
+        lua.create_function(|_, root: LuaPath| -> mlua::Result<walk::LuaWalkDir> {
+            Ok(walk::LuaWalkDir::lua_new(root))
         })?,
     )?;
 

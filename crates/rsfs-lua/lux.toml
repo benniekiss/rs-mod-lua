@@ -18,7 +18,7 @@ dir = "rs-mod-lua-$(PACKAGE)-v$(VERSION)/crates/$(PACKAGE)"
 [build]
 type = "rust-mlua"
 default_features = false
-features = ["module"]
+features = ["module", "contrib"]
 
 [build.modules]
 "rsfs" = "rsfs_lua"
