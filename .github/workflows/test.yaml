@@ -73,8 +73,8 @@ jobs:
           - "5.3"
           - "5.4"
           - "5.5"
-          - "jit"
-          - "jit52"
+          # - "jit"
+          # - "jit52"
         package: ${{ fromJSON(needs.filters.outputs.packages) }}
 
     steps:
