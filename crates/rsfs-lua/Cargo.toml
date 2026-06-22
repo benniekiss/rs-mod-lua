@@ -39,7 +39,7 @@ walkdir = { version = "2.5.0", optional = true }
 strip = true
 opt-level = "z"
 lto = true
-panic = "immediate-abort"
+panic = "unwind"
 codegen-units = 1
 rustflags = [
     "-Zlocation-detail=none",
