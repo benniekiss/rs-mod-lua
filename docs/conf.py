@@ -56,6 +56,7 @@ lua_ls_class_default_function_name = "new"
 lua_ls_apidoc_format = "md"
 
 lua_ls_project_directories = [
+    "crates/jsonschema-lua/library/",
     "crates/minijinja-lua/library/",
     "crates/rsast-lua/library/",
     "crates/rsjson-lua/library/",
@@ -63,6 +64,7 @@ lua_ls_project_directories = [
 ]
 
 lua_ls_apidoc_roots = {
+    "jsonschema": "api/jsonschema",
     "minijinja": "api/minijinja",
     "rsast": "api/rsast",
     "rsjson": "api/rsjson",

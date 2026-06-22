@@ -3,6 +3,7 @@ cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 [workspace]
 resolver = "3"
 members = [
+  "crates/jsonschema-lua",
   "crates/minijinja-lua",
   "crates/rs-mod-lua-core",
   "crates/rsast-lua",
