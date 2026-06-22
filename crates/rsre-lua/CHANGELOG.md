@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.3.1...rsre-lua-v0.3.2) - 2026-06-22
+
+### Fixed
+
+- *(windows)* set `panic = 'unwind'` for better windows support
+
+### Other
+
+- bump version
+- add luajit/luajit52 targets
+
 ## [0.3.1](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.3.0...rsre-lua-v0.3.1) - 2026-06-20
 
 ### Other

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.4.1...rsjson-lua-v0.4.2) - 2026-06-22
+
+### Fixed
+
+- *(windows)* set `panic = 'unwind'` for better windows support
+
+### Other
+
+- bump version
+- *(rsjson-lua)* disable benchmark test deps
+- add luajit/luajit52 targets
+
 ## [0.4.1](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.4.0...rsjson-lua-v0.4.1) - 2026-06-20
 
 ### Other
