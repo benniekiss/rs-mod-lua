@@ -38,7 +38,7 @@ serde_json = { version = "1.0.150", features = [
 strip = true
 opt-level = 3
 lto = true
-panic = "immediate-abort"
+panic = "unwind"
 codegen-units = 1
 rustflags = [
     "-Zlocation-detail=none",
