@@ -96,6 +96,8 @@ jobs:
       # See: https://github.com/bitcoin-core/secp256k1/pull/1846
       - name: Run tests (windows)
         if: ${{ endsWith(matrix.job.target, '-msvc') }}
+        env:
+          RUST_BACKTRACE: full
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
@@ -103,6 +105,8 @@ jobs:
 
       - name: Run tests (unix)
         if: ${{ !endsWith(matrix.job.target, '-msvc') }}
+        env:
+          RUST_BACKTRACE: full
         run: |
           lx --lua-version ${{ matrix.lua_version }} test --no-lock --package ${{ matrix.package }}
 
@@ -125,4 +129,6 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
 
       - name: Run tests
+        env:
+          RUST_BACKTRACE: full
         run: cargo test --package ${{ matrix.package }}
