@@ -29,9 +29,9 @@ features = ["module"]
 [test]
 type = "busted"
 
-[test_dependencies]
-rapidjson = "0.7.2-1"
-dkjson = "2.10-1"
-luamark = "1.1.2-1"
-lua-cjson = "2.1.0-1"
-lpeg = "1.1.0-2"
+# [test_dependencies]
+# rapidjson = "0.7.2-1"
+# dkjson = "2.10-1"
+# luamark = "1.1.2-1"
+# lua-cjson = "2.1.0-1"
+# lpeg = "1.1.0-2"
