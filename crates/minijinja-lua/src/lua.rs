@@ -78,4 +78,27 @@ mod tests {
 
         assert!(res.is_ok())
     }
+
+    #[test]
+    fn test_drop_and_restore() {
+        let lua1 = &mlua::Lua::new();
+        let lua2 = &mlua::Lua::new();
+
+        let reg1 = lua1.create_registry_value(1).unwrap();
+        let reg2 = lua2.create_registry_value(2).unwrap();
+
+        bind_lua(lua1, || {
+            let res1 = with_lua(|lua1| Ok(lua1.owns_registry_value(&reg1))).unwrap();
+            assert!(res1);
+
+            let res2 = bind_lua(lua2, || {
+                with_lua(|lua2| Ok(lua2.owns_registry_value(&reg2)))
+            })
+            .unwrap();
+            assert!(res2);
+
+            let res1 = with_lua(|lua1| Ok(lua1.owns_registry_value(&reg1))).unwrap();
+            assert!(res1);
+        })
+    }
 }
