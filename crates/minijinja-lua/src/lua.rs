@@ -69,6 +69,18 @@ mod tests {
     use super::*;
 
     #[test]
+    fn with_outside_context() {
+        let err = with_lua(|_| Ok(()));
+
+        assert!(err.is_err());
+        assert!(
+            err.unwrap_err()
+                .to_string()
+                .contains("accessed outside of a render context")
+        );
+    }
+
+    #[test]
     fn test_recursive_bind() {
         let lua = mlua::Lua::new();
 
@@ -96,6 +108,25 @@ mod tests {
             })
             .unwrap();
             assert!(res2);
+
+            let res1 = with_lua(|lua1| Ok(lua1.owns_registry_value(&reg1))).unwrap();
+            assert!(res1);
+        })
+    }
+
+    #[test]
+    fn test_panic_and_restore() {
+        let lua1 = &mlua::Lua::new();
+        let lua2 = &mlua::Lua::new();
+
+        let reg1 = lua1.create_registry_value(1).unwrap();
+
+        bind_lua(lua1, || {
+            let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                bind_lua(lua2, || {
+                    with_lua(|_| -> Result<(), mlua::Error> { panic!("pow") }).unwrap();
+                });
+            }));
 
             let res1 = with_lua(|lua1| Ok(lua1.owns_registry_value(&reg1))).unwrap();
             assert!(res1);
