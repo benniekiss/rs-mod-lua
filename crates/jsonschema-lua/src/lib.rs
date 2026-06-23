@@ -18,7 +18,7 @@ mod test {
         let lua = mlua::Lua::new();
 
         let table = jsonschema_lua(&lua).unwrap();
-        lua.globals().set("rsjsonschema", table).unwrap();
+        lua.globals().set("jsonschema", table).unwrap();
 
         lua
     }
