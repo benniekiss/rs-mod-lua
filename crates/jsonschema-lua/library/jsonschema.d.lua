@@ -140,7 +140,7 @@ function jsonschema.Validator:evaluate(json) end
 ---
 ---@param json any
 ---
----@return error[]
+---@return string[]
 ---
 function jsonschema.Validator:errors(json) end
 
