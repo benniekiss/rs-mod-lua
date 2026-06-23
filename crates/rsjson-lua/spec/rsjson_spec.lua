@@ -11,58 +11,58 @@ describe("config", function ()
         local conf = json.EncodeConfig:new()
 
         it("EncodeConfig.indent#config", function ()
-            conf.indent = nil
+            conf:set_indent()
             assert.Nil(conf.indent)
 
-            conf.indent = 4
+            conf:set_indent(4)
             assert.Equal(4, conf.indent)
         end)
 
         it("EncodeConfig.prefix#config", function ()
             assert.Equal(conf.prefix, " ")
 
-            conf.prefix = "foo"
+            conf:set_prefix("foo")
             assert.Equal("foo", conf.prefix)
         end)
 
         it("EncodeConfig.sort_keys#config", function ()
-            conf.sort_keys = true
+            conf:set_sort_keys(true)
             assert.True(conf.sort_keys)
 
-            conf.sort_keys = false
+            conf:set_sort_keys(false)
             assert.False(conf.sort_keys)
         end)
 
-        it("EncodeConfig.empty_table_as_array#config", function ()
-            conf.empty_table_as_array = true
-            assert.True(conf.empty_table_as_array)
+        it("EncodeConfig.encode_empty_tables_as_array#config", function ()
+            conf:set_encode_empty_tables_as_array(true)
+            assert.True(conf.encode_empty_tables_as_array)
 
-            conf.empty_table_as_array = false
-            assert.False(conf.empty_table_as_array)
+            conf:set_encode_empty_tables_as_array(false)
+            assert.False(conf.encode_empty_tables_as_array)
         end)
 
         it("EncodeConfig.detect_mixed_tables#config", function ()
-            conf.detect_mixed_tables = true
+            conf:set_detect_mixed_tables(true)
             assert.True(conf.detect_mixed_tables)
 
-            conf.detect_mixed_tables = false
+            conf:set_detect_mixed_tables(false)
             assert.False(conf.detect_mixed_tables)
         end)
 
-        it("EncodeConfig.error_unsupported#config", function ()
-            conf.error_unsupported = true
-            assert.True(conf.error_unsupported)
+        it("EncodeConfig.deny_unsupported_types#config", function ()
+            conf:set_deny_unsupported_types(true)
+            assert.True(conf.deny_unsupported_types)
 
-            conf.error_unsupported = false
-            assert.False(conf.error_unsupported)
+            conf:set_deny_unsupported_types(false)
+            assert.False(conf.deny_unsupported_types)
         end)
 
         it("EncodeConfig.error_cycles#config", function ()
-            conf.error_cycles = true
-            assert.True(conf.error_cycles)
+            conf:set_deny_recursive_tables(true)
+            assert.True(conf.deny_recursive_tables)
 
-            conf.error_cycles = false
-            assert.False(conf.error_cycles)
+            conf:set_deny_recursive_tables(false)
+            assert.False(conf.deny_recursive_tables)
         end)
     end)
 
@@ -76,27 +76,27 @@ describe("config", function ()
         local conf = json.DecodeConfig:new()
 
         it("DecodeConfig.null#config", function ()
-            conf.null = true
+            conf:set_null(true)
             assert.True(conf.null)
 
-            conf.null = false
+            conf:set_null(false)
             assert.False(conf.null)
         end)
 
         it("DecodeConfig.cast_u64_to_f64#config", function ()
-            conf.cast_u64_to_f64 = true
+            conf:set_cast_u64_to_f64(true)
             assert.True(conf.cast_u64_to_f64)
 
-            conf.cast_u64_to_f64 = false
+            conf:set_cast_u64_to_f64(false)
             assert.False(conf.cast_u64_to_f64)
         end)
 
         it("DecodeConfig.set_array_mt#config", function ()
-            conf.set_array_mt = true
-            assert.True(conf.set_array_mt)
+            conf:set_array_metatable(true)
+            assert.True(conf.array_metatable)
 
-            conf.set_array_mt = false
-            assert.False(conf.set_array_mt)
+            conf:set_array_metatable(false)
+            assert.False(conf.array_metatable)
         end)
     end)
 end)
@@ -193,7 +193,7 @@ describe("decode", function ()
 
     it("array_mt#decode", function ()
         local config = json.DecodeConfig:new()
-        config.set_array_mt = true
+        config:set_array_metatable(true)
 
         local te = '["one",2,"three"]'
         local ex = { "one", 2, "three" }
@@ -207,7 +207,7 @@ describe("decode", function ()
 
     it("no_array_mt#decode", function ()
         local config = json.DecodeConfig:new()
-        config.set_array_mt = false
+        config:set_array_metatable(false)
 
         local te = '["one",2,"three"]'
         local ex = { "one", 2, "three" }

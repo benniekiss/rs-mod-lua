@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-mod config;
+pub mod config;
 mod decode;
 mod encode;
 

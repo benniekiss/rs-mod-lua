@@ -53,7 +53,7 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
     where
         E: de::Error,
     {
-        if self.config.null {
+        if self.config.serialize_unit_to_null {
             Ok(mlua::Value::NULL)
         } else {
             Ok(mlua::Value::Nil)
@@ -119,7 +119,7 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
             .create_table_with_capacity(hint, 0)
             .map_err(de::Error::custom)?;
 
-        if self.config.set_array_mt {
+        if self.config.set_array_metatable {
             table
                 .set_metatable(Some(self.lua.array_metatable()))
                 .map_err(de::Error::custom)?;
@@ -145,7 +145,7 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
         let first_key: Option<String> = map.next_key()?;
 
         match first_key.as_deref() {
-            Some(Self::SERDE_JSON_NUMBER) => {
+            Some(Self::SERDE_JSON_NUMBER) if self.config.detect_serde_json_arbitrary_precision => {
                 // The value is the raw number string, e.g. "1.23456789012345678901234567890"
                 let raw: String = map.next_value()?;
 
@@ -260,7 +260,7 @@ mod test {
     #[test]
     fn it_json_cast_u64_to_f64() {
         let lua = mlua::Lua::new();
-        let mut config = DecodeConfig::new();
+        let mut config = DecodeConfig::default();
         config.cast_u64_to_f64 = true;
 
         let v = u64::MAX;
@@ -276,7 +276,7 @@ mod test {
     #[test]
     fn it_json_err_cast_u64_to_f64() {
         let lua = mlua::Lua::new();
-        let mut config = DecodeConfig::new();
+        let mut config = DecodeConfig::default();
         config.cast_u64_to_f64 = false;
 
         let v = u64::MAX;
@@ -312,8 +312,8 @@ mod test {
     fn it_json_to_nil() {
         let lua = mlua::Lua::new();
 
-        let mut config = DecodeConfig::new();
-        config.null = false;
+        let mut config = DecodeConfig::default();
+        config.lua_set_null(false);
 
         let res = decode(&lua, b"null", Some(config)).unwrap();
 
@@ -336,8 +336,8 @@ mod test {
     #[test]
     fn it_json_array_mt() {
         let lua = mlua::Lua::new();
-        let mut config = DecodeConfig::new();
-        config.set_array_mt = true;
+        let mut config = DecodeConfig::default();
+        config.lua_set_array_metatable(true);
 
         let res = decode(&lua, b"[1,2,3]", Some(config))
             .unwrap()
@@ -351,8 +351,8 @@ mod test {
     #[test]
     fn it_json_no_array_mt() {
         let lua = mlua::Lua::new();
-        let mut config = DecodeConfig::new();
-        config.set_array_mt = false;
+        let mut config = DecodeConfig::default();
+        config.lua_set_array_metatable(false);
 
         let res = decode(&lua, b"[1,2,3]", Some(config))
             .unwrap()
