@@ -105,7 +105,7 @@ impl LuaWalkIter {
 
     #[lua(name = "iter")]
     pub(crate) fn lua_iter(mut self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
-        lua.create_function_mut(move |_, _: ()| -> mlua::Result<Option<LuaWalkDirEntry>> {
+        lua.create_function_mut(move |_, ()| -> mlua::Result<Option<LuaWalkDirEntry>> {
             self.0
                 .next()
                 .transpose()

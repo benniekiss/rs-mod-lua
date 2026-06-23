@@ -219,7 +219,7 @@ macro_rules! lua_path_methods {
             ) -> mlua::Result<mlua::Function> {
                 let mut comps = self.lua_ancestors().into_iter();
 
-                lua.create_function_mut(move |_, _: ()| Ok(comps.next()))
+                lua.create_function_mut(move |_, ()| Ok(comps.next()))
             }
 
             #[lua(name = "components", infallible)]
@@ -234,7 +234,7 @@ macro_rules! lua_path_methods {
             pub(crate) fn lua_iter(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
                 let mut comps = self.lua_components().into_iter();
 
-                lua.create_function_mut(move |_, _: ()| Ok(comps.next()))
+                lua.create_function_mut(move |_, ()| Ok(comps.next()))
             }
 
             #[lua(name = "metadata")]

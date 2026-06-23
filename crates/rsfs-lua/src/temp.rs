@@ -542,7 +542,7 @@ pub(crate) fn temp_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
     table.set(
         "tempfile",
-        lua.create_function(|_, _: ()| -> mlua::Result<LuaFile> {
+        lua.create_function(|_, ()| -> mlua::Result<LuaFile> {
             tempfile::tempfile()
                 .map(|f| f.into())
                 .map_err(mlua::Error::external)
@@ -576,7 +576,7 @@ pub(crate) fn temp_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
     table.set(
         "named_tempfile",
-        lua.create_function(|_, _: ()| -> mlua::Result<LuaNamedTempFile> {
+        lua.create_function(|_, ()| -> mlua::Result<LuaNamedTempFile> {
             LuaNamedTempFile::lua_new()
         })?,
     )?;
@@ -590,7 +590,7 @@ pub(crate) fn temp_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
     table.set(
         "tempdir",
-        lua.create_function(|_, _: ()| -> mlua::Result<LuaTempDir> {
+        lua.create_function(|_, ()| -> mlua::Result<LuaTempDir> {
             tempfile::tempdir()
                 .map(|d| d.into())
                 .map_err(mlua::Error::external)

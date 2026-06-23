@@ -261,7 +261,7 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
     table.set(
         "current_dir",
-        lua.create_function(|_, _: ()| -> mlua::Result<LuaPath> {
+        lua.create_function(|_, ()| -> mlua::Result<LuaPath> {
             std::env::current_dir()
                 .map(|p| p.into())
                 .map_err(mlua::Error::external)
@@ -270,16 +270,14 @@ pub fn rsfs_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
     table.set(
         "home_dir",
-        lua.create_function(|_, _: ()| -> mlua::Result<Option<LuaPath>> {
+        lua.create_function(|_, ()| -> mlua::Result<Option<LuaPath>> {
             Ok(std::env::home_dir().map(|p| p.into()))
         })?,
     )?;
 
     table.set(
         "temp_dir",
-        lua.create_function(|_, _: ()| -> mlua::Result<LuaPath> {
-            Ok(std::env::temp_dir().into())
-        })?,
+        lua.create_function(|_, ()| -> mlua::Result<LuaPath> { Ok(std::env::temp_dir().into()) })?,
     )?;
 
     Ok(table)
