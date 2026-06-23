@@ -1,5 +1,5 @@
 use mlua::LuaSerdeExt;
-use rsjson_lua::config::EncodeConfig;
+use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
 use crate::lua::*;
 
@@ -10,9 +10,8 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "is_valid",
         lua.create_function(
             |lua, (schema, options): (mlua::Value, Option<EncodeConfig>)| -> mlua::Result<bool> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
-
-                Ok(jsonschema::meta::is_valid(&schema_val))
+                lua.from_value_with(schema, *options.unwrap_or_default())
+                    .map(|val| jsonschema::meta::is_valid(&val))
             },
         )?,
     )?;
@@ -21,10 +20,11 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "validate",
         lua.create_function(
             |lua, (schema, options): (mlua::Value, Option<EncodeConfig>)| -> mlua::Result<()> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
-
-                jsonschema::meta::validate(&schema_val)
-                    .map_err(|err| mlua::Error::external(err.to_owned()))
+                lua.from_value_with(schema, *options.unwrap_or_default())
+                    .and_then(|val| {
+                        jsonschema::meta::validate(&val)
+                            .map_err(|err| mlua::Error::external(err.to_owned()))
+                    })
             },
         )?,
     )?;
@@ -35,11 +35,11 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, options): (mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<LuaValidator> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
-
-                jsonschema::meta::validator_for(&schema_val)
+                lua.from_value_with(schema, *options.unwrap_or_default())
+                    .and_then(|val| {
+                        jsonschema::meta::validator_for(&val).map_err(mlua::Error::external)
+                    })
                     .map(|v| v.into())
-                    .map_err(mlua::Error::external)
             },
         )?,
     )?;
@@ -49,6 +49,8 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
 #[cfg(feature = "async")]
 fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
+    use rsjson_lua::config::DecodeConfig;
+
     let table = lua.create_table()?;
 
     table.set(
@@ -87,14 +89,18 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "bundle",
         lua.create_async_function(
             async |lua,
-                   (schema, options): (mlua::Value, Option<EncodeConfig>)|
+                   (schema, encode, decode): (
+                mlua::Value,
+                Option<EncodeConfig>,
+                Option<DecodeConfig>,
+            )|
                    -> mlua::Result<mlua::Value> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
+                let schema_val = lua.from_value_with(schema, *encode.unwrap_or_default())?;
 
                 jsonschema::async_bundle(&schema_val)
                     .await
                     .map_err(mlua::Error::external)
-                    .and_then(|bundle| lua.to_value(&bundle))
+                    .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
             },
         )?,
     )?;
@@ -103,14 +109,20 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "dereference",
         lua.create_async_function(
             async |lua,
-                   (schema, options): (mlua::Value, Option<EncodeConfig>)|
+                   (schema, encode, decode): (
+                mlua::Value,
+                Option<EncodeConfig>,
+                Option<DecodeConfig>,
+            )|
                    -> mlua::Result<mlua::Value> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
+                let schema_val = lua.from_value_with(schema, *encode.unwrap_or_default())?;
 
                 jsonschema::async_dereference(&schema_val)
                     .await
                     .map_err(mlua::Error::external)
-                    .and_then(|reference| lua.to_value(&reference))
+                    .and_then(|reference| {
+                        lua.to_value_with(&reference, *decode.unwrap_or_default())
+                    })
             },
         )?,
     )?;
@@ -120,6 +132,9 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
 pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
+
+    table.set("EncodeConfig", lua.create_proxy::<EncodeConfig>()?)?;
+    table.set("DecodeConfig", lua.create_proxy::<DecodeConfig>()?)?;
 
     table.set("meta", jsonschema_meta_lua(lua)?)?;
 
@@ -178,11 +193,9 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, options): (mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<LuaValidator> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
-
-                jsonschema::validator_for(&schema_val)
+                lua.from_value_with(schema, *options.unwrap_or_default())
+                    .and_then(|val| jsonschema::validator_for(&val).map_err(mlua::Error::external))
                     .map(|v| v.into())
-                    .map_err(mlua::Error::external)
             },
         )?,
     )?;
@@ -193,11 +206,11 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, options): (mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<LuaValidatorMap> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
-
-                jsonschema::validator_map_for(&schema_val)
-                    .map(|v| v.into())
-                    .map_err(mlua::Error::external)
+                lua.from_value_with(schema, *options.unwrap_or_default())
+                    .and_then(|val| {
+                        jsonschema::validator_map_for(&val).map_err(mlua::Error::external)
+                    })
+                    .map(|m| m.into())
             },
         )?,
     )?;
@@ -206,13 +219,15 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "bundle",
         lua.create_function(
             |lua,
-             (schema, options): (mlua::Value, Option<EncodeConfig>)|
+             (schema, encode, decode): (
+                mlua::Value,
+                Option<EncodeConfig>,
+                Option<DecodeConfig>,
+            )|
              -> mlua::Result<mlua::Value> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
-
-                jsonschema::bundle(&schema_val)
-                    .map_err(mlua::Error::external)
-                    .and_then(|bundle| lua.to_value(&bundle))
+                lua.from_value_with(schema, *encode.unwrap_or_default())
+                    .and_then(|val| jsonschema::bundle(&val).map_err(mlua::Error::external))
+                    .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
             },
         )?,
     )?;
@@ -221,13 +236,15 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "dereference",
         lua.create_function(
             |lua,
-             (schema, options): (mlua::Value, Option<EncodeConfig>)|
+             (schema, encode, decode): (
+                mlua::Value,
+                Option<EncodeConfig>,
+                Option<DecodeConfig>,
+            )|
              -> mlua::Result<mlua::Value> {
-                let schema_val = lua.from_value_with(schema, *options.unwrap_or_default())?;
-
-                jsonschema::dereference(&schema_val)
-                    .map_err(mlua::Error::external)
-                    .and_then(|reference| lua.to_value(&reference))
+                lua.from_value_with(schema, *encode.unwrap_or_default())
+                    .and_then(|val| jsonschema::dereference(&val).map_err(mlua::Error::external))
+                    .and_then(|der| lua.to_value_with(&der, *decode.unwrap_or_default()))
             },
         )?,
     )?;

@@ -249,8 +249,8 @@ impl LuaValidator {
         json: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<bool> {
-        let json = lua.from_value_with(json, *options.unwrap_or_default())?;
-        Ok(self.0.is_valid(&json))
+        lua.from_value_with(json, *options.unwrap_or_default())
+            .map(|val| self.0.is_valid(&val))
     }
 
     #[lua(name = "validate")]
@@ -260,10 +260,12 @@ impl LuaValidator {
         json: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<()> {
-        let json = lua.from_value_with(json, *options.unwrap_or_default())?;
-        self.0
-            .validate(&json)
-            .map_err(|err| mlua::Error::external(err.to_owned()))
+        lua.from_value_with(json, *options.unwrap_or_default())
+            .and_then(|val| {
+                self.0
+                    .validate(&val)
+                    .map_err(|err| mlua::Error::external(err.to_owned()))
+            })
     }
 
     #[lua(name = "evaluate")]
@@ -273,8 +275,8 @@ impl LuaValidator {
         json: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<LuaEvaluation> {
-        let json = lua.from_value_with(json, *options.unwrap_or_default())?;
-        Ok(self.0.evaluate(&json).into())
+        lua.from_value_with(json, *options.unwrap_or_default())
+            .map(|val| self.0.evaluate(&val).into())
     }
 
     #[lua(name = "errors")]
@@ -284,17 +286,15 @@ impl LuaValidator {
         json: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<Vec<mlua::Error>> {
-        let json = lua.from_value_with(json, *options.unwrap_or_default())?;
-
-        let errs = self
-            .0
-            .iter_errors(&json)
-            .into_errors()
-            .into_iter()
-            .map(|err| mlua::Error::external(err.to_owned()))
-            .collect::<Vec<_>>();
-
-        Ok(errs)
+        lua.from_value_with(json, *options.unwrap_or_default())
+            .map(|val| {
+                self.0
+                    .iter_errors(&val)
+                    .into_errors()
+                    .into_iter()
+                    .map(|err| mlua::Error::external(err.to_owned()))
+                    .collect::<Vec<_>>()
+            })
     }
 
     #[lua(name = "draft", infallible)]
