@@ -1,4 +1,76 @@
+use std::ops::Deref;
+
 use mlua::LuaSerdeExt;
+use rsjson_lua::config::EncodeConfig;
+
+#[derive(Clone)]
+pub(crate) struct LuaJsonSchemaDraft(jsonschema::Draft);
+
+impl Deref for LuaJsonSchemaDraft {
+    type Target = jsonschema::Draft;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<jsonschema::Draft> for LuaJsonSchemaDraft {
+    fn from(value: jsonschema::Draft) -> Self {
+        LuaJsonSchemaDraft(value)
+    }
+}
+
+impl From<LuaJsonSchemaDraft> for jsonschema::Draft {
+    fn from(value: LuaJsonSchemaDraft) -> Self {
+        value.0
+    }
+}
+
+impl TryFrom<&str> for LuaJsonSchemaDraft {
+    type Error = mlua::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "draft201909" => Ok(jsonschema::Draft::Draft201909.into()),
+            "draft202012" => Ok(jsonschema::Draft::Draft202012.into()),
+            "draft4" => Ok(jsonschema::Draft::Draft4.into()),
+            "draft6" => Ok(jsonschema::Draft::Draft6.into()),
+            "draft7" => Ok(jsonschema::Draft::Draft7.into()),
+            _ => Err(mlua::Error::FromLuaConversionError {
+                from: "string",
+                to: "JsonSchemaDraft".to_string(),
+                message: Some("unknown Json Draft version".to_string()),
+            }),
+        }
+    }
+}
+
+impl TryFrom<String> for LuaJsonSchemaDraft {
+    type Error = mlua::Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        value.as_str().try_into()
+    }
+}
+
+impl mlua::FromLua for LuaJsonSchemaDraft {
+    fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
+        value.to_string()?.try_into()
+    }
+}
+
+impl mlua::IntoLua for LuaJsonSchemaDraft {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        match self.deref() {
+            jsonschema::Draft::Draft201909 => "Draft201909".into_lua(lua),
+            jsonschema::Draft::Draft202012 => "Draft202012".into_lua(lua),
+            jsonschema::Draft::Draft4 => "Draft4".into_lua(lua),
+            jsonschema::Draft::Draft6 => "Draft6".into_lua(lua),
+            jsonschema::Draft::Draft7 => "Draft7".into_lua(lua),
+            _ => Err(mlua::Error::runtime("unknown Json Draft version")),
+        }
+    }
+}
 
 pub(crate) struct LuaAnnotationEntry {
     schema_location: String,
@@ -7,13 +79,13 @@ pub(crate) struct LuaAnnotationEntry {
     annotations: jsonschema::output::Annotations,
 }
 
-impl LuaAnnotationEntry {
-    pub(crate) fn from(annotation: jsonschema::AnnotationEntry) -> Self {
+impl From<jsonschema::AnnotationEntry<'_>> for LuaAnnotationEntry {
+    fn from(value: jsonschema::AnnotationEntry) -> Self {
         Self {
-            schema_location: annotation.schema_location.to_string(),
-            absolute_keyword_location: annotation.absolute_keyword_location.cloned(),
-            instance_location: annotation.instance_location.clone(),
-            annotations: annotation.annotations.clone(),
+            schema_location: value.schema_location.to_string(),
+            absolute_keyword_location: value.absolute_keyword_location.cloned(),
+            instance_location: value.instance_location.clone(),
+            annotations: value.annotations.clone(),
         }
     }
 }
@@ -42,13 +114,13 @@ pub(crate) struct LuaErrorEntry {
     error: jsonschema::output::ErrorDescription,
 }
 
-impl LuaErrorEntry {
-    pub(crate) fn from(error: jsonschema::ErrorEntry) -> Self {
+impl From<jsonschema::ErrorEntry<'_>> for LuaErrorEntry {
+    fn from(value: jsonschema::ErrorEntry) -> Self {
         Self {
-            schema_location: error.schema_location.to_string(),
-            absolute_keyword_location: error.absolute_keyword_location.cloned(),
-            instance_location: error.instance_location.clone(),
-            error: error.error.clone(),
+            schema_location: value.schema_location.to_string(),
+            absolute_keyword_location: value.absolute_keyword_location.cloned(),
+            instance_location: value.instance_location.clone(),
+            error: value.error.clone(),
         }
     }
 }
@@ -70,163 +142,210 @@ impl mlua::IntoLua for LuaErrorEntry {
     }
 }
 
+#[derive(mlua::UserData)]
 pub(crate) struct LuaEvaluation(jsonschema::Evaluation);
 
+impl From<jsonschema::Evaluation> for LuaEvaluation {
+    fn from(value: jsonschema::Evaluation) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LuaEvaluation> for jsonschema::Evaluation {
+    fn from(value: LuaEvaluation) -> Self {
+        value.0
+    }
+}
+
+impl AsRef<jsonschema::Evaluation> for LuaEvaluation {
+    fn as_ref(&self) -> &jsonschema::Evaluation {
+        &self.0
+    }
+}
+
+impl Deref for LuaEvaluation {
+    type Target = jsonschema::Evaluation;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[mlua::userdata_impl]
 impl LuaEvaluation {
-    pub(crate) fn new(evaluation: jsonschema::Evaluation) -> Self {
-        Self(evaluation)
+    #[lua(name = "flag")]
+    pub(crate) fn lua_flag(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.to_value(&self.0.flag())
+    }
+
+    #[lua(name = "list")]
+    pub(crate) fn lua_list(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.to_value(&self.0.list())
+    }
+
+    #[lua(name = "hierarchical")]
+    pub(crate) fn lua_hierarchical(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.to_value(&self.0.hierarchical())
+    }
+
+    #[lua(name = "annotations", infallible)]
+    pub(crate) fn lua_annotations(&self) -> Vec<LuaAnnotationEntry> {
+        self.0
+            .iter_annotations()
+            .map(LuaAnnotationEntry::from)
+            .collect::<Vec<_>>()
+    }
+
+    #[lua(name = "errors", infallible)]
+    pub(crate) fn lua_errors(&self) -> Vec<LuaErrorEntry> {
+        self.0
+            .iter_errors()
+            .map(LuaErrorEntry::from)
+            .collect::<Vec<_>>()
     }
 }
 
-impl mlua::UserData for LuaEvaluation {
-    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method(
-            "flag",
-            |lua, this, _: mlua::Value| -> mlua::Result<mlua::Value> {
-                lua.to_value(&this.0.flag())
-            },
-        );
-
-        methods.add_method(
-            "list",
-            |lua, this, _: mlua::Value| -> mlua::Result<mlua::Value> {
-                lua.to_value(&this.0.list())
-            },
-        );
-
-        methods.add_method(
-            "hierarchical",
-            |lua, this, _: mlua::Value| -> mlua::Result<mlua::Value> {
-                lua.to_value(&this.0.hierarchical())
-            },
-        );
-
-        methods.add_method(
-            "annotations",
-            |_, this: &LuaEvaluation, _: mlua::Value| -> mlua::Result<Vec<LuaAnnotationEntry>> {
-                let annt = this
-                    .0
-                    .iter_annotations()
-                    .map(LuaAnnotationEntry::from)
-                    .collect::<Vec<_>>();
-
-                Ok(annt)
-            },
-        );
-
-        methods.add_method(
-            "errors",
-            |_, this: &LuaEvaluation, _: mlua::Value| -> mlua::Result<Vec<LuaErrorEntry>> {
-                let errs = this
-                    .0
-                    .iter_errors()
-                    .map(LuaErrorEntry::from)
-                    .collect::<Vec<_>>();
-
-                Ok(errs)
-            },
-        );
-    }
-}
-
+#[derive(mlua::UserData)]
 pub(crate) struct LuaValidator(jsonschema::Validator);
 
+impl From<jsonschema::Validator> for LuaValidator {
+    fn from(value: jsonschema::Validator) -> Self {
+        Self(value)
+    }
+}
+
+impl From<jsonschema::meta::MetaValidator<'_>> for LuaValidator {
+    fn from(value: jsonschema::meta::MetaValidator) -> Self {
+        Self(value.clone())
+    }
+}
+
+impl From<LuaValidator> for jsonschema::Validator {
+    fn from(value: LuaValidator) -> Self {
+        value.0
+    }
+}
+
+impl AsRef<jsonschema::Validator> for LuaValidator {
+    fn as_ref(&self) -> &jsonschema::Validator {
+        &self.0
+    }
+}
+
+impl Deref for LuaValidator {
+    type Target = jsonschema::Validator;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[mlua::userdata_impl]
 impl LuaValidator {
-    pub(crate) fn new(validator: jsonschema::Validator) -> Self {
-        Self(validator)
+    #[lua(name = "is_valid")]
+    pub(crate) fn lua_is_valid(
+        &self,
+        lua: &mlua::Lua,
+        json: mlua::Value,
+        options: Option<EncodeConfig>,
+    ) -> mlua::Result<bool> {
+        let json = lua.from_value_with(json, *options.unwrap_or_default())?;
+        Ok(self.0.is_valid(&json))
+    }
+
+    #[lua(name = "validate")]
+    pub(crate) fn lua_validate(
+        &self,
+        lua: &mlua::Lua,
+        json: mlua::Value,
+        options: Option<EncodeConfig>,
+    ) -> mlua::Result<()> {
+        let json = lua.from_value_with(json, *options.unwrap_or_default())?;
+        self.0
+            .validate(&json)
+            .map_err(|err| mlua::Error::external(err.to_owned()))
+    }
+
+    #[lua(name = "evaluate")]
+    pub(crate) fn lua_evaluate(
+        &self,
+        lua: &mlua::Lua,
+        json: mlua::Value,
+        options: Option<EncodeConfig>,
+    ) -> mlua::Result<LuaEvaluation> {
+        let json = lua.from_value_with(json, *options.unwrap_or_default())?;
+        Ok(self.0.evaluate(&json).into())
+    }
+
+    #[lua(name = "errors")]
+    pub(crate) fn lua_errors(
+        &self,
+        lua: &mlua::Lua,
+        json: mlua::Value,
+        options: Option<EncodeConfig>,
+    ) -> mlua::Result<Vec<mlua::Error>> {
+        let json = lua.from_value_with(json, *options.unwrap_or_default())?;
+
+        let errs = self
+            .0
+            .iter_errors(&json)
+            .into_errors()
+            .into_iter()
+            .map(|err| mlua::Error::external(err.to_owned()))
+            .collect::<Vec<_>>();
+
+        Ok(errs)
+    }
+
+    #[lua(name = "draft", infallible)]
+    pub(crate) fn lua_draft(&self) -> LuaJsonSchemaDraft {
+        self.0.draft().into()
     }
 }
 
-impl mlua::UserData for LuaValidator {
-    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("is_valid", |_, this, json: String| -> mlua::Result<bool> {
-            let json_val: serde_json::Value =
-                serde_json::from_str(&json).map_err(mlua::Error::external)?;
-
-            Ok(this.0.is_valid(&json_val))
-        });
-
-        methods.add_method("validate", |_, this, json: String| -> mlua::Result<()> {
-            let json_val: serde_json::Value =
-                serde_json::from_str(&json).map_err(mlua::Error::external)?;
-
-            this.0
-                .validate(&json_val)
-                .map_err(|err| mlua::Error::external(err.to_owned()))
-        });
-
-        methods.add_method(
-            "evaluate",
-            |_, this, json: String| -> mlua::Result<LuaEvaluation> {
-                let json_val: serde_json::Value =
-                    serde_json::from_str(&json).map_err(mlua::Error::external)?;
-
-                let evaluation = this.0.evaluate(&json_val);
-
-                Ok(LuaEvaluation::new(evaluation))
-            },
-        );
-
-        methods.add_method(
-            "errors",
-            |_, this, json: String| -> mlua::Result<Vec<mlua::Error>> {
-                let json_val: serde_json::Value =
-                    serde_json::from_str(&json).map_err(mlua::Error::external)?;
-
-                let errs = this
-                    .0
-                    .iter_errors(&json_val)
-                    .into_errors()
-                    .into_iter()
-                    .map(|err| mlua::Error::external(err.to_owned()))
-                    .collect::<Vec<_>>();
-
-                Ok(errs)
-            },
-        );
-
-        methods.add_method("draft", |_, this, _: mlua::Value| -> mlua::Result<String> {
-            let draft = match this.0.draft() {
-                jsonschema::Draft::Draft201909 => "Draft201909",
-                jsonschema::Draft::Draft202012 => "Draft202012",
-                jsonschema::Draft::Draft4 => "Draft4",
-                jsonschema::Draft::Draft6 => "Draft6",
-                jsonschema::Draft::Draft7 => "Draft7",
-                _ => "unknown",
-            };
-
-            Ok(draft.to_string())
-        });
-    }
-}
-
+#[derive(mlua::UserData)]
 pub(crate) struct LuaValidatorMap(jsonschema::ValidatorMap);
 
-impl LuaValidatorMap {
-    pub(crate) fn new(map: jsonschema::ValidatorMap) -> Self {
-        Self(map)
+impl From<jsonschema::ValidatorMap> for LuaValidatorMap {
+    fn from(value: jsonschema::ValidatorMap) -> Self {
+        Self(value)
     }
 }
 
-impl mlua::UserData for LuaValidatorMap {
-    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method(
-            "get",
-            |_, this, pointer: String| -> mlua::Result<Option<LuaValidator>> {
-                Ok(this.0.get(&pointer).cloned().map(LuaValidator::new))
-            },
-        );
+impl From<LuaValidatorMap> for jsonschema::ValidatorMap {
+    fn from(value: LuaValidatorMap) -> Self {
+        value.0
+    }
+}
 
-        methods.add_method(
-            "contains_key",
-            |_, this, pointer: String| -> mlua::Result<bool> { Ok(this.0.contains_key(&pointer)) },
-        );
+impl AsRef<jsonschema::ValidatorMap> for LuaValidatorMap {
+    fn as_ref(&self) -> &jsonschema::ValidatorMap {
+        &self.0
+    }
+}
 
-        methods.add_method(
-            "keys",
-            |_, this, _: mlua::Value| -> mlua::Result<Vec<String>> {
-                Ok(this.0.keys().map(|s| s.to_string()).collect())
-            },
-        );
+impl Deref for LuaValidatorMap {
+    type Target = jsonschema::ValidatorMap;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaValidatorMap {
+    #[lua(name = "get", infallible)]
+    pub(crate) fn lua_get(&self, pointer: &str) -> Option<LuaValidator> {
+        self.0.get(pointer).cloned().map(|v| v.into())
+    }
+
+    #[lua(name = "contains_key", infallible)]
+    pub(crate) fn lua_contains_key(&self, pointer: &str) -> bool {
+        self.0.contains_key(pointer)
+    }
+
+    #[lua(name = "keys", infallible)]
+    pub(crate) fn lua_keys(&self) -> Vec<String> {
+        self.0.keys().map(|s| s.to_string()).collect()
     }
 }
