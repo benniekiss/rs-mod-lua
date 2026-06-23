@@ -4,25 +4,48 @@
 
 local jsonschema = {}
 
----@alias jsonschema.Draft "Draft201909" | "Draft202012" | "Draft4" | "Draft6" | "Draft7"
+---@alias jsonschema.Draft
+--- | "Draft201909"
+--- | "Draft202012"
+--- | "Draft4"
+--- | "Draft6"
+--- | "Draft7"
 
----@alias jsonschema.EvaluationNode { valid: bool, evaluationPath: string, schemaLocation: string, instanceLocation: string, annotations: integer, droppedAnnotations: boolean, errors: table[] }
+---@class (exact) jsonschema.EvaluationNode: table
+---@field valid              bool
+---@field evaluationPath     string
+---@field schemaLocation     string
+---@field instanceLocation   string
+---@field annotations        integer
+---@field droppedAnnotations boolean
+---@field errors             table[]
 
 --- Simple boolean validity indicator
 ---
----@alias jsonschema.FlagOutput { valid: bool }
+---@class (exact) jsonschema.FlagOutput: table
+---@field valid bool
 
 --- Flat list of all evaluation units
 ---
 ---@see jsonschema.EvaluationNode
 ---
----@alias jsonschema.ListOutput { valid: bool, details: jsonschema.EvaluationNode[] }
+---@class (exact) jsonschema.ListOutput: table
+---@field valid   bool
+---@field details jsonschema.EvaluationNode[]
 
 --- Nested tree structure of evaluation units
 ---
 ---@see jsonschema.EvaluationNode
 ---
----@alias jsonschema.HierarchicalOutput { valid: bool, evaluationPath: string, schemaLocation: string, instanceLocation: string, annotations: integer, droppedAnnotations: boolean, errors: table[], details: jsonschema.EvaluationNode[] }
+---@class (exact) jsonschema.HierarchicalOutput: table
+---@field valid              bool
+---@field evaluationPath     string
+---@field schemaLocation     string
+---@field instanceLocation   string
+---@field annotations        integer
+---@field droppedAnnotations boolean
+---@field errors             table[]
+---@field details            jsonschema.EvaluationNode[]
 
 --- Entry describing annotations emitted by a keyword during evaluation
 ---
