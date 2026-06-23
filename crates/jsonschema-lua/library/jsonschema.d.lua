@@ -93,20 +93,20 @@ jsonschema.Validator = {}
 
 --- Check if a JSON instance is valid
 ---
----@param json string
+---@param json any
 ---
 ---@return boolean
 function jsonschema.Validator:is_valid(json) end
 
 --- Raises an error if the JSON instance is invalid
 ---
----@param json string
+---@param json any
 ---
 function jsonschema.Validator:validate(json) end
 
 --- Evaluate the JSON instance.
 ---
----@param json string
+---@param json any
 ---
 ---@return jsonschema.Evaluation
 ---
@@ -114,7 +114,7 @@ function jsonschema.Validator:evaluate(json) end
 
 --- List all errors raised when validating the JSON instance
 ---
----@param json string
+---@param json any
 ---
 ---@return error[]
 ---
@@ -159,20 +159,20 @@ jsonschema.meta = {}
 
 --- Validate a JSON Schema document against its meta-schema
 ---
----@param schema string
+---@param schema any
 ---
 ---@return boolean
 function jsonschema.meta.is_valid(schema) end
 
 --- Validate a JSON Schema document against its meta-schema and return the first error, if any
 ---
----@param schema string
+---@param schema any
 ---
 function jsonschema.meta.validate(schema) end
 
 --- Build a validator for a JSON Schema's meta-schema.
 ---
----@param schema string
+---@param schema any
 ---
 ---@return jsonschema.Validator
 function jsonschema.meta.validator_for(schema) end
@@ -189,7 +189,7 @@ jsonschema.async = {}
 --- asynchronous - validation itself is always synchronous.
 ---
 ---@async
----@param schema string
+---@param schema any
 ---
 ---@return jsonschema.Validator
 function jsonschema.async.validator_for(schema) end
@@ -201,7 +201,7 @@ function jsonschema.async.validator_for(schema) end
 --- asynchronous — validation itself is always synchronous.
 ---
 ---@async
----@param schema string
+---@param schema any
 ---
 ---@return jsonschema.ValidatorMap
 function jsonschema.async.validator_map_for(schema) end
@@ -212,9 +212,9 @@ function jsonschema.async.validator_map_for(schema) end
 --- Async counterpart to [`bundle()`](lua-jsonschema.bundle).
 ---
 ---@async
----@param schema string
+---@param schema any
 ---
----@return string
+---@return any
 function jsonschema.async.bundle(schema) end
 
 --- Dereference a JSON Schema asynchronously.
@@ -222,15 +222,15 @@ function jsonschema.async.bundle(schema) end
 --- Async counterpart to [`dereference()`](lua-jsonschema.dereference).
 ---
 ---@async
----@param schema string
+---@param schema any
 ---
----@return string
+---@return any
 function jsonschema.async.dereference(schema) end
 
 --- Validate a JSON instance against a schema
 ---
----@param schema string
----@param json   string
+---@param schema any
+---@param json   any
 ---
 ---@return boolean
 ---
@@ -238,15 +238,15 @@ function jsonschema.is_valid(schema, json) end
 
 --- Validate a JSON instance against a schema and return the first error, if any
 ---
----@param schema string
----@param json   string
+---@param schema any
+---@param json   any
 ---
 function jsonschema.validate(schema, json) end
 
 --- Evaluate a JSON instance against a schema
 ---
----@param schema string
----@param json   string
+---@param schema any
+---@param json   any
 ---
 ---@return jsonschema.Evaluation
 ---
@@ -254,7 +254,7 @@ function jsonschema.evaluate(schema, json) end
 
 --- Create a [`Validator`](lua-jsonschema.Validator) for the input schema
 ---
----@param schema string
+---@param schema any
 ---
 ---@return jsonschema.Validator
 ---
@@ -262,7 +262,7 @@ function jsonschema.validator_for(schema) end
 
 --- Create a [`ValidatorMap`](lua-jsonschema.ValidatorMap) from the input schema
 ---
----@param schema string
+---@param schema any
 ---
 ---@return jsonschema.ValidatorMap
 ---
@@ -277,9 +277,9 @@ function jsonschema.validator_map_for(schema) end
 ---
 --- Limitation: $dynamicRef is not followed during bundling.
 ---
----@param schema string
+---@param schema any
 ---
----@return string
+---@return any
 ---
 function jsonschema.bundle(schema) end
 
@@ -288,8 +288,8 @@ function jsonschema.bundle(schema) end
 ---
 --- Circular references are left in place as $ref strings.
 ---
----@param schema string
+---@param schema any
 ---
----@return string
+---@return any
 ---
 function jsonschema.dereference(schema) end
