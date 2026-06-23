@@ -19,11 +19,17 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set(
         "validate",
         lua.create_function(
-            |lua, (schema, options): (mlua::Value, Option<EncodeConfig>)| -> mlua::Result<()> {
+            |lua,
+             (schema, options): (mlua::Value, Option<EncodeConfig>)|
+             -> mlua::Result<(bool, Option<String>)> {
                 lua.from_value_with(schema, *options.unwrap_or_default())
-                    .and_then(|val| {
-                        jsonschema::meta::validate(&val)
-                            .map_err(|err| mlua::Error::external(err.to_owned()))
+                    .map(|val| {
+                        let res = jsonschema::meta::validate(&val);
+                        if let Err(err) = res {
+                            (false, Some(err.to_string()))
+                        } else {
+                            (true, None)
+                        }
                     })
             },
         )?,
@@ -161,13 +167,17 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         lua.create_function(
             |lua,
              (schema, json, options): (mlua::Value, mlua::Value, Option<EncodeConfig>)|
-             -> mlua::Result<()> {
+             -> mlua::Result<(bool, Option<String>)> {
                 let options = options.unwrap_or_default();
                 let schema_val = lua.from_value_with(schema, *options)?;
                 let json_val = lua.from_value_with(json, *options)?;
 
-                jsonschema::validate(&schema_val, &json_val)
-                    .map_err(|err| mlua::Error::external(err.to_owned()))
+                let res = jsonschema::validate(&schema_val, &json_val);
+                if let Err(err) = res {
+                    Ok((false, Some(err.to_string())))
+                } else {
+                    Ok((true, None))
+                }
             },
         )?,
     )?;

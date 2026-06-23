@@ -259,12 +259,15 @@ impl LuaValidator {
         lua: &mlua::Lua,
         json: mlua::Value,
         options: Option<EncodeConfig>,
-    ) -> mlua::Result<()> {
+    ) -> mlua::Result<(bool, Option<String>)> {
         lua.from_value_with(json, *options.unwrap_or_default())
-            .and_then(|val| {
-                self.0
-                    .validate(&val)
-                    .map_err(|err| mlua::Error::external(err.to_owned()))
+            .map(|val| {
+                let res = self.0.validate(&val);
+                if let Err(err) = res {
+                    (false, Some(err.to_string()))
+                } else {
+                    (true, None)
+                }
             })
     }
 
@@ -285,14 +288,14 @@ impl LuaValidator {
         lua: &mlua::Lua,
         json: mlua::Value,
         options: Option<EncodeConfig>,
-    ) -> mlua::Result<Vec<mlua::Error>> {
+    ) -> mlua::Result<Vec<String>> {
         lua.from_value_with(json, *options.unwrap_or_default())
             .map(|val| {
                 self.0
                     .iter_errors(&val)
                     .into_errors()
                     .into_iter()
-                    .map(|err| mlua::Error::external(err.to_owned()))
+                    .map(|err| err.to_string())
                     .collect::<Vec<_>>()
             })
     }
