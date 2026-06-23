@@ -121,11 +121,14 @@ jsonschema.Validator = {}
 ---@return boolean
 function jsonschema.Validator:is_valid(json) end
 
---- Raises an error if the JSON instance is invalid
+--- Validate a JSON document against the schema.
+---
+--- Returns true and nil if the json is valid,
+--- otherwise, returns false and an error message.
 ---
 ---@param json any
 ---
----@return bool, string?
+---@return boolean, string?
 function jsonschema.Validator:validate(json) end
 
 --- Evaluate the JSON instance.
@@ -188,11 +191,14 @@ jsonschema.meta = {}
 ---@return boolean
 function jsonschema.meta.is_valid(schema) end
 
---- Validate a JSON Schema document against its meta-schema and return the first error, if any
+--- Validate a JSON Schema document against its meta-schema.
+---
+--- Returns true and nil if the schema is valid,
+--- otherwise, returns false and an error message.
 ---
 ---@param schema any
 ---
----@return bool, string?
+---@return boolean, string?
 function jsonschema.meta.validate(schema) end
 
 --- Build a validator for a JSON Schema's meta-schema.
@@ -261,12 +267,15 @@ function jsonschema.async.dereference(schema) end
 ---
 function jsonschema.is_valid(schema, json) end
 
---- Validate a JSON instance against a schema and return the first error, if any
+--- Validate a JSON instance against a schema.
+---
+--- Returns true and nil if the json is valid,
+--- otherwise, returns false and an error message.
 ---
 ---@param schema any
 ---@param json   any
 ---
----@return bool, string?
+---@return boolean, string?
 function jsonschema.validate(schema, json) end
 
 --- Evaluate a JSON instance against a schema
