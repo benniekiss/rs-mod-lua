@@ -11,7 +11,7 @@ description = "a json lua module using the serde-json rust crate"
 
 [lib]
 name = "rsjson_lua"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["lua54", "vendored"]

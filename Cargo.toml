@@ -19,5 +19,5 @@ rustflags = [
     "-Zfmt-debug=none",
 ]
 
-[profile.release.package.rsjson_lua]
+[profile.release.package.rsjson-lua]
 opt-level = 3
