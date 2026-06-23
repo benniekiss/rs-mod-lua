@@ -125,6 +125,7 @@ function jsonschema.Validator:is_valid(json) end
 ---
 ---@param json any
 ---
+---@return bool, string?
 function jsonschema.Validator:validate(json) end
 
 --- Evaluate the JSON instance.
@@ -191,6 +192,7 @@ function jsonschema.meta.is_valid(schema) end
 ---
 ---@param schema any
 ---
+---@return bool, string?
 function jsonschema.meta.validate(schema) end
 
 --- Build a validator for a JSON Schema's meta-schema.
@@ -264,6 +266,7 @@ function jsonschema.is_valid(schema, json) end
 ---@param schema any
 ---@param json   any
 ---
+---@return bool, string?
 function jsonschema.validate(schema, json) end
 
 --- Evaluate a JSON instance against a schema
