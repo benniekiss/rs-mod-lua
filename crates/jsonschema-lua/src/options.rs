@@ -1,0 +1,329 @@
+use std::ops::Deref;
+
+use mlua::LuaSerdeExt;
+use rsjson_lua::config::{DecodeConfig, EncodeConfig};
+
+use crate::{
+    lua::{bind_lua, json_from_lua, with_lua},
+    validator::{LuaValidator, LuaValidatorMap},
+};
+
+pub(crate) struct LuaKeyword {
+    is_valid: mlua::RegistryKey,
+    validate: mlua::RegistryKey,
+}
+
+impl LuaKeyword {
+    pub(crate) fn new(
+        lua: &mlua::Lua,
+        is_valid: mlua::Function,
+        validate: mlua::Function,
+    ) -> mlua::Result<Self> {
+        let is_valid = lua.create_registry_value(is_valid)?;
+        let validate = lua.create_registry_value(validate)?;
+
+        Ok(Self { is_valid, validate })
+    }
+}
+
+impl jsonschema::Keyword for LuaKeyword {
+    fn is_valid(&self, instance: &serde_json::Value) -> bool {
+        with_lua(|lua| {
+            let func = lua.registry_value::<mlua::Function>(&self.is_valid)?;
+            let val = lua.to_value(instance)?;
+            func.call::<bool>(val)
+        })
+        .unwrap_or(false)
+    }
+
+    fn validate<'i>(
+        &self,
+        instance: &'i serde_json::Value,
+    ) -> Result<(), jsonschema::ValidationError<'i>> {
+        with_lua(|lua| {
+            let func = lua.registry_value::<mlua::Function>(&self.validate)?;
+            let val = lua.to_value(instance)?;
+            func.call::<()>(val)
+        })
+        .map_err(|err| jsonschema::ValidationError::custom(err.to_string()))
+    }
+}
+
+#[derive(mlua::UserData, mlua::FromLua, Clone)]
+pub(crate) struct LuaEmailOptions(jsonschema::EmailOptions);
+
+impl From<jsonschema::EmailOptions> for LuaEmailOptions {
+    fn from(value: jsonschema::EmailOptions) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LuaEmailOptions> for jsonschema::EmailOptions {
+    fn from(value: LuaEmailOptions) -> Self {
+        value.0
+    }
+}
+
+impl AsRef<jsonschema::EmailOptions> for LuaEmailOptions {
+    fn as_ref(&self) -> &jsonschema::EmailOptions {
+        &self.0
+    }
+}
+
+impl Deref for LuaEmailOptions {
+    type Target = jsonschema::EmailOptions;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaEmailOptions {}
+
+#[derive(mlua::UserData, mlua::FromLua, Clone)]
+pub(crate) struct LuaHttpOptions(jsonschema::HttpOptions);
+
+impl From<jsonschema::HttpOptions> for LuaHttpOptions {
+    fn from(value: jsonschema::HttpOptions) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LuaHttpOptions> for jsonschema::HttpOptions {
+    fn from(value: LuaHttpOptions) -> Self {
+        value.0
+    }
+}
+
+impl AsRef<jsonschema::HttpOptions> for LuaHttpOptions {
+    fn as_ref(&self) -> &jsonschema::HttpOptions {
+        &self.0
+    }
+}
+
+impl Deref for LuaHttpOptions {
+    type Target = jsonschema::HttpOptions;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(mlua::UserData)]
+pub(crate) struct LuaFancyRegexPatternOptions(jsonschema::PatternOptions<jsonschema::FancyRegex>);
+
+impl From<jsonschema::PatternOptions<jsonschema::FancyRegex>> for LuaFancyRegexPatternOptions {
+    fn from(value: jsonschema::PatternOptions<jsonschema::FancyRegex>) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LuaFancyRegexPatternOptions> for jsonschema::PatternOptions<jsonschema::FancyRegex> {
+    fn from(value: LuaFancyRegexPatternOptions) -> Self {
+        value.0
+    }
+}
+
+impl AsRef<jsonschema::PatternOptions<jsonschema::FancyRegex>> for LuaFancyRegexPatternOptions {
+    fn as_ref(&self) -> &jsonschema::PatternOptions<jsonschema::FancyRegex> {
+        &self.0
+    }
+}
+
+impl Deref for LuaFancyRegexPatternOptions {
+    type Target = jsonschema::PatternOptions<jsonschema::FancyRegex>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl mlua::FromLua for LuaFancyRegexPatternOptions {
+    fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
+        match value.as_userdata() {
+            Some(ud) => ud.take::<LuaFancyRegexPatternOptions>(),
+            _ => Err(mlua::Error::FromLuaConversionError {
+                from: value.type_name(),
+                to: "PatternOptions".to_string(),
+                message: None,
+            }),
+        }
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaFancyRegexPatternOptions {}
+
+#[derive(mlua::UserData, mlua::FromLua, Clone)]
+pub(crate) struct LuaValidationOptions(jsonschema::ValidationOptions<'static>);
+
+impl From<jsonschema::ValidationOptions<'static>> for LuaValidationOptions {
+    fn from(value: jsonschema::ValidationOptions<'static>) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LuaValidationOptions> for jsonschema::ValidationOptions<'static> {
+    fn from(value: LuaValidationOptions) -> Self {
+        value.0
+    }
+}
+
+impl AsRef<jsonschema::ValidationOptions<'static>> for LuaValidationOptions {
+    fn as_ref(&self) -> &jsonschema::ValidationOptions<'static> {
+        &self.0
+    }
+}
+
+impl Deref for LuaValidationOptions {
+    type Target = jsonschema::ValidationOptions<'static>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaValidationOptions {
+    #[lua(name = "build")]
+    pub(crate) fn lua_build(
+        &self,
+        lua: &mlua::Lua,
+        schema: mlua::Value,
+        options: Option<EncodeConfig>,
+    ) -> mlua::Result<LuaValidator> {
+        json_from_lua(lua, schema, options)
+            .and_then(|s| self.0.build(&s).map_err(mlua::Error::external))
+            .map(|v| v.into())
+    }
+
+    #[lua(name = "build_map")]
+    pub(crate) fn lua_build_map(
+        &self,
+        lua: &mlua::Lua,
+        schema: mlua::Value,
+        options: Option<EncodeConfig>,
+    ) -> mlua::Result<LuaValidatorMap> {
+        json_from_lua(lua, schema, options)
+            .and_then(|s| self.0.build_map(&s).map_err(mlua::Error::external))
+            .map(|v| v.into())
+    }
+
+    #[lua(name = "bundle")]
+    pub(crate) fn lua_bundle(
+        &self,
+        lua: &mlua::Lua,
+        schema: mlua::Value,
+        encode: Option<EncodeConfig>,
+        decode: Option<DecodeConfig>,
+    ) -> mlua::Result<mlua::Value> {
+        json_from_lua(lua, schema, encode)
+            .and_then(|s| bind_lua(lua, || self.0.bundle(&s).map_err(mlua::Error::external)))
+            .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
+    }
+
+    #[lua(name = "dereference")]
+    pub(crate) fn lua_dereference(
+        &self,
+        lua: &mlua::Lua,
+        schema: mlua::Value,
+        encode: Option<EncodeConfig>,
+        decode: Option<DecodeConfig>,
+    ) -> mlua::Result<mlua::Value> {
+        json_from_lua(lua, schema, encode)
+            .and_then(|s| {
+                bind_lua(lua, || {
+                    self.0.dereference(&s).map_err(mlua::Error::external)
+                })
+            })
+            .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
+    }
+
+    #[lua(name = "with_base_uri", infallible)]
+    pub(crate) fn lua_with_base_uri(mut self, base_uri: String) -> Self {
+        self.0 = self.0.with_base_uri(base_uri);
+        self
+    }
+
+    #[lua(name = "with_email_options", infallible)]
+    pub(crate) fn lua_with_email_options(mut self, options: LuaEmailOptions) -> Self {
+        self.0 = self.0.with_email_options(options.into());
+        self
+    }
+
+    #[lua(name = "with_pattern_options", infallible)]
+    pub(crate) fn lua_with_pattern_options(mut self, options: LuaFancyRegexPatternOptions) -> Self {
+        self.0 = self.0.with_pattern_options(options.into());
+        self
+    }
+
+    #[lua(name = "with_http_options")]
+    pub(crate) fn lua_with_http_options(mut self, options: LuaHttpOptions) -> mlua::Result<Self> {
+        self.0 = self
+            .0
+            .with_http_options(&options.into())
+            .map_err(mlua::Error::external)?;
+        Ok(self)
+    }
+
+    #[lua(name = "should_validate_formats", infallible)]
+    pub(crate) fn lua_should_validate_formats(mut self, validate: bool) -> Self {
+        self.0 = self.0.should_validate_formats(validate);
+        self
+    }
+
+    #[lua(name = "should_ignore_unknown_formats", infallible)]
+    pub(crate) fn lua_should_ignore_unknown_formats(mut self, ignore: bool) -> Self {
+        self.0 = self.0.should_ignore_unknown_formats(ignore);
+        self
+    }
+
+    #[lua(name = "with_format", infallible)]
+    pub(crate) fn lua_with_format(
+        mut self,
+        lua: &mlua::Lua,
+        name: String,
+        format: mlua::Function,
+    ) -> mlua::Result<Self> {
+        let key = lua.create_registry_value(format)?;
+
+        self.0 = self.0.with_format(name, move |s| {
+            with_lua(|lua| {
+                let func = lua.registry_value::<mlua::Function>(&key)?;
+                func.call::<bool>(s)
+            })
+            .unwrap_or(false)
+        });
+        Ok(self)
+    }
+
+    #[lua(name = "with_keyword")]
+    pub(crate) fn lua_with_keyword(
+        mut self,
+        lua: &mlua::Lua,
+        name: String,
+        factory: mlua::Function,
+    ) -> mlua::Result<Self> {
+        let key = lua.create_registry_value(factory)?;
+
+        self.0 = self.0.with_keyword(name, move |name, value, location| {
+            with_lua(|lua| {
+                let func = lua.registry_value::<mlua::Function>(&key)?;
+                let name = lua.to_value(name)?;
+                let value = lua.to_value(value)?;
+
+                let (is_valid, validate) = func.call::<(mlua::Function, mlua::Function)>((
+                    name,
+                    value,
+                    location.as_str(),
+                ))?;
+
+                LuaKeyword::new(lua, is_valid, validate)
+            })
+            .map(|kw| Box::new(kw) as Box<dyn jsonschema::Keyword>)
+            .map_err(|err| jsonschema::ValidationError::custom(err.to_string()))
+        });
+        Ok(self)
+    }
+}
