@@ -1,7 +1,11 @@
 use mlua::LuaSerdeExt;
 use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
-use crate::lua::*;
+use crate::{
+    evaluation::*,
+    lua::json_from_lua,
+    validator::{LuaValidator, LuaValidatorMap},
+};
 
 fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
@@ -51,8 +55,6 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
 #[cfg(feature = "async")]
 fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
-    use rsjson_lua::config::DecodeConfig;
-
     let table = lua.create_table()?;
 
     table.set(
