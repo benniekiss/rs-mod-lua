@@ -5,7 +5,7 @@ use rsjson_lua::config::EncodeConfig;
 use crate::{
     draft::LuaJsonSchemaDraft,
     evaluation::LuaEvaluation,
-    lua::{bind_lua, json_from_lua},
+    lua::{bind_lua, lua_to_json},
 };
 
 #[derive(mlua::UserData)]
@@ -52,7 +52,7 @@ impl LuaValidator {
         json: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<bool> {
-        json_from_lua(lua, json, options).map(|val| bind_lua(lua, || self.0.is_valid(&val)))
+        lua_to_json(lua, json, options).map(|val| bind_lua(lua, || self.0.is_valid(&val)))
     }
 
     #[lua(name = "validate")]
@@ -62,7 +62,7 @@ impl LuaValidator {
         json: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<(bool, Option<String>)> {
-        json_from_lua(lua, json, options).map(|val| {
+        lua_to_json(lua, json, options).map(|val| {
             bind_lua(lua, || match self.0.validate(&val) {
                 Ok(_) => (true, None),
                 Err(err) => (false, Some(err.to_string())),
@@ -77,7 +77,7 @@ impl LuaValidator {
         json: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<LuaEvaluation> {
-        json_from_lua(lua, json, options).map(|val| bind_lua(lua, || self.0.evaluate(&val).into()))
+        lua_to_json(lua, json, options).map(|val| bind_lua(lua, || self.0.evaluate(&val).into()))
     }
 
     #[lua(name = "errors")]
@@ -87,7 +87,7 @@ impl LuaValidator {
         json: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<Vec<String>> {
-        json_from_lua(lua, json, options).map(|val| {
+        lua_to_json(lua, json, options).map(|val| {
             bind_lua(lua, || {
                 self.0
                     .iter_errors(&val)

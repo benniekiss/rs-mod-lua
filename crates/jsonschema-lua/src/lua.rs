@@ -67,14 +67,14 @@ where
     LUA.with(|store| LuaGuard::with(store, f))
 }
 
-pub(crate) fn json_from_lua(
+pub(crate) fn lua_to_json(
     lua: &mlua::Lua,
-    json: mlua::Value,
+    value: mlua::Value,
     options: Option<EncodeConfig>,
 ) -> mlua::Result<serde_json::Value> {
-    match json.as_string() {
+    match value.as_string() {
         Some(s) => serde_json::from_str(&s.to_string_lossy()).map_err(mlua::Error::external),
-        None => lua.from_value_with(json, *options.unwrap_or_default()),
+        None => lua.from_value_with(value, *options.unwrap_or_default()),
     }
 }
 

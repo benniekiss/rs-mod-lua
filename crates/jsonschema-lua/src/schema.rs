@@ -3,7 +3,7 @@ use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
 use crate::{
     evaluation::*,
-    lua::json_from_lua,
+    lua::lua_to_json,
     validator::{LuaValidator, LuaValidatorMap},
 };
 
@@ -14,7 +14,7 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         "is_valid",
         lua.create_function(
             |lua, (schema, options): (mlua::Value, Option<EncodeConfig>)| -> mlua::Result<bool> {
-                json_from_lua(lua, schema, options).map(|val| jsonschema::meta::is_valid(&val))
+                lua_to_json(lua, schema, options).map(|val| jsonschema::meta::is_valid(&val))
             },
         )?,
     )?;
@@ -25,7 +25,7 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, options): (mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<(bool, Option<String>)> {
-                json_from_lua(lua, schema, options).map(|val| {
+                lua_to_json(lua, schema, options).map(|val| {
                     match jsonschema::meta::validate(&val) {
                         Ok(_) => (true, None),
                         Err(err) => (false, Some(err.to_string())),
@@ -41,7 +41,7 @@ fn jsonschema_meta_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, options): (mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<LuaValidator> {
-                json_from_lua(lua, schema, options)
+                lua_to_json(lua, schema, options)
                     .and_then(|val| {
                         jsonschema::meta::validator_for(&val).map_err(mlua::Error::external)
                     })
@@ -63,7 +63,7 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             async |lua,
                    (schema, options): (mlua::Value, Option<EncodeConfig>)|
                    -> mlua::Result<LuaValidator> {
-                let schema_val = json_from_lua(&lua, schema, options)?;
+                let schema_val = lua_to_json(&lua, schema, options)?;
 
                 jsonschema::async_validator_for(&schema_val)
                     .await
@@ -79,7 +79,7 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             async |lua,
                    (schema, options): (mlua::Value, Option<EncodeConfig>)|
                    -> mlua::Result<LuaValidatorMap> {
-                let schema_val = json_from_lua(&lua, schema, options)?;
+                let schema_val = lua_to_json(&lua, schema, options)?;
 
                 jsonschema::async_validator_map_for(&schema_val)
                     .await
@@ -99,7 +99,7 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Option<DecodeConfig>,
             )|
                    -> mlua::Result<mlua::Value> {
-                let schema_val = json_from_lua(&lua, schema, encode)?;
+                let schema_val = lua_to_json(&lua, schema, encode)?;
 
                 jsonschema::async_bundle(&schema_val)
                     .await
@@ -119,7 +119,7 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Option<DecodeConfig>,
             )|
                    -> mlua::Result<mlua::Value> {
-                let schema_val = json_from_lua(&lua, schema, encode)?;
+                let schema_val = lua_to_json(&lua, schema, encode)?;
 
                 jsonschema::async_dereference(&schema_val)
                     .await
@@ -151,8 +151,8 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, json, options): (mlua::Value, mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<bool> {
-                let schema_val = json_from_lua(lua, schema, options.clone())?;
-                let json_val = json_from_lua(lua, json, options.clone())?;
+                let schema_val = lua_to_json(lua, schema, options.clone())?;
+                let json_val = lua_to_json(lua, json, options.clone())?;
 
                 Ok(jsonschema::is_valid(&schema_val, &json_val))
             },
@@ -165,8 +165,8 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, json, options): (mlua::Value, mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<(bool, Option<String>)> {
-                let schema_val = json_from_lua(lua, schema, options.clone())?;
-                let json_val = json_from_lua(lua, json, options.clone())?;
+                let schema_val = lua_to_json(lua, schema, options.clone())?;
+                let json_val = lua_to_json(lua, json, options.clone())?;
 
                 let res = match jsonschema::validate(&schema_val, &json_val) {
                     Ok(_) => (true, None),
@@ -184,8 +184,8 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, json, options): (mlua::Value, mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<LuaEvaluation> {
-                let schema_val = json_from_lua(lua, schema, options.clone())?;
-                let json_val = json_from_lua(lua, json, options.clone())?;
+                let schema_val = lua_to_json(lua, schema, options.clone())?;
+                let json_val = lua_to_json(lua, json, options.clone())?;
 
                 Ok(jsonschema::evaluate(&schema_val, &json_val).into())
             },
@@ -198,7 +198,7 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, options): (mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<LuaValidator> {
-                json_from_lua(lua, schema, options)
+                lua_to_json(lua, schema, options)
                     .and_then(|val| jsonschema::validator_for(&val).map_err(mlua::Error::external))
                     .map(|v| v.into())
             },
@@ -211,7 +211,7 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
             |lua,
              (schema, options): (mlua::Value, Option<EncodeConfig>)|
              -> mlua::Result<LuaValidatorMap> {
-                json_from_lua(lua, schema, options)
+                lua_to_json(lua, schema, options)
                     .and_then(|val| {
                         jsonschema::validator_map_for(&val).map_err(mlua::Error::external)
                     })
@@ -230,7 +230,7 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Option<DecodeConfig>,
             )|
              -> mlua::Result<mlua::Value> {
-                json_from_lua(lua, schema, encode)
+                lua_to_json(lua, schema, encode)
                     .and_then(|val| jsonschema::bundle(&val).map_err(mlua::Error::external))
                     .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
             },
@@ -247,7 +247,7 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Option<DecodeConfig>,
             )|
              -> mlua::Result<mlua::Value> {
-                json_from_lua(lua, schema, encode)
+                lua_to_json(lua, schema, encode)
                     .and_then(|val| jsonschema::dereference(&val).map_err(mlua::Error::external))
                     .and_then(|der| lua.to_value_with(&der, *decode.unwrap_or_default()))
             },
