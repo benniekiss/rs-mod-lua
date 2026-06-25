@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ffi::OsString, ops::Deref, time::Duration};
 
 use mlua::LuaSerdeExt;
 use rsjson_lua::config::{DecodeConfig, EncodeConfig};
@@ -79,7 +79,54 @@ impl Deref for LuaEmailOptions {
 }
 
 #[mlua::userdata_impl]
-impl LuaEmailOptions {}
+impl LuaEmailOptions {
+    #[lua(name = "new", infallible)]
+    pub(crate) fn lua_new() -> Self {
+        jsonschema::EmailOptions::default().into()
+    }
+
+    #[lua(name = "with_minimum_sub_domains", infallible)]
+    pub(crate) fn lua_with_minimum_sub_domains(mut self, min: usize) -> Self {
+        self.0 = self.0.with_minimum_sub_domains(min);
+        self
+    }
+
+    #[lua(name = "with_no_minimum_sub_domains", infallible)]
+    pub(crate) fn lua_with_no_minimum_sub_domains(mut self) -> Self {
+        self.0 = self.0.with_no_minimum_sub_domains();
+        self
+    }
+
+    #[lua(name = "with_required_tld", infallible)]
+    pub(crate) fn lua_with_required_tld(mut self) -> Self {
+        self.0 = self.0.with_required_tld();
+        self
+    }
+
+    #[lua(name = "with_domain_literal", infallible)]
+    pub(crate) fn lua_with_domain_literal(mut self) -> Self {
+        self.0 = self.0.with_domain_literal();
+        self
+    }
+
+    #[lua(name = "without_domain_literal", infallible)]
+    pub(crate) fn lua_without_domain_literal(mut self) -> Self {
+        self.0 = self.0.without_domain_literal();
+        self
+    }
+
+    #[lua(name = "with_display_text", infallible)]
+    pub(crate) fn lua_with_display_text(mut self) -> Self {
+        self.0 = self.0.with_display_text();
+        self
+    }
+
+    #[lua(name = "without_display_text", infallible)]
+    pub(crate) fn lua_without_display_text(mut self) -> Self {
+        self.0 = self.0.without_display_text();
+        self
+    }
+}
 
 #[derive(mlua::UserData, mlua::FromLua, Clone)]
 pub(crate) struct LuaHttpOptions(jsonschema::HttpOptions);
@@ -107,6 +154,38 @@ impl Deref for LuaHttpOptions {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaHttpOptions {
+    #[lua(name = "new", infallible)]
+    pub(crate) fn lua_new() -> Self {
+        jsonschema::HttpOptions::default().into()
+    }
+
+    #[lua(name = "connect_timeout", infallible)]
+    pub(crate) fn lua_connect_timeout(mut self, timeout: u64) -> Self {
+        self.0 = self.0.connect_timeout(Duration::from_secs(timeout));
+        self
+    }
+
+    #[lua(name = "timeout", infallible)]
+    pub(crate) fn lua_timeout(mut self, timeout: u64) -> Self {
+        self.0 = self.0.timeout(Duration::from_secs(timeout));
+        self
+    }
+
+    #[lua(name = "danger_accept_invalid_certs", infallible)]
+    pub(crate) fn lua_danger_accept_invalid_certs(mut self, accept: bool) -> Self {
+        self.0 = self.0.danger_accept_invalid_certs(accept);
+        self
+    }
+
+    #[lua(name = "add_root_certificate", infallible)]
+    pub(crate) fn lua_add_root_certificates(mut self, path: OsString) -> Self {
+        self.0 = self.0.add_root_certificate(path);
+        self
     }
 }
 
@@ -153,7 +232,30 @@ impl mlua::FromLua for LuaFancyRegexPatternOptions {
 }
 
 #[mlua::userdata_impl]
-impl LuaFancyRegexPatternOptions {}
+impl LuaFancyRegexPatternOptions {
+    #[lua(name = "new", infallible)]
+    pub(crate) fn lua_new() -> Self {
+        jsonschema::PatternOptions::fancy_regex().into()
+    }
+
+    #[lua(name = "backtrack_limit", infallible)]
+    pub(crate) fn lua_backtrack_limit(mut self, limit: usize) -> Self {
+        self.0 = self.0.backtrack_limit(limit);
+        self
+    }
+
+    #[lua(name = "size_limit", infallible)]
+    pub(crate) fn lua_size_limit(mut self, limit: usize) -> Self {
+        self.0 = self.0.size_limit(limit);
+        self
+    }
+
+    #[lua(name = "dfa_size_limit", infallible)]
+    pub(crate) fn lua_dfa_size_limit(mut self, limit: usize) -> Self {
+        self.0 = self.0.dfa_size_limit(limit);
+        self
+    }
+}
 
 #[derive(mlua::UserData, mlua::FromLua, Clone)]
 pub(crate) struct LuaValidationOptions(jsonschema::ValidationOptions<'static>);
