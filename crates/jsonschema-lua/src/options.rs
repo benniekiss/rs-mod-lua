@@ -4,7 +4,7 @@ use mlua::LuaSerdeExt;
 use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
 use crate::{
-    lua::{bind_lua, json_from_lua, with_lua},
+    lua::{bind_lua, lua_to_json, with_lua},
     validator::{LuaValidator, LuaValidatorMap},
 };
 
@@ -295,7 +295,7 @@ impl LuaValidationOptions {
         schema: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<LuaValidator> {
-        json_from_lua(lua, schema, options)
+        lua_to_json(lua, schema, options)
             .and_then(|s| self.0.build(&s).map_err(mlua::Error::external))
             .map(|v| v.into())
     }
@@ -307,7 +307,7 @@ impl LuaValidationOptions {
         schema: mlua::Value,
         options: Option<EncodeConfig>,
     ) -> mlua::Result<LuaValidatorMap> {
-        json_from_lua(lua, schema, options)
+        lua_to_json(lua, schema, options)
             .and_then(|s| self.0.build_map(&s).map_err(mlua::Error::external))
             .map(|v| v.into())
     }
@@ -320,7 +320,7 @@ impl LuaValidationOptions {
         encode: Option<EncodeConfig>,
         decode: Option<DecodeConfig>,
     ) -> mlua::Result<mlua::Value> {
-        json_from_lua(lua, schema, encode)
+        lua_to_json(lua, schema, encode)
             .and_then(|s| bind_lua(lua, || self.0.bundle(&s).map_err(mlua::Error::external)))
             .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
     }
@@ -333,7 +333,7 @@ impl LuaValidationOptions {
         encode: Option<EncodeConfig>,
         decode: Option<DecodeConfig>,
     ) -> mlua::Result<mlua::Value> {
-        json_from_lua(lua, schema, encode)
+        lua_to_json(lua, schema, encode)
             .and_then(|s| {
                 bind_lua(lua, || {
                     self.0.dereference(&s).map_err(mlua::Error::external)
