@@ -5,7 +5,7 @@ local dkjson = require("dkjson").use_lpeg()
 local cjson = require("cjson").new()
 local rapidjson = require("rapidjson")
 
-local encoding_test = {
+local t = {
    one = 1,
    two = "2",
    three = { 4, 5, 6 },
@@ -126,19 +126,40 @@ local encoding_test = {
    },
 }
 
+local encoding_test = {
+   one = t,
+   two = t,
+   three = {
+      one = t,
+      two = t,
+      three = {
+         one = t,
+         two = t,
+         three = {
+            one = t,
+            two = t,
+            three = t,
+         },
+      },
+   },
+}
+
 local decoding_test = [[{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"one":1,"nested2":{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"one":1,"nested2":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]}]]
 
 local iters = arg[1] or 100
 
 local encoding = luamark.compare_time({
    rsjson = function (ctx, p)
+      local config = ctx.rsjson
       for _ = 1, iters do
-         rsjson.encode(encoding_test, ctx.rsjson)
+         rsjson.encode(encoding_test, config)
       end
    end,
    dkjson = function (ctx, p)
+      local config = ctx.dkjson
+
       for _ = 1, iters do
-         dkjson.encode(encoding_test, ctx.dkjson)
+         dkjson.encode(encoding_test, config)
       end
    end,
    cjson = function (ctx, p)
@@ -147,8 +168,10 @@ local encoding = luamark.compare_time({
       end
    end,
    rapidjson = function (ctx, p)
+      local config = ctx.rapidjson
+
       for _ = 1, iters do
-         rapidjson.encode(encoding_test, ctx.rapidjson)
+         rapidjson.encode(encoding_test, config)
       end
    end,
 },
@@ -157,20 +180,20 @@ local encoding = luamark.compare_time({
       setup = function (p)
          local pretty = p.pretty
 
-         local rsjson_config = rsjson.EncodeConfig:new()
-         local dkjson_config = { indent = pretty }
-         local rapidjson_config = { pretty = pretty }
-
          if pretty then
-            rsjson_config.indent = 4
+            local rsjson_config = rsjson.EncodeConfig:new()
+               :set_indent(4)
+            local dkjson_config = { indent = pretty }
+            local rapidjson_config = { pretty = pretty }
+            return {
+               rsjson = rsjson_config,
+               dkjson = dkjson_config,
+               rapidjson = rapidjson_config,
+               cjson = {},
+            }
+         else
+            return {}
          end
-
-         return {
-            rsjson = rsjson_config,
-            dkjson = dkjson_config,
-            rapidjson = rapidjson_config,
-            cjson = {},
-         }
       end,
    })
 
