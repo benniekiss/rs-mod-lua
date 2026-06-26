@@ -35,7 +35,7 @@ pub(crate) struct LuaJsonVisitor<'lua> {
 }
 
 impl<'lua> LuaJsonVisitor<'lua> {
-    const SERDE_JSON_NUMBER: &'lua str = "$serde_json::private::Number";
+    const SERDE_JSON_NUMBER: &'static str = "$serde_json::private::Number";
 
     fn new(lua: &'lua mlua::Lua, config: &'lua DecodeConfig) -> Self {
         Self { lua, config }
@@ -54,6 +54,17 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
         E: de::Error,
     {
         if self.config.serialize_unit_to_null {
+            Ok(mlua::Value::NULL)
+        } else {
+            Ok(mlua::Value::Nil)
+        }
+    }
+
+    fn visit_none<E>(self) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        if self.config.serialize_none_to_null {
             Ok(mlua::Value::NULL)
         } else {
             Ok(mlua::Value::Nil)
@@ -97,7 +108,7 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
         E: de::Error,
     {
         self.lua
-            .create_string(v.as_bytes()) // skip redundant UTF-8 check
+            .create_string(v)
             .map(mlua::Value::String)
             .map_err(de::Error::custom)
     }
@@ -125,13 +136,10 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
                 .map_err(de::Error::custom)?;
         }
 
-        let mut i: i64 = 1;
-        while let Some(v) = seq.next_element_seed(LuaJsonDeserializer {
-            lua: self.lua,
-            config: self.config,
-        })? {
-            table.raw_insert(i, v).map_err(de::Error::custom)?;
-            i += 1;
+        while let Some(v) =
+            seq.next_element_seed(LuaJsonDeserializer::new(self.lua, self.config))?
+        {
+            table.raw_push(v).map_err(de::Error::custom)?;
         }
 
         Ok(mlua::Value::Table(table))
@@ -141,27 +149,18 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
     where
         A: MapAccess<'de>,
     {
-        // Check for the arbitrary_precision sentinel (`Self::SERDE_JSON_NUMBER`)
-        let first_key: Option<String> = map.next_key()?;
-
-        match first_key.as_deref() {
+        match map.next_key()? {
+            // Check for the arbitrary_precision sentinel (`Self::SERDE_JSON_NUMBER`)
             Some(Self::SERDE_JSON_NUMBER) if self.config.detect_serde_json_arbitrary_precision => {
                 // The value is the raw number string, e.g. "1.23456789012345678901234567890"
-                let raw: String = map.next_value()?;
-
-                if let Ok(i) = raw.parse::<i64>() {
-                    return Ok(mlua::Value::Integer(i));
-                }
-
-                if let Ok(f) = raw.parse::<f64>() {
-                    return Ok(mlua::Value::Number(f));
-                }
-
-                // If the value cannot be cast to i64 or f64, preserve it as a string
-                self.lua
-                    .create_string(raw.as_bytes())
-                    .map(mlua::Value::String)
-                    .map_err(de::Error::custom)
+                map.next_value().and_then(|s: &str| {
+                    s.parse::<i64>()
+                        .map(mlua::Value::Integer)
+                        .or_else(|_| s.parse::<f64>().map(mlua::Value::Number))
+                        // If the value cannot be cast to i64 or f64, preserve it as a string
+                        .or_else(|_| self.lua.create_string(s).map(mlua::Value::String))
+                        .map_err(de::Error::custom)
+                })
             },
 
             Some(first) => {
@@ -171,30 +170,16 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
                     .create_table_with_capacity(0, hint)
                     .map_err(de::Error::custom)?;
 
-                let first_key = self
-                    .lua
-                    .create_string(first.as_bytes())
-                    .map_err(de::Error::custom)?;
-
-                let first_val: mlua::Value = map.next_value_seed(LuaJsonDeserializer {
+                map.next_value_seed(LuaJsonDeserializer {
                     lua: self.lua,
                     config: self.config,
-                })?;
+                })
+                .and_then(|v| table.raw_set(first, v).map_err(de::Error::custom))?;
 
-                table
-                    .raw_set(first_key, first_val)
-                    .map_err(de::Error::custom)?;
-
-                while let Some(k) = map.next_key::<String>()? {
-                    let k = self
-                        .lua
-                        .create_string(k.as_bytes())
-                        .map_err(de::Error::custom)?;
-
-                    let v: mlua::Value = map.next_value_seed(LuaJsonDeserializer {
-                        lua: self.lua,
-                        config: self.config,
-                    })?;
+                while let Some((k, v)) = map.next_entry_seed(
+                    LuaJsonDeserializer::new(self.lua, self.config),
+                    LuaJsonDeserializer::new(self.lua, self.config),
+                )? {
                     table.raw_set(k, v).map_err(de::Error::custom)?;
                 }
 
@@ -213,12 +198,10 @@ pub(crate) fn decode(
     json: &[u8],
     config: Option<DecodeConfig>,
 ) -> mlua::Result<mlua::Value> {
-    let config = config.unwrap_or_default();
-
     let mut de = serde_json::Deserializer::from_slice(json);
-    let seed = LuaJsonDeserializer::new(lua, &config);
-
-    seed.deserialize(&mut de).map_err(mlua::Error::external)
+    LuaJsonDeserializer::new(lua, &config.unwrap_or_default())
+        .deserialize(&mut de)
+        .map_err(mlua::Error::external)
 }
 
 #[cfg(test)]
