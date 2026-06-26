@@ -149,32 +149,35 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
     where
         A: MapAccess<'de>,
     {
-        match map.next_key()? {
+        match map.next_entry_seed(
+            LuaJsonDeserializer::new(self.lua, self.config),
+            LuaJsonDeserializer::new(self.lua, self.config),
+        )? {
             // Check for the arbitrary_precision sentinel (`Self::SERDE_JSON_NUMBER`)
-            Some(Self::SERDE_JSON_NUMBER) if self.config.detect_serde_json_arbitrary_precision => {
+            Some((mlua::Value::String(k), mlua::Value::String(v)))
+                if self.config.detect_serde_json_arbitrary_precision
+                    && k == Self::SERDE_JSON_NUMBER =>
+            {
                 // The value is the raw number string, e.g. "1.23456789012345678901234567890"
-                map.next_value().and_then(|s: &str| {
-                    s.parse::<i64>()
-                        .map(mlua::Value::Integer)
-                        .or_else(|_| s.parse::<f64>().map(mlua::Value::Number))
-                        // If the value cannot be cast to i64 or f64, preserve it as a string
-                        .or_else(|_| self.lua.create_string(s).map(mlua::Value::String))
-                        .map_err(de::Error::custom)
-                })
+                v.to_str()
+                    .and_then(|s| {
+                        s.parse::<i64>()
+                            .map(mlua::Value::Integer)
+                            .or_else(|_| s.parse::<f64>().map(mlua::Value::Number))
+                            .map_err(mlua::Error::external)
+                    })
+                    // If the value cannot be cast to i64 or f64, preserve it as a string
+                    .or(Ok(mlua::Value::String(v)))
             },
 
-            Some(first) => {
+            Some((k, v)) => {
                 let hint = map.size_hint().unwrap_or(0);
                 let table = self
                     .lua
                     .create_table_with_capacity(0, hint)
                     .map_err(de::Error::custom)?;
 
-                map.next_value_seed(LuaJsonDeserializer {
-                    lua: self.lua,
-                    config: self.config,
-                })
-                .and_then(|v| table.raw_set(first, v).map_err(de::Error::custom))?;
+                table.raw_set(k, v).map_err(de::Error::custom)?;
 
                 while let Some((k, v)) = map.next_entry_seed(
                     LuaJsonDeserializer::new(self.lua, self.config),
