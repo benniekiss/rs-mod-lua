@@ -16,8 +16,8 @@ rsjson.null = nil
 --- contain only sequence part of the table, with the same length
 --- as the # operator on that table.
 ---
----@class rsjson.array_mt: table
-rsjson.array_mt = nil
+---@class rsjson.array_metatable: table
+rsjson.array_metatable = nil
 
 ---@class (exact) rsjson.EncodeConfig: userdata
 ---

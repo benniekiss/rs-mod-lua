@@ -91,7 +91,7 @@ describe("config", function ()
             assert.False(conf.cast_u64_to_f64)
         end)
 
-        it("DecodeConfig.set_array_mt#config", function ()
+        it("DecodeConfig.set_array_metatable#config", function ()
             conf:set_array_metatable(true)
             assert.True(conf.array_metatable)
 
@@ -123,20 +123,20 @@ describe("encode", function ()
         assert.Equal(ex, json.encode(te))
     end)
 
-    it("array_mt#encode", function ()
+    it("array_metatable#encode", function ()
         local config = json.EncodeConfig:new()
 
         local te = { foo = "bar" }
         local ex = "[]"
 
-        setmetatable(te, json.array_mt)
+        setmetatable(te, json.array_metatable)
 
         local res = json.encode(te, config)
 
         assert.Equal(ex, res)
     end)
 
-    it("no_array_mt#encode", function ()
+    it("no_array_metatable#encode", function ()
         local config = json.EncodeConfig:new()
 
         local te = { foo = "bar" }
@@ -191,7 +191,7 @@ describe("decode", function ()
         assert.Same(ex, json.decode(te))
     end)
 
-    it("array_mt#decode", function ()
+    it("array_metatable#decode", function ()
         local config = json.DecodeConfig:new()
         config:set_array_metatable(true)
 
@@ -202,10 +202,10 @@ describe("decode", function ()
         local mt = debug.getmetatable(res)
 
         assert.Same(ex, res)
-        assert.Equal(mt, json.array_mt)
+        assert.Equal(mt, json.array_metatable)
     end)
 
-    it("no_array_mt#decode", function ()
+    it("no_array_metatable#decode", function ()
         local config = json.DecodeConfig:new()
         config:set_array_metatable(false)
 
