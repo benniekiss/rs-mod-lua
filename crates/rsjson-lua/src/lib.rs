@@ -64,15 +64,19 @@ mod test {
         let encode_func: mlua::Value = table.get("encode").unwrap();
         let decode_func: mlua::Value = table.get("decode").unwrap();
         let null_val: mlua::Value = table.get("null").unwrap();
-        let array_mt: mlua::Value = table.get("array_mt").unwrap();
+        let array_metatable: mlua::Value = table.get("array_metatable").unwrap();
         let enc_conf: mlua::Value = table.get("EncodeConfig").unwrap();
         let dec_conf: mlua::Value = table.get("DecodeConfig").unwrap();
 
         assert!(encode_func.is_function());
         assert!(decode_func.is_function());
         assert!(null_val.is_null());
-        assert!(array_mt.is_table());
-        assert!(array_mt.equals(&lua.array_metatable().to_value()).unwrap());
+        assert!(array_metatable.is_table());
+        assert!(
+            array_metatable
+                .equals(&lua.array_metatable().to_value())
+                .unwrap()
+        );
         assert!(enc_conf.is_userdata());
         assert!(dec_conf.is_userdata());
     }
