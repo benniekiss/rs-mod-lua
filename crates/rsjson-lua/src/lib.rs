@@ -11,7 +11,7 @@ use mlua::LuaSerdeExt;
 pub fn rsjson_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set("array_mt", lua.array_metatable())?;
+    table.set("array_metatable", lua.array_metatable())?;
 
     table.set("null", lua.null())?;
 
