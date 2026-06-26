@@ -38,10 +38,7 @@ pub(crate) fn encode(
         },
         None => {
             let mut ser = Serializer::new(&mut writer);
-            value
-                .to_serializable()
-                .serialize(&mut ser)
-                .map_err(mlua::Error::external)?;
+            value.serialize(&mut ser).map_err(mlua::Error::external)?;
         },
     };
 
