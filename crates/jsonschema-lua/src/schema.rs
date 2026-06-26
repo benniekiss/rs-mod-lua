@@ -1,9 +1,8 @@
-use mlua::LuaSerdeExt;
 use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
 use crate::{
     evaluation::*,
-    lua::lua_to_json,
+    lua::{json_to_lua, lua_to_json},
     validator::{LuaValidator, LuaValidatorMap},
 };
 
@@ -99,12 +98,13 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Option<DecodeConfig>,
             )|
                    -> mlua::Result<mlua::Value> {
+                let is_string = schema.is_string();
                 let schema_val = lua_to_json(&lua, schema, encode)?;
 
                 jsonschema::async_bundle(&schema_val)
                     .await
                     .map_err(mlua::Error::external)
-                    .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
+                    .and_then(|bundle| json_to_lua(&lua, bundle, decode, is_string))
             },
         )?,
     )?;
@@ -119,14 +119,13 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Option<DecodeConfig>,
             )|
                    -> mlua::Result<mlua::Value> {
+                let is_string = schema.is_string();
                 let schema_val = lua_to_json(&lua, schema, encode)?;
 
                 jsonschema::async_dereference(&schema_val)
                     .await
                     .map_err(mlua::Error::external)
-                    .and_then(|reference| {
-                        lua.to_value_with(&reference, *decode.unwrap_or_default())
-                    })
+                    .and_then(|der| json_to_lua(&lua, der, decode, is_string))
             },
         )?,
     )?;
@@ -230,9 +229,11 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Option<DecodeConfig>,
             )|
              -> mlua::Result<mlua::Value> {
+                let is_string = schema.is_string();
+
                 lua_to_json(lua, schema, encode)
                     .and_then(|val| jsonschema::bundle(&val).map_err(mlua::Error::external))
-                    .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
+                    .and_then(|bundle| json_to_lua(lua, bundle, decode, is_string))
             },
         )?,
     )?;
@@ -247,9 +248,11 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
                 Option<DecodeConfig>,
             )|
              -> mlua::Result<mlua::Value> {
+                let is_string = schema.is_string();
+
                 lua_to_json(lua, schema, encode)
                     .and_then(|val| jsonschema::dereference(&val).map_err(mlua::Error::external))
-                    .and_then(|der| lua.to_value_with(&der, *decode.unwrap_or_default()))
+                    .and_then(|der| json_to_lua(lua, der, decode, is_string))
             },
         )?,
     )?;
