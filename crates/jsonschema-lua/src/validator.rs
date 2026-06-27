@@ -3,7 +3,7 @@ use std::ops::Deref;
 use rsjson_lua::config::EncodeConfig;
 
 use crate::{
-    draft::LuaJsonSchemaDraft,
+    draft::LuaDraft,
     evaluation::LuaEvaluation,
     lua::{bind_lua, lua_to_json},
 };
@@ -100,7 +100,7 @@ impl LuaValidator {
     }
 
     #[lua(name = "draft", infallible)]
-    pub(crate) fn lua_draft(&self) -> LuaJsonSchemaDraft {
+    pub(crate) fn lua_draft(&self) -> LuaDraft {
         self.0.draft().into()
     }
 }

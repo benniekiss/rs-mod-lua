@@ -1,70 +1,81 @@
-use std::ops::Deref;
+use rsjson_lua::config::EncodeConfig;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
-pub(crate) struct LuaJsonSchemaDraft(jsonschema::Draft);
+use crate::lua::lua_to_json;
 
-impl Deref for LuaJsonSchemaDraft {
-    type Target = jsonschema::Draft;
+#[derive(Debug, Clone, Serialize, Deserialize, mlua::UserData, mlua::FromLua)]
+pub(crate) enum LuaDraft {
+    #[serde(alias = "DRAFT201909", alias = "draft201909")]
+    Draft201909,
+    #[serde(alias = "DRAFT202012", alias = "draft202012")]
+    Draft202012,
+    #[serde(alias = "DRAFT4", alias = "draft4")]
+    Draft4,
+    #[serde(alias = "DRAFT6", alias = "draft6")]
+    Draft6,
+    #[serde(alias = "DRAFT7", alias = "draft7")]
+    Draft7,
+    Unknown,
+}
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl From<LuaDraft> for jsonschema::Draft {
+    fn from(value: LuaDraft) -> Self {
+        match value {
+            LuaDraft::Draft201909 => jsonschema::Draft::Draft201909,
+            LuaDraft::Draft202012 => jsonschema::Draft::Draft202012,
+            LuaDraft::Draft4 => jsonschema::Draft::Draft4,
+            LuaDraft::Draft6 => jsonschema::Draft::Draft6,
+            LuaDraft::Draft7 => jsonschema::Draft::Draft7,
+            LuaDraft::Unknown => jsonschema::Draft::Unknown,
+        }
     }
 }
 
-impl From<jsonschema::Draft> for LuaJsonSchemaDraft {
+impl From<&LuaDraft> for jsonschema::Draft {
+    fn from(value: &LuaDraft) -> Self {
+        value.to_owned().into()
+    }
+}
+
+impl From<jsonschema::Draft> for LuaDraft {
     fn from(value: jsonschema::Draft) -> Self {
-        LuaJsonSchemaDraft(value)
-    }
-}
-
-impl From<LuaJsonSchemaDraft> for jsonschema::Draft {
-    fn from(value: LuaJsonSchemaDraft) -> Self {
-        value.0
-    }
-}
-
-impl TryFrom<&str> for LuaJsonSchemaDraft {
-    type Error = mlua::Error;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value.to_lowercase().as_str() {
-            "draft201909" => Ok(jsonschema::Draft::Draft201909.into()),
-            "draft202012" => Ok(jsonschema::Draft::Draft202012.into()),
-            "draft4" => Ok(jsonschema::Draft::Draft4.into()),
-            "draft6" => Ok(jsonschema::Draft::Draft6.into()),
-            "draft7" => Ok(jsonschema::Draft::Draft7.into()),
-            _ => Err(mlua::Error::FromLuaConversionError {
-                from: "string",
-                to: "JsonSchemaDraft".to_string(),
-                message: Some("unknown Json Draft version".to_string()),
-            }),
+        match value {
+            jsonschema::Draft::Draft201909 => LuaDraft::Draft201909,
+            jsonschema::Draft::Draft202012 => LuaDraft::Draft202012,
+            jsonschema::Draft::Draft4 => LuaDraft::Draft4,
+            jsonschema::Draft::Draft6 => LuaDraft::Draft6,
+            jsonschema::Draft::Draft7 => LuaDraft::Draft7,
+            _ => LuaDraft::Unknown,
         }
     }
 }
 
-impl TryFrom<String> for LuaJsonSchemaDraft {
-    type Error = mlua::Error;
+#[mlua::userdata_impl]
+impl LuaDraft {
+    const DRAFT201909: &'static str = "DRAFT201909";
+    const DRAFT202012: &'static str = "DRAFT202012";
+    const DRAFT4: &'static str = "DRAFT4";
+    const DRAFT6: &'static str = "DRAFT6";
+    const DRAFT7: &'static str = "DRAFT7";
 
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        value.as_str().try_into()
+    #[lua(name = "from_schema_uri", infallible)]
+    pub(crate) fn lua_from_schema_uri(uri: &str) -> Self {
+        jsonschema::Draft::from_schema_uri(uri).into()
     }
-}
 
-impl mlua::FromLua for LuaJsonSchemaDraft {
-    fn from_lua(value: mlua::Value, _: &mlua::Lua) -> mlua::Result<Self> {
-        value.to_string()?.try_into()
+    #[lua(name = "detect")]
+    pub(crate) fn lua_detect(
+        &self,
+        lua: &mlua::Lua,
+        schema: mlua::Value,
+        options: Option<EncodeConfig>,
+    ) -> mlua::Result<LuaDraft> {
+        lua_to_json(lua, schema, options)
+            .map(|v| jsonschema::Draft::detect(self.clone().into(), &v).into())
     }
-}
 
-impl mlua::IntoLua for LuaJsonSchemaDraft {
-    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        match self.deref() {
-            jsonschema::Draft::Draft201909 => "Draft201909".into_lua(lua),
-            jsonschema::Draft::Draft202012 => "Draft202012".into_lua(lua),
-            jsonschema::Draft::Draft4 => "Draft4".into_lua(lua),
-            jsonschema::Draft::Draft6 => "Draft6".into_lua(lua),
-            jsonschema::Draft::Draft7 => "Draft7".into_lua(lua),
-            _ => Err(mlua::Error::runtime("unknown Json Draft version")),
-        }
+    #[lua(name = "is_known_keyword", infallible)]
+    pub(crate) fn lua_is_known_keyword(&self, keyword: &str) -> bool {
+        jsonschema::Draft::is_known_keyword(&self.into(), keyword)
     }
 }
