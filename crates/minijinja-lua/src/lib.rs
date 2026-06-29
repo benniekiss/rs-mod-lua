@@ -8,7 +8,7 @@ mod state;
 
 use mlua::LuaSerdeExt;
 
-use crate::convert::LuaSyntaxConfig;
+use crate::convert::{LuaAutoEscape, LuaSyntaxConfig, LuaUndefinedBehavior};
 pub use crate::{
     environment::LuaEnvironment,
     state::{LuaStateMut, LuaStateRef},
@@ -32,6 +32,11 @@ pub fn minijinja_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set("path_loader", contrib::minijinja_path_loader(lua)?)?;
 
     table.set("None", lua.null())?;
+    table.set("AutoEscape", lua.create_proxy::<LuaAutoEscape>()?)?;
+    table.set(
+        "UndefinedBehavior",
+        lua.create_proxy::<LuaUndefinedBehavior>()?,
+    )?;
     table.set("Environment", lua.create_proxy::<LuaEnvironment>()?)?;
     table.set("SyntaxConfig", lua.create_proxy::<LuaSyntaxConfig>()?)?;
 

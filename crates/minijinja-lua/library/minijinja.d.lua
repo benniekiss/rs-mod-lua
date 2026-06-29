@@ -38,11 +38,13 @@ local minijinja = {}
 ---     - attributes: fails
 ---     - test: fails
 ---
----@alias minijinja.UndefinedBehavior
---- | "lenient"
---- | "chainable"
---- | "semi-strict"
---- | "strict"
+---@enum minijinja.UndefinedBehavior
+minijinja.UndefinedBehavior = {
+    CHAINABLE = "Chainable",
+    LENIENT = "Lenient",
+    SEMISTRICT = "SemiStrict",
+    STRICT = "Strict",
+}
 
 --- Determines how autoescaping is applied.
 ---
@@ -52,10 +54,12 @@ local minijinja = {}
 --- - json
 --- - none
 ---
----@alias minijinja.AutoEscape
---- | "html"
---- | "json"
---- | "none"
+---@enum minijinja.AutoEscape
+minijinja.AutoEscape = {
+    HTML = "Html",
+    JSON = "Json",
+    NONE = "None",
+}
 
 --- A minijinja callback.
 ---

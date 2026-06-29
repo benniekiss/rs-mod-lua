@@ -333,6 +333,7 @@ dependencies = [
  "minijinja",
  "minijinja-contrib",
  "mlua",
+ "serde",
  "serde_json",
 ]
 

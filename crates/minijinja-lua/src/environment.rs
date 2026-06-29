@@ -209,17 +209,19 @@ impl LuaEnvironment {
         let func = LuaFunctionObject::from_value(lua, &callback)?;
 
         self.0.set_loader(move |name| {
-            let source = func.with_func(args!(name), None)?;
-            Ok(source.and_then(|v| {
-                // If the lua function returns nil, i.e., no path found
-                // it is mapped as `minijinja::value::ValueKind::Undefined`, however
-                // we need to return a `None` to indicate no path was found.
-                if v.is_undefined() {
-                    None
-                } else {
-                    Some(v.to_string())
-                }
-            }))
+            func.with_func::<Option<mlua::String>>(args!(name), None)
+                .map(|v| {
+                    v.and_then(|v| {
+                        // If the lua function returns nil, i.e., no path found
+                        // it is mapped as `minijinja::value::ValueKind::Undefined`, however
+                        // we need to return a `None` to indicate no path was found.
+                        if v.is_undefined() {
+                            None
+                        } else {
+                            v.as_str().map(|s| s.to_string())
+                        }
+                    })
+                })
         });
 
         Ok(())
@@ -234,7 +236,7 @@ impl LuaEnvironment {
         let func = LuaFunctionObject::from_value(lua, &callback)?;
 
         self.0.set_path_join_callback(move |name, parent| {
-            func.with_func(args!(name, parent), None)
+            func.with_func::<String>(args!(name, parent), None)
                 .ok()
                 .flatten()
                 .and_then(|v| v.as_str().map(|s| Cow::Owned(s.to_string())))
@@ -255,7 +257,7 @@ impl LuaEnvironment {
 
         self.0
             .set_unknown_method_callback(move |state, value, method, args| {
-                func.with_func(args!(value, method, ..args), Some(state))
+                func.with_func::<mlua::MultiValue>(args!(value, method, ..args), Some(state))
                     .map(|v| v.unwrap_or_default())
             });
 
@@ -285,10 +287,7 @@ impl LuaEnvironment {
 
         self.0
             .set_auto_escape_callback(move |name| -> minijinja::AutoEscape {
-                func.with_func(args!(name), None)
-                    .ok()
-                    .flatten()
-                    .and_then(|v| LuaAutoEscape::try_from(v.to_string().as_str()).ok())
+                func.with_func_ser::<LuaAutoEscape>(args!(name), None)
                     .unwrap_or_default()
                     .into()
             });
@@ -306,7 +305,11 @@ impl LuaEnvironment {
         func.set_pass_state(true);
 
         self.0.set_formatter(move |out, state, value| {
-            let Some(val) = func.with_func(args!(value), Some(state)).ok().flatten() else {
+            let Some(val) = func
+                .with_func::<Option<String>>(args!(value), Some(state))
+                .ok()
+                .flatten()
+            else {
                 return Ok(());
             };
 
@@ -396,7 +399,7 @@ impl LuaEnvironment {
                 .map_err(mlua::Error::external)?;
 
             let mut mv = captured
-                .with_state_mut(|state| func.with_func_mut(&[], Some(state)))
+                .with_state_mut(|state| func.with_func_mut::<mlua::MultiValue>(&[], Some(state)))
                 .map_err(mlua::Error::external)?
                 .and_then(|v| minijinja_to_lua(lua, &v))
                 .unwrap_or_default();
@@ -447,7 +450,7 @@ impl LuaEnvironment {
 
         self.0
             .add_filter(name, move |state: &State, args: JinjaRest<JinjaValue>| {
-                func.with_func(&args, Some(state))
+                func.with_func::<mlua::MultiValue>(&args, Some(state))
             });
 
         Ok(())
@@ -471,7 +474,7 @@ impl LuaEnvironment {
 
         self.0
             .add_test(name, move |state: &State, args: JinjaRest<JinjaValue>| {
-                func.with_func(&args, Some(state))
+                func.with_func::<bool>(&args, Some(state))
             });
 
         Ok(())
@@ -497,7 +500,7 @@ impl LuaEnvironment {
 
                 self.0
                     .add_function(name, move |state: &State, args: JinjaRest<JinjaValue>| {
-                        func.with_func(&args, Some(state))
+                        func.with_func::<mlua::MultiValue>(&args, Some(state))
                     })
             },
             _ => self.0.add_global(name, lua_to_minijinja(lua, &val)),

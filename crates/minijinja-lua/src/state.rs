@@ -161,14 +161,18 @@ where
     // The current auto escape flag
     methods.add_method(
         "auto_escape",
-        |_, this, ()| -> mlua::Result<LuaAutoEscape> { Ok(this.state().auto_escape().into()) },
+        |lua, this, ()| -> mlua::Result<mlua::Value> {
+            let ae: LuaAutoEscape = this.state().auto_escape().into();
+            lua.to_value(&ae)
+        },
     );
 
     // The current undefined behavior
     methods.add_method(
         "undefined_behavior",
-        |_, this, ()| -> mlua::Result<LuaUndefinedBehavior> {
-            Ok(this.state().undefined_behavior().into())
+        |lua, this, ()| -> mlua::Result<mlua::Value> {
+            let ub: LuaUndefinedBehavior = this.state().undefined_behavior().into();
+            lua.to_value(&ub)
         },
     );
 
