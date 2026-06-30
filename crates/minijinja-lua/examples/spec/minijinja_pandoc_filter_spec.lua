@@ -1,8 +1,8 @@
 local filter = require("minijinja_pandoc_filter")
 
-describe("Examples", function()
-    describe("minijinja_pandoc_filter#examples", function()
-        it("simple#examples", function()
+describe("Examples", function ()
+    describe("minijinja_pandoc_filter#examples", function ()
+        it("simple#examples", function ()
             local source = [[
 ---
 minijinja:
@@ -23,7 +23,7 @@ Test: {{ foo }}
             assert.Equal(ex, te)
         end)
 
-        it("nested context#examples", function()
+        it("nested context#examples", function ()
             local source = [[
 ---
 minijinja:

@@ -40,16 +40,16 @@ local filter = {}
 ---
 ---@class (exact) minijinja_pandoc_filter.JinjaSettings
 ---
----@field reload_before_render? boolean
+---@field reload_before_render?  boolean
 ---@field keep_trailing_newline? boolean
----@field trim_blocks? boolean
----@field lstrip_blocks? boolean
----@field debug? boolean
----@field fuel? integer
----@field recursion_limit? integer
----@field undefined_behavior? minijinja.UndefinedBehavior
----@field pycompat? boolean
----@field context? table
+---@field trim_blocks?           boolean
+---@field lstrip_blocks?         boolean
+---@field debug?                 boolean
+---@field fuel?                  integer
+---@field recursion_limit?       integer
+---@field undefined_behavior?    minijinja.UndefinedBehavior
+---@field pycompat?              boolean
+---@field context?               table
 local JinjaSettings = {
     reload_before_render = nil,
     keep_trailing_newline = nil,
@@ -71,7 +71,7 @@ local YAML_EXTS = pandoc.List({ ".yaml", ".yml" })
 ---
 ---@param path string
 ---
----@return string|nil
+---@return string | nil
 local function read_file(path)
     local file = io.open(path, "r")
     if not file then
@@ -99,7 +99,7 @@ local function normalize_metadata(meta)
         local t = pandoc.utils.type(v)
 
         if t == "Inlines" or t == "Blocks" then
-            ---@cast v pandoc.Inlines,pandoc.Blocks
+            ---@cast v pandoc.Inlines, pandoc.Blocks
 
             if t == "Inlines" then
                 v = pandoc.Blocks(v)
@@ -139,7 +139,7 @@ end
 ---
 ---@param path string
 ---
----@return table|nil
+---@return table | nil
 local function load_json(path)
     local json = read_file(path)
     if json == nil then return end
@@ -158,7 +158,7 @@ end
 ---
 ---@param path string
 ---
----@return table|nil
+---@return table | nil
 local function load_yaml(path)
     local yaml = read_file(path)
     if yaml == nil then return end
@@ -177,7 +177,7 @@ end
 ---
 ---@param path string
 ---
----@return table|nil
+---@return table | nil
 local function load_context_from_file(path)
     if not pandoc.path.exists(path) then
         pandoc.log.error("file does not exist: " .. path)
@@ -203,7 +203,7 @@ end
 
 --- Load a minijinja context
 ---
----@param context string|table
+---@param context string | table
 local function load_context(context)
     local is_string = pandoc.utils.type(context) == "string"
     local is_table = pandoc.utils.type(context) == "table"

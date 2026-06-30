@@ -6,124 +6,124 @@ local cjson = require("cjson").new()
 local rapidjson = require("rapidjson")
 
 local encoding_test = {
-   one = 1,
-   two = "2",
-   three = { 4, 5, 6 },
-   ["four"] = {
-      [1] = "one",
-      [2] = "two",
-      [3] = "three",
-   },
-   nested = {
-      one = 1,
-      two = "2",
-      three = { 4, 5, 6 },
-      ["four"] = {
-         [1] = "one",
-         [2] = "two",
-         [3] = "three",
-      },
-      nested = {
-         one = 1,
-         two = "2",
-         three = { 4, 5, 6 },
-         ["four"] = {
+    one = 1,
+    two = "2",
+    three = { 4, 5, 6 },
+    ["four"] = {
+        [1] = "one",
+        [2] = "two",
+        [3] = "three",
+    },
+    nested = {
+        one = 1,
+        two = "2",
+        three = { 4, 5, 6 },
+        ["four"] = {
             [1] = "one",
             [2] = "two",
             [3] = "three",
-         },
-         nested = {
+        },
+        nested = {
             one = 1,
             two = "2",
             three = { 4, 5, 6 },
             ["four"] = {
-               [1] = "one",
-               [2] = "two",
-               [3] = "three",
-            },
-         },
-      },
-   },
-   nested2 = {
-      one = 1,
-      two = "2",
-      three = { 4, 5, 6 },
-      ["four"] = {
-         [1] = "one",
-         [2] = "two",
-         [3] = "three",
-      },
-      nested = {
-         one = 1,
-         two = "2",
-         three = { 4, 5, 6 },
-         ["four"] = {
-            [1] = "one",
-            [2] = "two",
-            [3] = "three",
-         },
-         nested = {
-            one = 1,
-            two = "2",
-            three = { 4, 5, 6 },
-            ["four"] = {
-               [1] = "one",
-               [2] = "two",
-               [3] = "three",
+                [1] = "one",
+                [2] = "two",
+                [3] = "three",
             },
             nested = {
-               one = 1,
-               two = "2",
-               three = { 4, 5, 6 },
-               ["four"] = {
-                  [1] = "one",
-                  [2] = "two",
-                  [3] = "three",
-               },
+                one = 1,
+                two = "2",
+                three = { 4, 5, 6 },
+                ["four"] = {
+                    [1] = "one",
+                    [2] = "two",
+                    [3] = "three",
+                },
             },
-         },
-      },
-      nested2 = {
-         one = 1,
-         two = "2",
-         three = { 4, 5, 6 },
-         ["four"] = {
+        },
+    },
+    nested2 = {
+        one = 1,
+        two = "2",
+        three = { 4, 5, 6 },
+        ["four"] = {
             [1] = "one",
             [2] = "two",
             [3] = "three",
-         },
-         nested = {
+        },
+        nested = {
             one = 1,
             two = "2",
             three = { 4, 5, 6 },
             ["four"] = {
-               [1] = "one",
-               [2] = "two",
-               [3] = "three",
+                [1] = "one",
+                [2] = "two",
+                [3] = "three",
             },
             nested = {
-               one = 1,
-               two = "2",
-               three = { 4, 5, 6 },
-               ["four"] = {
-                  [1] = "one",
-                  [2] = "two",
-                  [3] = "three",
-               },
-               nested = {
-                  one = 1,
-                  two = "2",
-                  three = { 4, 5, 6 },
-                  ["four"] = {
-                     [1] = "one",
-                     [2] = "two",
-                     [3] = "three",
-                  },
-               },
+                one = 1,
+                two = "2",
+                three = { 4, 5, 6 },
+                ["four"] = {
+                    [1] = "one",
+                    [2] = "two",
+                    [3] = "three",
+                },
+                nested = {
+                    one = 1,
+                    two = "2",
+                    three = { 4, 5, 6 },
+                    ["four"] = {
+                        [1] = "one",
+                        [2] = "two",
+                        [3] = "three",
+                    },
+                },
             },
-         },
-      },
-   },
+        },
+        nested2 = {
+            one = 1,
+            two = "2",
+            three = { 4, 5, 6 },
+            ["four"] = {
+                [1] = "one",
+                [2] = "two",
+                [3] = "three",
+            },
+            nested = {
+                one = 1,
+                two = "2",
+                three = { 4, 5, 6 },
+                ["four"] = {
+                    [1] = "one",
+                    [2] = "two",
+                    [3] = "three",
+                },
+                nested = {
+                    one = 1,
+                    two = "2",
+                    three = { 4, 5, 6 },
+                    ["four"] = {
+                        [1] = "one",
+                        [2] = "two",
+                        [3] = "three",
+                    },
+                    nested = {
+                        one = 1,
+                        two = "2",
+                        three = { 4, 5, 6 },
+                        ["four"] = {
+                            [1] = "one",
+                            [2] = "two",
+                            [3] = "three",
+                        },
+                    },
+                },
+            },
+        },
+    },
 }
 
 local decoding_test = [[{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"one":1,"nested2":{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"one":1,"nested2":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"three":[4,5,6],"one":1,"nested":{"one":1,"three":[4,5,6],"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]},"two":"2","four":["one","two","three"]}]]
@@ -131,49 +131,49 @@ local decoding_test = [[{"three":[4,5,6],"nested":{"three":[4,5,6],"one":1,"nest
 local iters = arg[1] or 100
 
 local encoding = luamark.compare_memory({
-   rsjson = function ()
-      for _ = 1, iters do
-         rsjson.encode(encoding_test)
-      end
-   end,
-   dkjson = function ()
-      for _ = 1, iters do
-         dkjson.encode(encoding_test)
-      end
-   end,
-   cjson = function ()
-      for _ = 1, iters do
-         cjson.encode(encoding_test)
-      end
-   end,
-   rapidjson = function ()
-      for _ = 1, iters do
-         rapidjson.encode(encoding_test)
-      end
-   end,
+    rsjson = function ()
+        for _ = 1, iters do
+            rsjson.encode(encoding_test)
+        end
+    end,
+    dkjson = function ()
+        for _ = 1, iters do
+            dkjson.encode(encoding_test)
+        end
+    end,
+    cjson = function ()
+        for _ = 1, iters do
+            cjson.encode(encoding_test)
+        end
+    end,
+    rapidjson = function ()
+        for _ = 1, iters do
+            rapidjson.encode(encoding_test)
+        end
+    end,
 })
 
 local decoding = luamark.compare_memory({
-   rsjson = function ()
-      for _ = 1, iters do
-         rsjson.decode(decoding_test)
-      end
-   end,
-   dkjson = function ()
-      for _ = 1, iters do
-         dkjson.decode(decoding_test)
-      end
-   end,
-   cjson = function ()
-      for _ = 1, iters do
-         cjson.decode(decoding_test)
-      end
-   end,
-   rapidjson = function ()
-      for _ = 1, iters do
-         rapidjson.decode(decoding_test)
-      end
-   end,
+    rsjson = function ()
+        for _ = 1, iters do
+            rsjson.decode(decoding_test)
+        end
+    end,
+    dkjson = function ()
+        for _ = 1, iters do
+            dkjson.decode(decoding_test)
+        end
+    end,
+    cjson = function ()
+        for _ = 1, iters do
+            cjson.decode(decoding_test)
+        end
+    end,
+    rapidjson = function ()
+        for _ = 1, iters do
+            rapidjson.decode(decoding_test)
+        end
+    end,
 })
 
 local sep = 20
