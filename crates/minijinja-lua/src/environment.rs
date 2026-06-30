@@ -294,23 +294,21 @@ impl LuaEnvironment {
         func.set_pass_state(true);
 
         self.0.set_formatter(move |out, state, value| {
-            let Some(val) = func
-                .with_func::<Option<String>>(args!(value), Some(state))
+            func.with_func::<Option<String>>(args!(value), Some(state))
                 .ok()
                 .flatten()
-            else {
-                return Ok(());
-            };
-
-            let Some(s) = val.as_str() else {
-                return Err(JinjaError::new(
-                    JinjaErrorKind::WriteFailure,
-                    "formatter must return a string",
-                ));
-            };
-
-            out.write_str(s)
-                .map_err(|_| JinjaError::new(JinjaErrorKind::WriteFailure, "write failed"))
+                .map(|val| {
+                    let s = val.as_str().ok_or_else(|| {
+                        JinjaError::new(
+                            JinjaErrorKind::WriteFailure,
+                            "formatter must return a string",
+                        )
+                    })?;
+                    out.write_str(s).map_err(|err| {
+                        JinjaError::new(JinjaErrorKind::WriteFailure, err.to_string())
+                    })
+                })
+                .unwrap_or(Ok(()))
         });
 
         Ok(())
