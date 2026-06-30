@@ -6,6 +6,9 @@
   "runtime": {
     "version": "Lua5.4"
   },
+  "diagnostics": {
+    "globals": [ "pandoc" ]
+  },
   "workspace": {
     "ignoreDir": [
       ".lux"
