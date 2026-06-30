@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.3.3...minijinja-lua-v0.3.4) - 2026-06-30
+
+### Other
+
+- bump versions
+- formatting with luafmt
+- *(minijinja-lua)* improve type conversions ([#41](https://github.com/benniekiss/rs-mod-lua/pull/41))
+
 ## [0.3.3](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.3.2...minijinja-lua-v0.3.3) - 2026-06-22
 
 ### Other
