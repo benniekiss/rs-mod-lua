@@ -210,18 +210,7 @@ impl LuaEnvironment {
 
         self.0.set_loader(move |name| {
             func.with_func::<Option<mlua::String>>(args!(name), None)
-                .map(|v| {
-                    v.and_then(|v| {
-                        // If the lua function returns nil, i.e., no path found
-                        // it is mapped as `minijinja::value::ValueKind::Undefined`, however
-                        // we need to return a `None` to indicate no path was found.
-                        if v.is_undefined() {
-                            None
-                        } else {
-                            v.as_str().map(|s| s.to_string())
-                        }
-                    })
-                })
+                .map(|v| v.and_then(|v| v.as_str().map(|s| s.to_string())))
         });
 
         Ok(())
