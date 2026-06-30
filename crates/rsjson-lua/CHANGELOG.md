@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.5.0...rsjson-lua-v0.6.0) - 2026-06-30
+
+### Fixed
+
+- *(rsjson-lua)* fix tests
+- *(rsjson-lua)* use correct `array_metatable` field
+
+### Other
+
+- bump versions
+- formatting with luafmt
+- *(rsjson-lua)* [**breaking**] change `array_mt` var name to `array_metatable`
+- *(rsjson-lua)* some more style refactors
+- *(rsjson-lua)* remove unnecessary `.to_serializable()`
+- *(rsjson-lua)* make benchmarks more rigorous
+- *(rsjson-lua)* refactor some code
+
 ## [0.5.0](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.4.2...rsjson-lua-v0.5.0) - 2026-06-23
 
 ### Other
