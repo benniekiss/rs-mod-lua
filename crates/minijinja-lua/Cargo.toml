@@ -30,7 +30,7 @@ json = ["dep:serde_json"]
 datetime = ["dep:jiff"]
 
 [dependencies]
-jiff = { version = "0.2.28", optional = true, features = ["serde"] }
+jiff = { version = "0.2.31", optional = true, features = ["serde"] }
 minijinja = { version = "2.21.0", features = [
     "unicode",
     "fuel",
