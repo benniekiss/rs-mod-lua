@@ -316,6 +316,57 @@ describe("Environment tests", function ()
             end, "engine ran out of fuel")
         end)
 
+        describe("undefined_behavior#templates", function ()
+            it("chainable#undefined_behavior", function ()
+                local env = Environment:new()
+                env.undefined_behavior = minijinja.UndefinedBehavior.CHAINABLE
+
+                local source = "{{ foo.bar.baz }}"
+
+                assert.Equal("", env:render_str(source))
+            end)
+
+            it("lenient#undefined_behavior", function ()
+                local env = Environment:new()
+                env.undefined_behavior = minijinja.UndefinedBehavior.LENIENT
+
+                local source = "{{ foo }}"
+
+                assert.Equal("", env:render_str(source))
+            end)
+
+            it("semi_strict#undefined_behavior", function ()
+                local env = Environment:new()
+                env.undefined_behavior = minijinja.UndefinedBehavior.SEMISTRICT
+
+                local source = "{% if not foo %}foo{% endif %}"
+
+                assert.Equal("foo", env:render_str(source))
+            end)
+
+            it("strict#undefined_behavior", function ()
+                local env = Environment:new()
+                env.undefined_behavior = minijinja.UndefinedBehavior.STRICT
+
+                local source = "{% if not foo %}foo{% endif %}"
+
+                assert.Error(function ()
+                    env:render_str(source)
+                end)
+            end)
+        end)
+
+        it("recursion_limit#templates", function ()
+            local env = Environment:new()
+            env.recursion_limit = 1
+
+            local source = "{% for i in range(10) %}{{ loop(i) }}{% endfor %}"
+
+            assert.match_error(function ()
+                env:render_str(source)
+            end, "invalid operation: cannot recurse outside of recursive loop")
+        end)
+
         it("undeclared-variables#templates", function ()
             local env = Environment:new()
 
