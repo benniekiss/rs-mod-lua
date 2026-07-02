@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.3.5...minijinja-lua-v0.3.6) - 2026-07-02
+
+### Other
+
+- *(minijinja-lua)* some cleanup
+- bump versions
+- *(minijinja-lua)* use chained operations
+- *(minijinja-lua)* use `chunk!` macro instead of raw string
+- *(minijinja-lua)* bump jiff
+
 ## [0.3.5](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.3.4...minijinja-lua-v0.3.5) - 2026-07-01
 
 ### Fixed
