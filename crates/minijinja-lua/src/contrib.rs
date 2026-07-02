@@ -119,31 +119,28 @@ pub mod datetime {
         let patterns = kwargs.get::<Option<Vec<String>>>("patterns")?;
         kwargs.assert_all_used()?;
 
-        let date = match value.as_str() {
-            Some(s) => {
+        value
+            .as_str()
+            .ok_or_else(|| {
+                JinjaError::new(
+                    JinjaErrorKind::CannotDeserialize,
+                    "could not parse value as a string",
+                )
+            })
+            .and_then(|s|
                 // Try the provided patterns
-                if let Some(date) = patterns
+                patterns
                     .iter()
                     .flatten()
                     .find_map(|f| Date::strptime(f, s).ok())
-                {
-                    Ok(date)
-                } else {
-                    // Or fallback to the `jiff` parser
-                    s.parse::<Date>()
-                        .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::CannotDeserialize))
-                }
-            },
-            None => Err(JinjaError::new(
-                JinjaErrorKind::CannotDeserialize,
-                "could not parse value as a string",
-            )),
-        }?;
-
-        Ok(match format {
-            Some(f) => date.strftime(f).to_string(),
-            None => date.to_string(),
-        })
+                    .map(Ok)
+                    // fallback to standard jiff parsing
+                    .unwrap_or_else(|| s.parse::<Date>())
+                    .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::CannotDeserialize)))
+            .map(|date| match format {
+                Some(f) => date.strftime(f).to_string(),
+                None => date.to_string(),
+            })
     }
 
     /// Formats a string into a time using the [`jiff`] crate.
@@ -162,31 +159,28 @@ pub mod datetime {
         let patterns = kwargs.get::<Option<Vec<String>>>("patterns")?;
         kwargs.assert_all_used()?;
 
-        let time = match value.as_str() {
-            Some(s) => {
+        value
+            .as_str()
+            .ok_or_else(|| {
+                JinjaError::new(
+                    JinjaErrorKind::CannotDeserialize,
+                    "could not parse value as a string",
+                )
+            })
+            .and_then(|s|
                 // Try the provided patterns
-                if let Some(date) = patterns
+                patterns
                     .iter()
                     .flatten()
                     .find_map(|f| Time::strptime(f, s).ok())
-                {
-                    Ok(date)
-                } else {
-                    // Or fallback to the `jiff` parser
-                    s.parse::<Time>()
-                        .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::CannotDeserialize))
-                }
-            },
-            None => Err(JinjaError::new(
-                JinjaErrorKind::CannotDeserialize,
-                "could not parse value as a string",
-            )),
-        }?;
-
-        Ok(match format {
-            Some(f) => time.strftime(f).to_string(),
-            None => time.to_string(),
-        })
+                    .map(Ok)
+                    // fallback to standard jiff parsing
+                    .unwrap_or_else(|| s.parse::<Time>())
+                    .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::CannotDeserialize)))
+            .map(|time| match format {
+                Some(f) => time.strftime(f).to_string(),
+                None => time.to_string(),
+            })
     }
 }
 
