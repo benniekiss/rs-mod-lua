@@ -16,7 +16,7 @@ use crate::convert::{
     minijinja_to_lua,
 };
 
-trait LuaState<'template, 'env> {
+pub(crate) trait LuaState<'template, 'env> {
     fn state(&self) -> &minijinja::State<'template, 'env>;
 }
 

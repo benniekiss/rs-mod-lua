@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::{
     lua::with_lua,
-    state::{LuaStateMut, LuaStateRef},
+    state::{LuaState, LuaStateMut, LuaStateRef},
 };
 
 #[derive(Debug, Clone)]
@@ -102,28 +102,27 @@ where
     }
 
     /// Execute a callback with [`mlua::Lua`] and the retrieved [`mlua::Value`] as arguments
-    pub(crate) fn with<R, F, T>(&self, f: F) -> Result<R, JinjaError>
+    pub(crate) fn with<F, R>(&self, f: F) -> Result<R, JinjaError>
     where
-        F: FnOnce(&mlua::Lua, T) -> Result<R, mlua::Error>,
-        T: mlua::FromLua,
+        F: FnOnce(&mlua::Lua, V) -> Result<R, mlua::Error>,
     {
         with_lua(|lua| {
-            lua.registry_value::<T>(&self.key())
+            lua.registry_value::<V>(&self.key())
                 .and_then(|value| f(lua, value))
         })
         .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::InvalidOperation))
     }
 
     /// Execute a callback in an [`mlua::Scope`] context
-    fn with_scope<T, R>(
+    fn with_scope<'t, 'e, T, R>(
         &self,
         lua: &mlua::Lua,
-        callback: impl FnOnce(mlua::MultiValue) -> mlua::Result<R>,
         args: &[JinjaValue],
         state: Option<impl Into<T>>,
+        callback: impl FnOnce(mlua::MultiValue) -> mlua::Result<R>,
     ) -> mlua::Result<R>
     where
-        T: mlua::UserData,
+        T: LuaState<'t, 'e> + mlua::UserData,
         R: mlua::FromLuaMulti,
     {
         // Using `mlua::Lua::scope` here allows passing the `minijinja::State` to the callback.
@@ -237,8 +236,8 @@ impl LuaFunctionObject {
     where
         R: DeserializeOwned,
     {
-        self.with(|lua, func: mlua::Function| {
-            self.with_scope::<LuaStateRef, mlua::Value>(lua, |mv| func.call(mv), args, state)
+        self.with(|lua, func| {
+            self.with_scope::<LuaStateRef, mlua::Value>(lua, args, state, |mv| func.call(mv))
                 .and_then(|v| lua.from_value::<R>(v))
         })
     }
@@ -256,8 +255,8 @@ impl LuaFunctionObject {
     where
         R: mlua::FromLuaMulti + mlua::IntoLuaMulti,
     {
-        self.with(|lua, func: mlua::Function| {
-            self.with_scope::<LuaStateRef, R>(lua, |mv| func.call(mv), args, state)
+        self.with(|lua, func| {
+            self.with_scope::<LuaStateRef, R>(lua, args, state, |mv| func.call(mv))
                 .map(|v| lua_multi_to_minijinja(lua, v))
         })
     }
@@ -278,8 +277,8 @@ impl LuaFunctionObject {
     where
         R: mlua::FromLuaMulti + mlua::IntoLuaMulti,
     {
-        self.with(|lua, func: mlua::Function| {
-            self.with_scope::<LuaStateMut, R>(lua, |mv| func.call(mv), args, state)
+        self.with(|lua, func| {
+            self.with_scope::<LuaStateMut, R>(lua, args, state, |mv| func.call(mv))
                 .map(|v| lua_multi_to_minijinja(lua, v))
         })
     }
@@ -314,7 +313,7 @@ pub(crate) type LuaTableObject = LuaJinjaObjectWrapper<mlua::Table>;
 
 impl fmt::Display for LuaTableObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let repr = self.with(|_, table: mlua::Table| {
+        let repr = self.with(|_, table| {
             Ok(table
                 .call_method::<String>(mlua::MetaMethod::ToString.name(), mlua::Nil)
                 .unwrap_or(JinjaValue::from_serialize(table).to_string()))
@@ -348,13 +347,10 @@ impl JinjaObject for LuaTableObject {
         state: &minijinja::State<'_, '_>,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, minijinja::Error> {
-        self.with(|lua, table: mlua::Table| {
-            self.with_scope::<LuaStateRef, mlua::MultiValue>(
-                lua,
-                |mv| table.call(mv),
-                args,
-                Some(state),
-            )
+        self.with(|lua, table| {
+            self.with_scope::<LuaStateRef, mlua::MultiValue>(lua, args, Some(state), |mv| {
+                table.call(mv)
+            })
             .map(|v| lua_multi_to_minijinja(lua, v).unwrap_or_default())
         })
     }
@@ -365,20 +361,17 @@ impl JinjaObject for LuaTableObject {
         method: &str,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, JinjaError> {
-        self.with(|lua, table: mlua::Table| {
-            self.with_scope::<LuaStateRef, mlua::MultiValue>(
-                lua,
-                |mv| table.call_method(method, mv),
-                args,
-                Some(state),
-            )
+        self.with(|lua, table| {
+            self.with_scope::<LuaStateRef, mlua::MultiValue>(lua, args, Some(state), |mv| {
+                table.call_method(method, mv)
+            })
             .map(|v| lua_multi_to_minijinja(lua, v).unwrap_or_default())
         })
         .map_err(|err| err_to_minijinja_err(err, JinjaErrorKind::UnknownMethod))
     }
 
     fn get_value(self: &Arc<Self>, key: &JinjaValue) -> Option<JinjaValue> {
-        self.with(|lua, table: mlua::Table| {
+        self.with(|lua, table| {
             let mut key = lua.to_value(key)?;
 
             // Since lua is 1-indexed, if the provided value is an integer,
@@ -406,7 +399,7 @@ impl JinjaObject for LuaTableObject {
     }
 
     fn enumerate(self: &std::sync::Arc<Self>) -> Enumerator {
-        self.with(|lua, table: mlua::Table| {
+        self.with(|lua, table| {
             let items = match self.array_like() {
                 true => table
                     .sequence_values::<mlua::Value>()
@@ -433,7 +426,7 @@ impl JinjaObject for LuaTableObject {
     fn custom_cmp(self: &Arc<Self>, other: &minijinja::value::DynObject) -> Option<cmp::Ordering> {
         let other = other.downcast_ref::<LuaTableObject>()?;
 
-        self.with(|lua, table: mlua::Table| {
+        self.with(|lua, table| {
             let other_table = lua.registry_value::<mlua::Table>(&other.key)?;
 
             if table.equals(&other_table)? {
@@ -460,7 +453,7 @@ pub(crate) type LuaUserDataObject = LuaJinjaObjectWrapper<mlua::AnyUserData>;
 
 impl fmt::Display for LuaUserDataObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let repr = self.with(|_, userdata: mlua::AnyUserData| userdata.to_string());
+        let repr = self.with(|_, userdata| userdata.to_string());
 
         match repr {
             Ok(s) => write!(f, "{s}"),
@@ -486,7 +479,7 @@ impl JinjaObject for LuaUserDataObject {
         state: &minijinja::State<'_, '_>,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, minijinja::Error> {
-        self.with(|lua, userdata: mlua::AnyUserData| {
+        self.with(|lua, userdata| {
             let mut mv = minijinja_args_to_lua(lua, args);
 
             lua.scope(move |scope| {
@@ -509,7 +502,7 @@ impl JinjaObject for LuaUserDataObject {
         method: &str,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, JinjaError> {
-        self.with(|lua, userdata: mlua::AnyUserData| {
+        self.with(|lua, userdata| {
             let mut mv = minijinja_args_to_lua(lua, args);
 
             lua.scope(move |scope| {
@@ -528,7 +521,7 @@ impl JinjaObject for LuaUserDataObject {
     }
 
     fn get_value(self: &Arc<Self>, key: &JinjaValue) -> Option<JinjaValue> {
-        self.with(|lua, userdata: mlua::AnyUserData| {
+        self.with(|lua, userdata| {
             lua.to_value(key)
                 .and_then(|k| userdata.get(k))
                 .map(|v| lua_to_minijinja(lua, &v))
@@ -540,7 +533,7 @@ impl JinjaObject for LuaUserDataObject {
     fn custom_cmp(self: &Arc<Self>, other: &minijinja::value::DynObject) -> Option<cmp::Ordering> {
         let other = other.downcast_ref::<LuaUserDataObject>()?;
 
-        self.with(|lua: &mlua::Lua, userdata: mlua::AnyUserData| {
+        self.with(|lua: &mlua::Lua, userdata| {
             let otherdata = lua.registry_value::<mlua::AnyUserData>(&other.key)?;
 
             if let Ok(true) = userdata.call_method::<bool>("__eq", &otherdata) {
