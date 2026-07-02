@@ -20,8 +20,7 @@ pub(crate) fn minijinja_types(val: mlua::Value) -> mlua::Result<String> {
 ///
 /// The returned function can be provided to `Environment:set_loader`
 pub(crate) fn minijinja_path_loader(lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
-    lua.load(
-        r#"
+    lua.load(mlua::chunk!(
         local function path_loader(paths)
             if type(paths) == "string" then
                 paths = { paths }
@@ -46,6 +45,7 @@ pub(crate) fn minijinja_path_loader(lua: &mlua::Lua) -> mlua::Result<mlua::Funct
                     local file = io.open(p, "r")
 
                     if file then
+                        // asterisk syntax is necessary for Lua 5.1 compat
                         local source = file:read("*a")
                         file:close()
 
@@ -58,8 +58,7 @@ pub(crate) fn minijinja_path_loader(lua: &mlua::Lua) -> mlua::Result<mlua::Funct
         end
 
         return path_loader
-    "#,
-    )
+    ))
     .eval()
 }
 
