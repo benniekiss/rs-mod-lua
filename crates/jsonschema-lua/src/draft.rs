@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::lua::lua_to_json;
 
-#[derive(Debug, Clone, Serialize, Deserialize, mlua::UserData)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, mlua::UserData)]
 pub(crate) enum LuaDraft {
     #[serde(alias = "DRAFT201909", alias = "draft201909")]
     Draft201909,
@@ -70,15 +70,25 @@ impl From<jsonschema::Draft> for LuaDraft {
 
 impl mlua::FromLua for LuaDraft {
     fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
-        lua.from_value(value)
+        match value {
+            mlua::Value::UserData(ud) if ud.is::<LuaDraft>() => {
+                ud.borrow::<LuaDraft>().map(|v| v.clone())
+            },
+            _ => lua.from_value(value),
+        }
     }
 }
 
 #[mlua::userdata_impl]
 impl LuaDraft {
-    #[lua(name = "__tostring", meta, infallible)]
+    #[lua(meta, name = "__tostring", infallible)]
     pub(crate) fn lua_tostring(&self) -> String {
         self.to_string()
+    }
+
+    #[lua(meta, name = "__eq", infallible)]
+    pub(crate) fn lua_eq(&self, other: LuaDraft) -> bool {
+        self == &other
     }
 
     #[lua(name = "from_schema_uri", infallible)]
