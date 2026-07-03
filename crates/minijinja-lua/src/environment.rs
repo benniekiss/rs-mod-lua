@@ -141,22 +141,14 @@ impl LuaEnvironment {
         self.0.set_recursion_limit(val)
     }
 
-    #[lua(name = "undefined_behavior", getter)]
-    pub(crate) fn lua_undefined_behavior(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        let ub: LuaUndefinedBehavior = self.0.undefined_behavior().into();
-        lua.to_value(&ub)
+    #[lua(name = "undefined_behavior", getter, infallible)]
+    pub(crate) fn lua_undefined_behavior(&self) -> LuaUndefinedBehavior {
+        self.0.undefined_behavior().into()
     }
 
-    #[lua(name = "undefined_behavior", setter)]
-    pub(crate) fn lua_set_undefined_behavior(
-        &mut self,
-        lua: &mlua::Lua,
-        val: mlua::Value,
-    ) -> mlua::Result<()> {
-        let val: LuaUndefinedBehavior = lua.from_value(val)?;
+    #[lua(name = "undefined_behavior", setter, infallible)]
+    pub(crate) fn lua_set_undefined_behavior(&mut self, val: LuaUndefinedBehavior) {
         self.0.set_undefined_behavior(val.into());
-
-        Ok(())
     }
 
     #[lua(name = "add_template", infallible)]
