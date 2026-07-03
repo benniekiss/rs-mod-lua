@@ -1,6 +1,7 @@
 use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
 use crate::{
+    draft::draft_lua,
     evaluation::*,
     lua::{json_to_lua, lua_to_json},
     uri::LuaUri,
@@ -140,6 +141,7 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set("EncodeConfig", lua.create_proxy::<EncodeConfig>()?)?;
     table.set("DecodeConfig", lua.create_proxy::<DecodeConfig>()?)?;
     table.set("Uri", lua.create_proxy::<LuaUri>()?)?;
+    table.set("Draft", draft_lua(lua)?)?;
 
     table.set("meta", jsonschema_meta_lua(lua)?)?;
 
