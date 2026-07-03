@@ -1,10 +1,11 @@
-use std::{ffi::OsString, ops::Deref, time::Duration};
+use std::ops::Deref;
 
 use mlua::LuaSerdeExt;
 use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
 use crate::{
     lua::{bind_lua, lua_to_json, with_lua},
+    retriever::LuaRetriever,
     validator::{LuaValidator, LuaValidatorMap},
 };
 
@@ -124,67 +125,6 @@ impl LuaEmailOptions {
     #[lua(name = "without_display_text", infallible)]
     pub(crate) fn lua_without_display_text(mut self) -> Self {
         self.0 = self.0.without_display_text();
-        self
-    }
-}
-
-#[derive(mlua::UserData, mlua::FromLua, Clone)]
-pub(crate) struct LuaHttpOptions(jsonschema::HttpOptions);
-
-impl From<jsonschema::HttpOptions> for LuaHttpOptions {
-    fn from(value: jsonschema::HttpOptions) -> Self {
-        Self(value)
-    }
-}
-
-impl From<LuaHttpOptions> for jsonschema::HttpOptions {
-    fn from(value: LuaHttpOptions) -> Self {
-        value.0
-    }
-}
-
-impl AsRef<jsonschema::HttpOptions> for LuaHttpOptions {
-    fn as_ref(&self) -> &jsonschema::HttpOptions {
-        &self.0
-    }
-}
-
-impl Deref for LuaHttpOptions {
-    type Target = jsonschema::HttpOptions;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[mlua::userdata_impl]
-impl LuaHttpOptions {
-    #[lua(name = "new", infallible)]
-    pub(crate) fn lua_new() -> Self {
-        jsonschema::HttpOptions::default().into()
-    }
-
-    #[lua(name = "connect_timeout", infallible)]
-    pub(crate) fn lua_connect_timeout(mut self, timeout: u64) -> Self {
-        self.0 = self.0.connect_timeout(Duration::from_secs(timeout));
-        self
-    }
-
-    #[lua(name = "timeout", infallible)]
-    pub(crate) fn lua_timeout(mut self, timeout: u64) -> Self {
-        self.0 = self.0.timeout(Duration::from_secs(timeout));
-        self
-    }
-
-    #[lua(name = "danger_accept_invalid_certs", infallible)]
-    pub(crate) fn lua_danger_accept_invalid_certs(mut self, accept: bool) -> Self {
-        self.0 = self.0.danger_accept_invalid_certs(accept);
-        self
-    }
-
-    #[lua(name = "add_root_certificate", infallible)]
-    pub(crate) fn lua_add_root_certificates(mut self, path: OsString) -> Self {
-        self.0 = self.0.add_root_certificate(path);
         self
     }
 }
@@ -360,12 +300,17 @@ impl LuaValidationOptions {
         self
     }
 
-    #[lua(name = "with_http_options")]
-    pub(crate) fn lua_with_http_options(mut self, options: LuaHttpOptions) -> mlua::Result<Self> {
-        self.0 = self
-            .0
-            .with_http_options(&options.into())
-            .map_err(mlua::Error::external)?;
+    #[lua(name = "with_retriever")]
+    pub(crate) fn lua_with_retriever(
+        mut self,
+        lua: &mlua::Lua,
+        func: mlua::Function,
+        options: Option<rsjson_lua::config::EncodeConfig>,
+    ) -> mlua::Result<Self> {
+        let key = lua.create_registry_value(func)?;
+        let retriever = LuaRetriever::new(key, options);
+
+        self.0 = self.0.with_retriever(retriever);
         Ok(self)
     }
 

@@ -52,11 +52,11 @@ impl From<jsonschema::Draft> for LuaDraft {
 
 #[mlua::userdata_impl]
 impl LuaDraft {
-    const DRAFT201909: &'static str = "DRAFT201909";
-    const DRAFT202012: &'static str = "DRAFT202012";
-    const DRAFT4: &'static str = "DRAFT4";
-    const DRAFT6: &'static str = "DRAFT6";
-    const DRAFT7: &'static str = "DRAFT7";
+    const DRAFT201909: &'static str = "Draft201909";
+    const DRAFT202012: &'static str = "Draft202012";
+    const DRAFT4: &'static str = "Draft4";
+    const DRAFT6: &'static str = "Draft6";
+    const DRAFT7: &'static str = "Draft7";
 
     #[lua(name = "from_schema_uri", infallible)]
     pub(crate) fn lua_from_schema_uri(uri: &str) -> Self {

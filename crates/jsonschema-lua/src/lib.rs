@@ -4,7 +4,9 @@ mod draft;
 mod evaluation;
 mod lua;
 mod options;
+mod retriever;
 mod schema;
+mod uri;
 mod validator;
 
 #[cfg_attr(feature = "module", mlua::lua_module(name = "jsonschema"))]
