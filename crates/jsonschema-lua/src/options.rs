@@ -284,12 +284,7 @@ impl LuaValidationOptions {
     }
 
     #[lua(name = "with_draft", infallible)]
-    pub(crate) fn lua_with_draft(
-        mut self,
-        lua: &mlua::Lua,
-        draft: mlua::String,
-    ) -> mlua::Result<Self> {
-        let draft: LuaDraft = lua.from_value(mlua::Value::String(draft))?;
+    pub(crate) fn lua_with_draft(mut self, draft: LuaDraft) -> mlua::Result<Self> {
         self.0 = self.0.with_draft(draft.into());
         Ok(self)
     }
@@ -317,7 +312,7 @@ impl LuaValidationOptions {
         mut self,
         lua: &mlua::Lua,
         func: mlua::Function,
-        options: Option<rsjson_lua::config::EncodeConfig>,
+        options: Option<EncodeConfig>,
     ) -> mlua::Result<Self> {
         let key = lua.create_registry_value(func)?;
         let retriever = LuaRetriever::new(key, options);

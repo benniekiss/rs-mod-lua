@@ -1,11 +1,12 @@
 use core::fmt;
 
+use mlua::LuaSerdeExt;
 use rsjson_lua::config::EncodeConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::lua::lua_to_json;
 
-#[derive(Debug, Clone, Serialize, Deserialize, mlua::UserData, mlua::FromLua)]
+#[derive(Debug, Clone, Serialize, Deserialize, mlua::UserData)]
 pub(crate) enum LuaDraft {
     #[serde(alias = "DRAFT201909", alias = "draft201909")]
     Draft201909,
@@ -67,6 +68,12 @@ impl From<jsonschema::Draft> for LuaDraft {
     }
 }
 
+impl mlua::FromLua for LuaDraft {
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        lua.from_value(value)
+    }
+}
+
 #[mlua::userdata_impl]
 impl LuaDraft {
     #[lua(name = "__tostring", meta, infallible)]
@@ -99,11 +106,11 @@ impl LuaDraft {
 pub(crate) fn draft_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set("Draft201909", lua.create_userdata(LuaDraft::Draft201909)?)?;
-    table.set("Draft202012", lua.create_userdata(LuaDraft::Draft202012)?)?;
-    table.set("Draft4", lua.create_userdata(LuaDraft::Draft4)?)?;
-    table.set("Draft6", lua.create_userdata(LuaDraft::Draft6)?)?;
-    table.set("Draft7", lua.create_userdata(LuaDraft::Draft7)?)?;
+    table.set("DRAFT201909", lua.create_userdata(LuaDraft::Draft201909)?)?;
+    table.set("DRAFT202012", lua.create_userdata(LuaDraft::Draft202012)?)?;
+    table.set("DRAFT4", lua.create_userdata(LuaDraft::Draft4)?)?;
+    table.set("DRAFT6", lua.create_userdata(LuaDraft::Draft6)?)?;
+    table.set("DRAFT7", lua.create_userdata(LuaDraft::Draft7)?)?;
 
     Ok(table)
 }

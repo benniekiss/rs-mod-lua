@@ -1,7 +1,9 @@
 use std::ops::Deref;
 
 use mlua::LuaSerdeExt;
+use serde::Serialize;
 
+#[derive(Serialize)]
 pub(crate) struct LuaAnnotationEntry {
     schema_location: String,
     absolute_keyword_location: Option<jsonschema::Uri<String>>,
@@ -22,26 +24,22 @@ impl From<jsonschema::AnnotationEntry<'_>> for LuaAnnotationEntry {
 
 impl mlua::IntoLua for LuaAnnotationEntry {
     fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        let table = lua.create_table()?;
-
-        table.set("schema_location", self.schema_location)?;
-        table.set(
-            "absolute_keyword_location",
-            self.absolute_keyword_location
-                .map(|v| lua.to_value(&v).ok()),
-        )?;
-        table.set("instance_location", lua.to_value(&self.instance_location)?)?;
-        table.set("annotations", lua.to_value(&self.annotations)?)?;
-
-        Ok(mlua::Value::Table(table))
+        lua.to_value(&self)
     }
 }
 
+#[derive(Serialize)]
+struct LuaErrorEntryError {
+    keyword: String,
+    message: String,
+}
+
+#[derive(Serialize)]
 pub(crate) struct LuaErrorEntry {
     schema_location: String,
     absolute_keyword_location: Option<jsonschema::Uri<String>>,
     instance_location: jsonschema::paths::Location,
-    error: jsonschema::output::ErrorDescription,
+    error: LuaErrorEntryError,
 }
 
 impl From<jsonschema::ErrorEntry<'_>> for LuaErrorEntry {
@@ -50,25 +48,17 @@ impl From<jsonschema::ErrorEntry<'_>> for LuaErrorEntry {
             schema_location: value.schema_location.to_string(),
             absolute_keyword_location: value.absolute_keyword_location.cloned(),
             instance_location: value.instance_location.clone(),
-            error: value.error.clone(),
+            error: LuaErrorEntryError {
+                keyword: value.error.keyword().to_string(),
+                message: value.error.message().to_string(),
+            },
         }
     }
 }
 
 impl mlua::IntoLua for LuaErrorEntry {
     fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        let table = lua.create_table()?;
-
-        table.set("schema_location", self.schema_location)?;
-        table.set(
-            "absolute_keyword_location",
-            self.absolute_keyword_location
-                .map(|v| lua.to_value(&v).ok()),
-        )?;
-        table.set("instance_location", lua.to_value(&self.instance_location)?)?;
-        table.set("error", self.error.into_inner())?;
-
-        Ok(mlua::Value::Table(table))
+        lua.to_value(&self)
     }
 }
 

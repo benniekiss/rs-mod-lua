@@ -1,6 +1,10 @@
 use std::ops::Deref;
 
-#[derive(mlua::UserData)]
+use mlua::LuaSerdeExt;
+use serde::{Deserialize, Serialize};
+
+#[derive(mlua::UserData, Serialize, Deserialize)]
+#[serde(transparent)]
 pub(crate) struct LuaUri(jsonschema::Uri<String>);
 
 impl From<jsonschema::Uri<String>> for LuaUri {
@@ -38,6 +42,12 @@ impl Deref for LuaUri {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl mlua::FromLua for LuaUri {
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        lua.from_value(value)
     }
 }
 
