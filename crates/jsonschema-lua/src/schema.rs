@@ -4,6 +4,7 @@ use crate::{
     draft::draft_lua,
     evaluation::*,
     lua::{json_to_lua, lua_to_json},
+    options::{LuaEmailOptions, LuaFancyRegexPatternOptions, LuaValidationOptions},
     uri::LuaUri,
     validator::{LuaValidator, LuaValidatorMap},
 };
@@ -141,6 +142,16 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set("EncodeConfig", lua.create_proxy::<EncodeConfig>()?)?;
     table.set("DecodeConfig", lua.create_proxy::<DecodeConfig>()?)?;
     table.set("Uri", lua.create_proxy::<LuaUri>()?)?;
+    table.set(
+        "ValidationOptions",
+        lua.create_proxy::<LuaValidationOptions>()?,
+    )?;
+    table.set(
+        "PatternOptions",
+        lua.create_proxy::<LuaFancyRegexPatternOptions>()?,
+    )?;
+    table.set("EmailOptions", lua.create_proxy::<LuaEmailOptions>()?)?;
+
     table.set("Draft", draft_lua(lua)?)?;
 
     table.set("meta", jsonschema_meta_lua(lua)?)?;
