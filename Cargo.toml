@@ -14,12 +14,14 @@ members = [
 strip = true
 opt-level = "z"
 lto = true
-panic = "immediate-abort"
+panic = "unwind"
 codegen-units = 1
 rustflags = [
     "-Zlocation-detail=none",
-    "-Zfmt-debug=none",
 ]
 
 [profile.release.package.rsjson-lua]
+opt-level = 3
+
+[profile.release.package.jsonschema-lua]
 opt-level = 3
