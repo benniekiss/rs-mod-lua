@@ -4,6 +4,7 @@ use mlua::LuaSerdeExt;
 use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
 use crate::{
+    draft::LuaDraft,
     lua::{bind_lua, lua_to_json, with_lua},
     retriever::LuaRetriever,
     validator::{LuaValidator, LuaValidatorMap},
@@ -280,6 +281,17 @@ impl LuaValidationOptions {
                 })
             })
             .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
+    }
+
+    #[lua(name = "with_draft", infallible)]
+    pub(crate) fn lua_with_draft(
+        mut self,
+        lua: &mlua::Lua,
+        draft: mlua::String,
+    ) -> mlua::Result<Self> {
+        let draft: LuaDraft = lua.from_value(mlua::Value::String(draft))?;
+        self.0 = self.0.with_draft(draft.into());
+        Ok(self)
     }
 
     #[lua(name = "with_base_uri", infallible)]
