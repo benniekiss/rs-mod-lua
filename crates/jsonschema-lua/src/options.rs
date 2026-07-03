@@ -229,6 +229,11 @@ impl Deref for LuaValidationOptions {
 
 #[mlua::userdata_impl]
 impl LuaValidationOptions {
+    #[lua(name = "new", infallible)]
+    pub(crate) fn lua_new() -> Self {
+        jsonschema::options().into()
+    }
+
     #[lua(name = "build")]
     pub(crate) fn lua_build(
         &self,
