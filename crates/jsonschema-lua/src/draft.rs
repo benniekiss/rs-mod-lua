@@ -91,11 +91,6 @@ impl LuaDraft {
         self == &other
     }
 
-    #[lua(name = "from_schema_uri", infallible)]
-    pub(crate) fn lua_from_schema_uri(uri: &str) -> Self {
-        jsonschema::Draft::from_schema_uri(uri).into()
-    }
-
     #[lua(name = "detect")]
     pub(crate) fn lua_detect(
         &self,
@@ -121,6 +116,14 @@ pub(crate) fn draft_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set("DRAFT4", lua.create_userdata(LuaDraft::Draft4)?)?;
     table.set("DRAFT6", lua.create_userdata(LuaDraft::Draft6)?)?;
     table.set("DRAFT7", lua.create_userdata(LuaDraft::Draft7)?)?;
+    table.set("UNKNOWN", lua.create_userdata(LuaDraft::Unknown)?)?;
+
+    table.set(
+        "from_schema_uri",
+        lua.create_function(|_, uri: mlua::BorrowedStr| -> mlua::Result<LuaDraft> {
+            Ok(jsonschema::Draft::from_schema_uri(&uri).into())
+        })?,
+    )?;
 
     Ok(table)
 }

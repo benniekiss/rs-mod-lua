@@ -4,12 +4,26 @@
 
 local jsonschema = {}
 
----@alias jsonschema.Draft
---- | "Draft201909"
---- | "Draft202012"
---- | "Draft4"
---- | "Draft6"
---- | "Draft7"
+---@class jsonschema.DraftVariant: userdata
+---
+---@field detect           fun(self, schema: any, options?: jsonschema.EncodeConfig): jsonschema.DraftVariant
+---@field is_known_keyword fun(self, keyword: string): boolean
+
+---@class jsonschema.Draft: table
+---@field DRAFT202012 jsonschema.DraftVariant
+---@field DRAFT201909 jsonschema.DraftVariant
+---@field DRAFT7      jsonschema.DraftVariant
+---@field DRAFT6      jsonschema.DraftVariant
+---@field DRAFT4      jsonschema.DraftVariant
+---@field UNKNOWN     jsonschema.DraftVariant
+jsonschema.Draft = {}
+
+---
+---
+---@param uri string
+---
+---@return jsonschema.DraftVariant
+function jsonschema.Draft.from_schema_uri(uri) end
 
 ---@class (exact) jsonschema.EvaluationNode: table
 ---@field valid              bool
@@ -328,3 +342,5 @@ function jsonschema.bundle(schema) end
 ---@return any
 ---
 function jsonschema.dereference(schema) end
+
+return jsonschema
