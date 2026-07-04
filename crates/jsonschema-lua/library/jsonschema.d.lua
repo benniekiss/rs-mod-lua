@@ -30,9 +30,9 @@ function jsonschema.Draft.from_schema_uri(uri) end
 ---@field evaluationPath      string
 ---@field schemaLocation      string
 ---@field instanceLocation    string
----@field annotations?        integer
+---@field annotations?        integer[]
 ---@field droppedAnnotations? boolean
----@field errors?             table[]
+---@field errors?             table<string, string>[]
 
 --- Simple boolean validity indicator
 ---
@@ -56,26 +56,26 @@ function jsonschema.Draft.from_schema_uri(uri) end
 ---@field evaluationPath     string
 ---@field schemaLocation     string
 ---@field instanceLocation   string
----@field annotations        integer
+---@field annotations        integer[]
 ---@field droppedAnnotations boolean
----@field errors             table[]
----@field details            jsonschema.EvaluationNode[]
+---@field errors             table<string, string>[]
+---@field details            jsonschema.HierarchicalOutput[]
 
 --- Entry describing annotations emitted by a keyword during evaluation
 ---
 ---@class (exact) jsonschema.AnnotationEntry
----@field schema_location           string
----@field absolute_keyword_location table?
----@field instance_location         table?
----@field annotations               table?
+---@field schema_location            string
+---@field absolute_keyword_location? string
+---@field instance_location?         string
+---@field annotations?               integer[]
 
 --- Entry describing errors emitted by a keyword during evaluation
 ---
 ---@class (exact) jsonschema.ErrorEntry
----@field schema_location           string
----@field absolute_keyword_location table?
----@field instance_location         table?
----@field error                     table?
+---@field schema_location            string
+---@field absolute_keyword_location? string
+---@field instance_location?         string
+---@field error?                     { keyword: string, message: string }
 
 --- Result of evaluating a JSON instance against a schema
 ---

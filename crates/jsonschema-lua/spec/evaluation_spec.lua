@@ -26,12 +26,12 @@ describe("evaluation#jsonschema", function ()
             },
         }
 
-        it("flag#evaluation", function ()
+        it("flag#valid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             assert.True(eval:flag().valid)
         end)
 
-        it("list#evaluation", function ()
+        it("list#valid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {
                 ["details"] = {
@@ -92,7 +92,7 @@ describe("evaluation#jsonschema", function ()
             assert.Same(ex, eval:list())
         end)
 
-        it("hierarchical#evaluation", function ()
+        it("hierarchical#valid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {
                 ["details"] = {
@@ -158,7 +158,7 @@ describe("evaluation#jsonschema", function ()
             assert.Same(ex, eval:hierarchical())
         end)
 
-        it("annotations#evaluation", function ()
+        it("annotations#valid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {
                 [1] = {
@@ -172,7 +172,7 @@ describe("evaluation#jsonschema", function ()
             assert.Same(ex, eval:annotations())
         end)
 
-        it("errors#evaluation", function ()
+        it("errors#valid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {}
             assert.Same(ex, eval:errors())
@@ -191,12 +191,12 @@ describe("evaluation#jsonschema", function ()
             },
         }
 
-        it("flag#evaluation", function ()
+        it("flag#invalid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             assert.False(eval:flag().valid)
         end)
 
-        it("list#evaluation", function ()
+        it("list#invalid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {
                 ["details"] = {
@@ -248,7 +248,7 @@ describe("evaluation#jsonschema", function ()
             assert.Same(ex, eval:list())
         end)
 
-        it("hierarchical#evaluation", function ()
+        it("hierarchical#invalid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {
                 ["details"] = {
@@ -301,13 +301,13 @@ describe("evaluation#jsonschema", function ()
             assert.Same(ex, eval:hierarchical())
         end)
 
-        it("annotations#evaluation", function ()
+        it("annotations#invalid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {}
             assert.Same(ex, eval:annotations())
         end)
 
-        it("errors#evaluation", function ()
+        it("errors#invalid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {
                 [1] = {
