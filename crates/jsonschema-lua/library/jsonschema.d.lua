@@ -26,13 +26,13 @@ jsonschema.Draft = {}
 function jsonschema.Draft.from_schema_uri(uri) end
 
 ---@class (exact) jsonschema.EvaluationNode: table
----@field valid              bool
----@field evaluationPath     string
----@field schemaLocation     string
----@field instanceLocation   string
----@field annotations        integer
----@field droppedAnnotations boolean
----@field errors             table[]
+---@field valid               bool
+---@field evaluationPath      string
+---@field schemaLocation      string
+---@field instanceLocation    string
+---@field annotations?        integer
+---@field droppedAnnotations? boolean
+---@field errors?             table[]
 
 --- Simple boolean validity indicator
 ---
