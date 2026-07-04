@@ -6,7 +6,7 @@ use serde::Serialize;
 #[derive(Serialize)]
 pub(crate) struct LuaAnnotationEntry {
     schema_location: String,
-    absolute_keyword_location: Option<jsonschema::Uri<String>>,
+    absolute_keyword_location: Option<String>,
     instance_location: jsonschema::paths::Location,
     annotations: jsonschema::output::Annotations,
 }
@@ -15,7 +15,7 @@ impl From<jsonschema::AnnotationEntry<'_>> for LuaAnnotationEntry {
     fn from(value: jsonschema::AnnotationEntry) -> Self {
         Self {
             schema_location: value.schema_location.to_string(),
-            absolute_keyword_location: value.absolute_keyword_location.cloned(),
+            absolute_keyword_location: value.absolute_keyword_location.map(|uri| uri.to_string()),
             instance_location: value.instance_location.clone(),
             annotations: value.annotations.clone(),
         }
@@ -37,7 +37,7 @@ struct LuaErrorEntryError {
 #[derive(Serialize)]
 pub(crate) struct LuaErrorEntry {
     schema_location: String,
-    absolute_keyword_location: Option<jsonschema::Uri<String>>,
+    absolute_keyword_location: Option<String>,
     instance_location: jsonschema::paths::Location,
     error: LuaErrorEntryError,
 }
@@ -46,7 +46,7 @@ impl From<jsonschema::ErrorEntry<'_>> for LuaErrorEntry {
     fn from(value: jsonschema::ErrorEntry) -> Self {
         Self {
             schema_location: value.schema_location.to_string(),
-            absolute_keyword_location: value.absolute_keyword_location.cloned(),
+            absolute_keyword_location: value.absolute_keyword_location.map(|uri| uri.to_string()),
             instance_location: value.instance_location.clone(),
             error: LuaErrorEntryError {
                 keyword: value.error.keyword().to_string(),
