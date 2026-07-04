@@ -3,10 +3,12 @@ use std::ops::Deref;
 use mlua::LuaSerdeExt;
 use serde::Serialize;
 
+use crate::uri::LuaUri;
+
 #[derive(Serialize)]
 pub(crate) struct LuaAnnotationEntry {
     schema_location: String,
-    absolute_keyword_location: Option<String>,
+    absolute_keyword_location: Option<LuaUri>,
     instance_location: jsonschema::paths::Location,
     annotations: jsonschema::output::Annotations,
 }
@@ -15,7 +17,7 @@ impl From<jsonschema::AnnotationEntry<'_>> for LuaAnnotationEntry {
     fn from(value: jsonschema::AnnotationEntry) -> Self {
         Self {
             schema_location: value.schema_location.to_string(),
-            absolute_keyword_location: value.absolute_keyword_location.map(|uri| uri.to_string()),
+            absolute_keyword_location: value.absolute_keyword_location.map(LuaUri::from),
             instance_location: value.instance_location.clone(),
             annotations: value.annotations.clone(),
         }
@@ -24,7 +26,9 @@ impl From<jsonschema::AnnotationEntry<'_>> for LuaAnnotationEntry {
 
 impl mlua::IntoLua for LuaAnnotationEntry {
     fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        lua.to_value(&self)
+        let opts = mlua::SerializeOptions::new().serialize_none_to_null(false);
+
+        lua.to_value_with(&self, opts)
     }
 }
 
@@ -37,7 +41,7 @@ struct LuaErrorEntryError {
 #[derive(Serialize)]
 pub(crate) struct LuaErrorEntry {
     schema_location: String,
-    absolute_keyword_location: Option<String>,
+    absolute_keyword_location: Option<LuaUri>,
     instance_location: jsonschema::paths::Location,
     error: LuaErrorEntryError,
 }
@@ -46,7 +50,7 @@ impl From<jsonschema::ErrorEntry<'_>> for LuaErrorEntry {
     fn from(value: jsonschema::ErrorEntry) -> Self {
         Self {
             schema_location: value.schema_location.to_string(),
-            absolute_keyword_location: value.absolute_keyword_location.map(|uri| uri.to_string()),
+            absolute_keyword_location: value.absolute_keyword_location.map(LuaUri::from),
             instance_location: value.instance_location.clone(),
             error: LuaErrorEntryError {
                 keyword: value.error.keyword().to_string(),
@@ -58,7 +62,9 @@ impl From<jsonschema::ErrorEntry<'_>> for LuaErrorEntry {
 
 impl mlua::IntoLua for LuaErrorEntry {
     fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        lua.to_value(&self)
+        let opts = mlua::SerializeOptions::new().serialize_none_to_null(false);
+
+        lua.to_value_with(&self, opts)
     }
 }
 
