@@ -10,7 +10,7 @@ pub(crate) fn encode(
     lua: &mlua::Lua,
     value: &mlua::Value,
     config: Option<EncodeConfig>,
-) -> mlua::Result<mlua::String> {
+) -> mlua::Result<mlua::LuaString> {
     let mut writer: Vec<u8> = Vec::new();
 
     match config {

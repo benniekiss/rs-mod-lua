@@ -5,15 +5,15 @@ use std::ops::Deref;
 #[derive(mlua::UserData, mlua::FromLua, Clone)]
 pub struct EncodeConfig {
     #[lua(skip)]
-    options: mlua::DeserializeOptions,
+    options: mlua::serde::DeserializeOptions,
     #[lua(skip)]
     pub(crate) indent: Option<usize>,
     #[lua(skip)]
     pub(crate) prefix: String,
 }
 
-impl From<mlua::DeserializeOptions> for EncodeConfig {
-    fn from(value: mlua::DeserializeOptions) -> Self {
+impl From<mlua::serde::DeserializeOptions> for EncodeConfig {
+    fn from(value: mlua::serde::DeserializeOptions) -> Self {
         EncodeConfig {
             options: value,
             indent: None,
@@ -22,20 +22,20 @@ impl From<mlua::DeserializeOptions> for EncodeConfig {
     }
 }
 
-impl From<EncodeConfig> for mlua::DeserializeOptions {
+impl From<EncodeConfig> for mlua::serde::DeserializeOptions {
     fn from(value: EncodeConfig) -> Self {
         value.options
     }
 }
 
-impl AsRef<mlua::DeserializeOptions> for EncodeConfig {
-    fn as_ref(&self) -> &mlua::DeserializeOptions {
+impl AsRef<mlua::serde::DeserializeOptions> for EncodeConfig {
+    fn as_ref(&self) -> &mlua::serde::DeserializeOptions {
         &self.options
     }
 }
 
 impl Deref for EncodeConfig {
-    type Target = mlua::DeserializeOptions;
+    type Target = mlua::serde::DeserializeOptions;
 
     fn deref(&self) -> &Self::Target {
         &self.options
@@ -44,7 +44,7 @@ impl Deref for EncodeConfig {
 
 impl Default for EncodeConfig {
     fn default() -> Self {
-        mlua::DeserializeOptions::new().into()
+        mlua::serde::DeserializeOptions::new().into()
     }
 }
 
@@ -136,13 +136,13 @@ impl EncodeConfig {
 #[derive(mlua::UserData, mlua::FromLua, Clone)]
 pub struct DecodeConfig {
     #[lua(skip)]
-    options: mlua::SerializeOptions,
+    options: mlua::serde::SerializeOptions,
     #[lua(skip)]
     pub(crate) cast_u64_to_f64: bool,
 }
 
-impl From<mlua::SerializeOptions> for DecodeConfig {
-    fn from(value: mlua::SerializeOptions) -> Self {
+impl From<mlua::serde::SerializeOptions> for DecodeConfig {
+    fn from(value: mlua::serde::SerializeOptions) -> Self {
         DecodeConfig {
             options: value,
             cast_u64_to_f64: false,
@@ -150,20 +150,20 @@ impl From<mlua::SerializeOptions> for DecodeConfig {
     }
 }
 
-impl From<DecodeConfig> for mlua::SerializeOptions {
+impl From<DecodeConfig> for mlua::serde::SerializeOptions {
     fn from(value: DecodeConfig) -> Self {
         value.options
     }
 }
 
-impl AsRef<mlua::SerializeOptions> for DecodeConfig {
-    fn as_ref(&self) -> &mlua::SerializeOptions {
+impl AsRef<mlua::serde::SerializeOptions> for DecodeConfig {
+    fn as_ref(&self) -> &mlua::serde::SerializeOptions {
         &self.options
     }
 }
 
 impl Deref for DecodeConfig {
-    type Target = mlua::SerializeOptions;
+    type Target = mlua::serde::SerializeOptions;
 
     fn deref(&self) -> &Self::Target {
         &self.options
@@ -172,7 +172,7 @@ impl Deref for DecodeConfig {
 
 impl Default for DecodeConfig {
     fn default() -> Self {
-        mlua::SerializeOptions::new()
+        mlua::serde::SerializeOptions::new()
             .detect_serde_json_arbitrary_precision(true)
             .into()
     }
