@@ -50,7 +50,7 @@ minijinja-contrib = { version = "2.21.0", features = [
     "wordcount",
     "unicode_wordwrap",
 ], optional = true }
-mlua = { version = "0.12.0-rc.2", features = ["serde", "macros"] }
+mlua = { version = "0.12.0", features = ["serde", "macros"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.150", features = [
     "preserve_order",
