@@ -1,0 +1,41 @@
+cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+
+[package]
+name = "rsyaml-lua"
+version = "0.1.0"
+edition = "2024"
+readme = "README.md"
+repository = "https://github.com/benniekiss/rs-mod-lua"
+license = "MIT"
+description = "a yaml lua module using the serde-saphyr rust crate"
+
+[lib]
+name = "rsyaml_lua"
+crate-type = ["cdylib"]
+
+[features]
+default = ["lua54", "vendored"]
+lua55 = ["mlua/lua55"]
+lua54 = ["mlua/lua54"]
+lua53 = ["mlua/lua53"]
+lua52 = ["mlua/lua52"]
+lua51 = ["mlua/lua51"]
+luajit = ["mlua/luajit"]
+luajit52 = ["mlua/luajit52"]
+vendored = ["mlua/vendored"]
+module = ["mlua/module"]
+
+[dependencies]
+mlua = { version = "0.12.0-rc.2", features = ["serde", "macros"] }
+serde-saphyr = { version = "0.0.29", features = ["include", "validator", "properties"] }
+
+[profile.release]
+strip = true
+opt-level = 3
+lto = true
+panic = "unwind"
+codegen-units = 1
+rustflags = [
+    "-Zlocation-detail=none",
+    "-Zfmt-debug=none",
+]
