@@ -204,7 +204,7 @@ impl LuaEnvironment {
         let func = LuaFunctionObject::from_value(lua, &callback)?;
 
         self.0.set_loader(move |name| {
-            func.with_func::<Option<mlua::String>>(args!(name), None)
+            func.with_func::<Option<mlua::LuaString>>(args!(name), None)
                 .map(|v| v.and_then(|v| v.as_str().map(|s| s.to_string())))
         });
 
