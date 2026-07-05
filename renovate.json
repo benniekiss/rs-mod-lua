@@ -38,6 +38,12 @@
                 "toolchain"
             ],
             "rangeStrategy": "pin"
+        },
+        {
+            "matchManagers": [
+                "cargo"
+            ],
+            "rangeStrategy": "bump"
         }
     ]
 }
