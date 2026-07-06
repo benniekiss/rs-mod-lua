@@ -655,8 +655,8 @@ impl LuaAutoEscape {
     }
 
     #[lua(meta, name = "__eq", infallible)]
-    pub(crate) fn lua_eq(&self, other: LuaAutoEscape) -> bool {
-        self == &other
+    pub(crate) fn lua_eq(this: &LuaAutoEscape, other: &LuaAutoEscape) -> bool {
+        this == other
     }
 }
 
@@ -737,8 +737,8 @@ impl LuaUndefinedBehavior {
     }
 
     #[lua(meta, name = "__eq", infallible)]
-    pub(crate) fn lua_eq(&self, other: LuaUndefinedBehavior) -> bool {
-        self == &other
+    pub(crate) fn lua_eq(this: &LuaUndefinedBehavior, other: &LuaUndefinedBehavior) -> bool {
+        this == other
     }
 }
 
