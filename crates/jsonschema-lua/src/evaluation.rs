@@ -26,7 +26,7 @@ impl From<jsonschema::AnnotationEntry<'_>> for LuaAnnotationEntry {
 
 impl mlua::IntoLua for LuaAnnotationEntry {
     fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        let opts = mlua::SerializeOptions::new().serialize_none_to_null(false);
+        let opts = mlua::serde::SerializeOptions::new().serialize_none_to_null(false);
 
         lua.to_value_with(&self, opts)
     }
@@ -62,7 +62,7 @@ impl From<jsonschema::ErrorEntry<'_>> for LuaErrorEntry {
 
 impl mlua::IntoLua for LuaErrorEntry {
     fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        let opts = mlua::SerializeOptions::new().serialize_none_to_null(false);
+        let opts = mlua::serde::SerializeOptions::new().serialize_none_to_null(false);
 
         lua.to_value_with(&self, opts)
     }
