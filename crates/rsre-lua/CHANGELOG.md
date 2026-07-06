@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.3.2...rsre-lua-v0.3.3) - 2026-07-06
+
+### Fixed
+
+- *(deps)* update rust crate mlua to 0.12.0 ([#53](https://github.com/benniekiss/rs-mod-lua/pull/53))
+
+### Other
+
+- bump versions
+- *(deps)* update rust to nightly-2026-07-05 ([#21](https://github.com/benniekiss/rs-mod-lua/pull/21))
+
 ## [0.3.2](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.3.1...rsre-lua-v0.3.2) - 2026-06-22
 
 ### Fixed
