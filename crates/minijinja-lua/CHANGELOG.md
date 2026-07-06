@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.3.6...minijinja-lua-v0.4.0) - 2026-07-06
+
+### Fixed
+
+- *(minijinja-lua)* fixup `__eq` userdata metamethod
+- *(minijinja-lua)* fixups for mlua v0.12
+- *(deps)* update rust crate mlua to 0.12.0 ([#53](https://github.com/benniekiss/rs-mod-lua/pull/53))
+
+### Other
+
+- *(minijinja-lua)* use Value .equals() method
+- *(deps)* update rust to nightly-2026-07-05 ([#21](https://github.com/benniekiss/rs-mod-lua/pull/21))
+- bump versions
+- *(minijinja-lua)* [**breaking**] more ergonomic enum handling
+
 ## [0.3.6](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.3.5...minijinja-lua-v0.3.6) - 2026-07-02
 
 ### Other

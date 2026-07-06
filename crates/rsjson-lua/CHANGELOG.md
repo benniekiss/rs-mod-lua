@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.0...rsjson-lua-v0.6.1) - 2026-07-06
+
+### Fixed
+
+- *(rsjson-lua)* fixups for mlua v0.12
+- *(deps)* update rust crate mlua to 0.12.0 ([#53](https://github.com/benniekiss/rs-mod-lua/pull/53))
+
+### Other
+
+- bump versions
+- *(deps)* update rust to nightly-2026-07-05 ([#21](https://github.com/benniekiss/rs-mod-lua/pull/21))
+
 ## [0.6.0](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.5.0...rsjson-lua-v0.6.0) - 2026-06-30
 
 ### Fixed
