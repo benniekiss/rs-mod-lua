@@ -536,7 +536,7 @@ impl JinjaObject for LuaUserDataObject {
         self.with(|lua: &mlua::Lua, userdata| {
             let otherdata = lua.registry_value::<mlua::AnyUserData>(&other.key)?;
 
-            if let Ok(true) = userdata.call_method::<bool>("__eq", &otherdata) {
+            if let Ok(true) = userdata.to_value().equals(&otherdata.to_value()) {
                 return Ok(Some(cmp::Ordering::Equal));
             };
 
