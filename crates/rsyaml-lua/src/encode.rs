@@ -1,39 +1,26 @@
 // SPDX-License-Identifier: MIT
 
-use serde::Serialize;
-use serde_saphyr::Serializer;
-
 use crate::config::{EncodeConfig, YamlEncodeOptions};
 
-/// Serialize an `mlua::Value` to a JSON string.
+/// Serialize an `mlua::Value` to a YAML string.
 pub(crate) fn encode(
-    lua: &mlua::Lua,
     value: &mlua::Value,
     config: Option<EncodeConfig>,
     options: Option<YamlEncodeOptions>,
-) -> mlua::Result<mlua::LuaString> {
-    let mut writer = String::new();
-
-    let mut ser = Serializer::with_options(&mut writer, &mut options.unwrap_or_default().into());
-
-    match config {
-        Some(config) => {
-            let obj = value
-                .to_serializable()
-                .sort_keys(config.sort_keys)
-                .encode_empty_tables_as_array(config.encode_empty_tables_as_array)
-                .detect_mixed_tables(config.detect_mixed_tables)
-                .deny_unsupported_types(config.deny_unsupported_types)
-                .deny_recursive_tables(config.deny_recursive_tables);
-
-            obj.serialize(&mut ser).map_err(mlua::Error::external)?;
-        },
-        None => {
-            value.serialize(&mut ser).map_err(mlua::Error::external)?;
-        },
+) -> mlua::Result<String> {
+    let obj = match config {
+        Some(config) => value
+            .to_serializable()
+            .sort_keys(config.sort_keys)
+            .encode_empty_tables_as_array(config.encode_empty_tables_as_array)
+            .detect_mixed_tables(config.detect_mixed_tables)
+            .deny_unsupported_types(config.deny_unsupported_types)
+            .deny_recursive_tables(config.deny_recursive_tables),
+        None => value.to_serializable(),
     };
 
-    lua.create_string(writer)
+    serde_saphyr::to_string_with_options(&obj, *options.unwrap_or_default())
+        .map_err(mlua::Error::external)
 }
 
 #[cfg(test)]
@@ -45,47 +32,39 @@ mod test {
         let lua = mlua::Lua::new();
 
         let te = lua.create_string("one two three").unwrap();
-        let res = encode(&lua, &mlua::Value::String(te), None, None).unwrap();
+        let res = encode(&mlua::Value::String(te), None, None).unwrap();
 
         assert_eq!(res, r#""one two three""#);
     }
 
     #[test]
     fn it_int_to_json() {
-        let lua = mlua::Lua::new();
-
-        let res = encode(&lua, &mlua::Value::Integer(99), None, None).unwrap();
+        let res = encode(&mlua::Value::Integer(99), None, None).unwrap();
 
         assert_eq!(res, "99");
     }
 
     #[test]
     fn it_float_to_json() {
-        let lua = mlua::Lua::new();
-
-        let res = encode(&lua, &mlua::Value::Number(9.9), None, None).unwrap();
+        let res = encode(&mlua::Value::Number(9.9), None, None).unwrap();
 
         assert_eq!(res, "9.9");
     }
 
     #[test]
     fn it_bool_to_json() {
-        let lua = mlua::Lua::new();
-
-        let res = encode(&lua, &mlua::Value::Boolean(true), None, None).unwrap();
+        let res = encode(&mlua::Value::Boolean(true), None, None).unwrap();
 
         assert_eq!(res, "true");
 
-        let res = encode(&lua, &mlua::Value::Boolean(false), None, None).unwrap();
+        let res = encode(&mlua::Value::Boolean(false), None, None).unwrap();
 
         assert_eq!(res, "false");
     }
 
     #[test]
     fn it_nil_to_json() {
-        let lua = mlua::Lua::new();
-
-        let res = encode(&lua, &mlua::Value::Nil, None, None).unwrap();
+        let res = encode(&mlua::Value::Nil, None, None).unwrap();
 
         assert_eq!(res, "null");
     }
@@ -95,7 +74,7 @@ mod test {
         let lua = mlua::Lua::new();
 
         let te = lua.create_sequence_from(vec![1, 2, 3]).unwrap();
-        let res = encode(&lua, &mlua::Value::Table(te), None, None).unwrap();
+        let res = encode(&mlua::Value::Table(te), None, None).unwrap();
 
         assert_eq!(res, "[1,2,3]");
     }
@@ -112,7 +91,7 @@ mod test {
         te.set("b", 2).unwrap();
         te.set("c", 3).unwrap();
 
-        let res = encode(&lua, &mlua::Value::Table(te), Some(config), None).unwrap();
+        let res = encode(&mlua::Value::Table(te), Some(config), None).unwrap();
 
         assert_eq!(res, r#"{"a":1,"b":2,"c":3}"#);
     }

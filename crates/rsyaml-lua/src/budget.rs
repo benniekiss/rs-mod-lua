@@ -2,80 +2,6 @@ use mlua::LuaSerdeExt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct YamlBudget {
-    pub(crate) max_reader_input_bytes: Option<usize>,
-    pub(crate) max_events: usize,
-    pub(crate) max_aliases: usize,
-    pub(crate) max_anchors: usize,
-    pub(crate) max_depth: usize,
-    pub(crate) max_inclusion_depth: u32,
-    pub(crate) max_documents: usize,
-    pub(crate) max_nodes: usize,
-    pub(crate) max_total_scalar_bytes: usize,
-    pub(crate) max_total_comment_bytes: usize,
-    pub(crate) max_merge_keys: usize,
-    pub(crate) enforce_alias_anchor_ratio: bool,
-    pub(crate) alias_anchor_min_aliases: usize,
-    pub(crate) alias_anchor_ratio_multiplier: usize,
-}
-
-#[allow(deprecated)]
-impl From<serde_saphyr::Budget> for YamlBudget {
-    fn from(value: serde_saphyr::Budget) -> Self {
-        Self {
-            max_reader_input_bytes: value.max_reader_input_bytes,
-            max_events: value.max_events,
-            max_aliases: value.max_aliases,
-            max_anchors: value.max_anchors,
-            max_depth: value.max_depth,
-            max_inclusion_depth: value.max_inclusion_depth,
-            max_documents: value.max_documents,
-            max_nodes: value.max_nodes,
-            max_total_scalar_bytes: value.max_total_scalar_bytes,
-            max_total_comment_bytes: value.max_total_comment_bytes,
-            max_merge_keys: value.max_merge_keys,
-            enforce_alias_anchor_ratio: value.enforce_alias_anchor_ratio,
-            alias_anchor_min_aliases: value.alias_anchor_min_aliases,
-            alias_anchor_ratio_multiplier: value.alias_anchor_ratio_multiplier,
-        }
-    }
-}
-
-#[allow(deprecated)]
-impl From<YamlBudget> for serde_saphyr::Budget {
-    fn from(value: YamlBudget) -> Self {
-        Self {
-            max_reader_input_bytes: value.max_reader_input_bytes,
-            max_events: value.max_events,
-            max_aliases: value.max_aliases,
-            max_anchors: value.max_anchors,
-            max_depth: value.max_depth,
-            max_inclusion_depth: value.max_inclusion_depth,
-            max_documents: value.max_documents,
-            max_nodes: value.max_nodes,
-            max_total_scalar_bytes: value.max_total_scalar_bytes,
-            max_total_comment_bytes: value.max_total_comment_bytes,
-            max_merge_keys: value.max_merge_keys,
-            enforce_alias_anchor_ratio: value.enforce_alias_anchor_ratio,
-            alias_anchor_min_aliases: value.alias_anchor_min_aliases,
-            alias_anchor_ratio_multiplier: value.alias_anchor_ratio_multiplier,
-        }
-    }
-}
-
-impl mlua::IntoLua for YamlBudget {
-    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
-        lua.to_value(&self)
-    }
-}
-
-impl mlua::FromLua for YamlBudget {
-    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
-        lua.from_value(value)
-    }
-}
-
-#[derive(Serialize, Deserialize)]
 pub(crate) enum YamlBudgetBreach {
     Events { events: usize },
     Aliases { aliases: usize },
@@ -202,7 +128,7 @@ impl mlua::FromLua for YamlBudgetBreach {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub(crate) struct YamlBudgetReport {
     pub breached: Option<YamlBudgetBreach>,
     pub events: usize,
@@ -257,6 +183,80 @@ impl mlua::IntoLua for YamlBudgetReport {
 }
 
 impl mlua::FromLua for YamlBudgetReport {
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        lua.from_value(value)
+    }
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub(crate) struct YamlBudget {
+    pub(crate) max_reader_input_bytes: Option<usize>,
+    pub(crate) max_events: usize,
+    pub(crate) max_aliases: usize,
+    pub(crate) max_anchors: usize,
+    pub(crate) max_depth: usize,
+    pub(crate) max_inclusion_depth: u32,
+    pub(crate) max_documents: usize,
+    pub(crate) max_nodes: usize,
+    pub(crate) max_total_scalar_bytes: usize,
+    pub(crate) max_total_comment_bytes: usize,
+    pub(crate) max_merge_keys: usize,
+    pub(crate) enforce_alias_anchor_ratio: bool,
+    pub(crate) alias_anchor_min_aliases: usize,
+    pub(crate) alias_anchor_ratio_multiplier: usize,
+}
+
+#[allow(deprecated)]
+impl From<serde_saphyr::Budget> for YamlBudget {
+    fn from(value: serde_saphyr::Budget) -> Self {
+        Self {
+            max_reader_input_bytes: value.max_reader_input_bytes,
+            max_events: value.max_events,
+            max_aliases: value.max_aliases,
+            max_anchors: value.max_anchors,
+            max_depth: value.max_depth,
+            max_inclusion_depth: value.max_inclusion_depth,
+            max_documents: value.max_documents,
+            max_nodes: value.max_nodes,
+            max_total_scalar_bytes: value.max_total_scalar_bytes,
+            max_total_comment_bytes: value.max_total_comment_bytes,
+            max_merge_keys: value.max_merge_keys,
+            enforce_alias_anchor_ratio: value.enforce_alias_anchor_ratio,
+            alias_anchor_min_aliases: value.alias_anchor_min_aliases,
+            alias_anchor_ratio_multiplier: value.alias_anchor_ratio_multiplier,
+        }
+    }
+}
+
+#[allow(deprecated)]
+impl From<YamlBudget> for serde_saphyr::Budget {
+    fn from(value: YamlBudget) -> Self {
+        Self {
+            max_reader_input_bytes: value.max_reader_input_bytes,
+            max_events: value.max_events,
+            max_aliases: value.max_aliases,
+            max_anchors: value.max_anchors,
+            max_depth: value.max_depth,
+            max_inclusion_depth: value.max_inclusion_depth,
+            max_documents: value.max_documents,
+            max_nodes: value.max_nodes,
+            max_total_scalar_bytes: value.max_total_scalar_bytes,
+            max_total_comment_bytes: value.max_total_comment_bytes,
+            max_merge_keys: value.max_merge_keys,
+            enforce_alias_anchor_ratio: value.enforce_alias_anchor_ratio,
+            alias_anchor_min_aliases: value.alias_anchor_min_aliases,
+            alias_anchor_ratio_multiplier: value.alias_anchor_ratio_multiplier,
+        }
+    }
+}
+
+impl mlua::IntoLua for YamlBudget {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.to_value(&self)
+    }
+}
+
+impl mlua::FromLua for YamlBudget {
     fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
         lua.from_value(value)
     }

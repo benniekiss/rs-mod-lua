@@ -198,12 +198,12 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
 
 pub(crate) fn decode(
     lua: &mlua::Lua,
-    json: &[u8],
+    yaml: &str,
     config: Option<DecodeConfig>,
     options: Option<YamlDecodeOptions>,
 ) -> mlua::Result<mlua::Value> {
-    serde_saphyr::with_deserializer_from_slice_with_options(
-        json,
+    serde_saphyr::with_deserializer_from_str_with_options(
+        yaml,
         options.unwrap_or_default().into(),
         |de| LuaJsonDeserializer::new(lua, &config.unwrap_or_default()).deserialize(de),
     )
@@ -220,7 +220,7 @@ mod test {
     fn it_json_to_str() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, br#""one two three""#, None, None)
+        let res = decode(&lua, r#""one two three""#, None, None)
             .unwrap()
             .to_string()
             .unwrap();
@@ -232,7 +232,7 @@ mod test {
     fn it_json_to_int() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, b"99", None, None)
+        let res = decode(&lua, "99", None, None)
             .unwrap()
             .as_integer()
             .unwrap();
@@ -244,7 +244,7 @@ mod test {
     fn it_json_to_float() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, b"9.9", None, None)
+        let res = decode(&lua, "9.9", None, None)
             .unwrap()
             .as_number()
             .unwrap();
@@ -260,7 +260,7 @@ mod test {
 
         let v = u64::MAX;
 
-        let res = decode(&lua, v.to_string().as_bytes(), Some(config), None)
+        let res = decode(&lua, &v.to_string(), Some(config), None)
             .unwrap()
             .as_number()
             .unwrap();
@@ -276,7 +276,7 @@ mod test {
 
         let v = u64::MAX;
 
-        let res = decode(&lua, v.to_string().as_bytes(), Some(config), None);
+        let res = decode(&lua, &v.to_string(), Some(config), None);
 
         assert!(res.is_err());
     }
@@ -285,14 +285,14 @@ mod test {
     fn it_json_to_bool() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, b"true", None, None)
+        let res = decode(&lua, "true", None, None)
             .unwrap()
             .as_boolean()
             .unwrap();
 
         assert!(res);
 
-        let res = decode(&lua, b"false", None, None)
+        let res = decode(&lua, "false", None, None)
             .unwrap()
             .as_boolean()
             .unwrap();
@@ -304,7 +304,7 @@ mod test {
     fn it_json_to_null() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, b"null", None, None).unwrap();
+        let res = decode(&lua, "null", None, None).unwrap();
 
         assert!(res.is_null());
     }
@@ -316,7 +316,7 @@ mod test {
         let mut config = DecodeConfig::default();
         config.lua_set_null(false);
 
-        let res = decode(&lua, b"null", Some(config), None).unwrap();
+        let res = decode(&lua, "null", Some(config), None).unwrap();
 
         assert!(res.is_nil());
     }
@@ -326,7 +326,7 @@ mod test {
         let lua = mlua::Lua::new();
 
         let te = lua.create_sequence_from(vec![1, 2, 3]).unwrap();
-        let res = decode(&lua, b"[1,2,3]", None, None).unwrap();
+        let res = decode(&lua, "[1,2,3]", None, None).unwrap();
 
         assert_eq!(
             lua.from_value::<Vec<i64>>(mlua::Value::Table(te)).unwrap(),
@@ -340,7 +340,7 @@ mod test {
         let mut config = DecodeConfig::default();
         config.lua_set_array_metatable(true);
 
-        let res = decode(&lua, b"[1,2,3]", Some(config), None)
+        let res = decode(&lua, "[1,2,3]", Some(config), None)
             .unwrap()
             .as_table()
             .unwrap()
@@ -355,7 +355,7 @@ mod test {
         let mut config = DecodeConfig::default();
         config.lua_set_array_metatable(false);
 
-        let res = decode(&lua, b"[1,2,3]", Some(config), None)
+        let res = decode(&lua, "[1,2,3]", Some(config), None)
             .unwrap()
             .as_table()
             .unwrap()
@@ -368,14 +368,14 @@ mod test {
     fn it_json_to_table() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, br#"{"a":1,"b":2,"c":3}"#, None, None)
+        let res = decode(&lua, r#"{"a":1,"":2,"c":3}"#, None, None)
             .unwrap()
             .as_table()
             .unwrap()
             .to_owned();
 
         assert_eq!(res.get::<i64>("a").unwrap(), 1);
-        assert_eq!(res.get::<i64>("b").unwrap(), 2);
+        assert_eq!(res.get::<i64>("").unwrap(), 2);
         assert_eq!(res.get::<i64>("c").unwrap(), 3);
     }
 
@@ -383,7 +383,7 @@ mod test {
     fn it_json_array_of_objects() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, br#"[{"a":1},{"b":2}]"#, None, None)
+        let res = decode(&lua, r#"[{"a":1},{"":2}]"#, None, None)
             .unwrap()
             .as_table()
             .unwrap()
@@ -393,21 +393,21 @@ mod test {
         let second = res.get::<mlua::Table>(2).unwrap();
 
         assert_eq!(first.get::<i64>("a").unwrap(), 1);
-        assert_eq!(second.get::<i64>("b").unwrap(), 2);
+        assert_eq!(second.get::<i64>("").unwrap(), 2);
     }
 
     #[test]
     fn it_json_object_of_arrays() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, br#"{"a":[1,2,3],"b":[4,5,6]}"#, None, None)
+        let res = decode(&lua, r#"{"a":[1,2,3],"":[4,5,6]}"#, None, None)
             .unwrap()
             .as_table()
             .unwrap()
             .to_owned();
 
         let a = res.get::<mlua::Table>("a").unwrap();
-        let b = res.get::<mlua::Table>("b").unwrap();
+        let b = res.get::<mlua::Table>("").unwrap();
 
         assert_eq!(a.get::<i64>(1).unwrap(), 1);
         assert_eq!(a.get::<i64>(2).unwrap(), 2);
@@ -422,7 +422,7 @@ mod test {
     fn it_json_array_of_arrays() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, br#"[[[1,2,[3,4,5]], [6,7,8]]]"#, None, None)
+        let res = decode(&lua, r#"[[[1,2,[3,4,5]], [6,7,8]]]"#, None, None)
             .unwrap()
             .as_table()
             .unwrap()
@@ -447,14 +447,14 @@ mod test {
     fn it_json_object_of_objects() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, br#"{"a":{"b":{"c":42}}}"#, None, None)
+        let res = decode(&lua, r#"{"a":{"":{"c":42}}}"#, None, None)
             .unwrap()
             .as_table()
             .unwrap()
             .to_owned();
 
         let a = res.get::<mlua::Table>("a").unwrap();
-        let b = a.get::<mlua::Table>("b").unwrap();
+        let b = a.get::<mlua::Table>("").unwrap();
 
         assert_eq!(b.get::<i64>("c").unwrap(), 42);
     }
@@ -463,7 +463,7 @@ mod test {
     fn it_json_empty_array() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, b"[]", None, None)
+        let res = decode(&lua, "[]", None, None)
             .unwrap()
             .as_table()
             .unwrap()
@@ -476,7 +476,7 @@ mod test {
     fn it_json_empty_object() {
         let lua = mlua::Lua::new();
 
-        let res = decode(&lua, b"{}", None, None)
+        let res = decode(&lua, "{}", None, None)
             .unwrap()
             .as_table()
             .unwrap()

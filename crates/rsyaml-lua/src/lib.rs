@@ -24,14 +24,24 @@ pub fn rsyaml_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     table.set("DecodeConfig", lua.create_proxy::<DecodeConfig>()?)?;
 
     table.set(
+        "YamlEncodeOptions",
+        lua.create_proxy::<YamlEncodeOptions>()?,
+    )?;
+
+    table.set(
+        "YamlDecodeOptions",
+        lua.create_proxy::<YamlDecodeOptions>()?,
+    )?;
+
+    table.set(
         "encode",
         lua.create_function(
-            |lua,
+            |_,
              (value, config, options): (
                 mlua::Value,
                 Option<EncodeConfig>,
                 Option<YamlEncodeOptions>,
-            )| { encode::encode(lua, &value, config, options) },
+            )| { encode::encode(&value, config, options) },
         )?,
     )?;
 
@@ -40,7 +50,7 @@ pub fn rsyaml_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
         lua.create_function(
             |lua,
              (json, config, options): (
-                mlua::BorrowedBytes,
+                mlua::BorrowedStr,
                 Option<DecodeConfig>,
                 Option<YamlDecodeOptions>,
             )| { decode::decode(lua, &json, config, options) },
