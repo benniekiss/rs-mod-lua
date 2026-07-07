@@ -26,8 +26,13 @@ vendored = ["mlua/vendored"]
 module = ["mlua/module"]
 
 [dependencies]
-mlua = { version = "0.12.0-rc.2", features = ["serde", "macros"] }
-serde-saphyr = { version = "0.0.29", features = ["include", "validator", "properties"] }
+mlua = { version = "0.12.0", features = ["serde", "macros"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde-saphyr = { version = "0.0.29", features = [
+    "include",
+    "validator",
+    "properties",
+] }
 
 [profile.release]
 strip = true

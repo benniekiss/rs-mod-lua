@@ -1,1 +1,93 @@
+// SPDX-License-Identifier: MIT
 
+mod budget;
+pub mod config;
+mod decode;
+mod encode;
+mod policy;
+
+use config::{DecodeConfig, EncodeConfig};
+use mlua::LuaSerdeExt;
+
+use crate::config::{YamlDecodeOptions, YamlEncodeOptions};
+
+#[cfg_attr(feature = "module", mlua::lua_module(name = "rsjson"))]
+pub fn rsjson_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
+    let table = lua.create_table()?;
+
+    table.set("array_metatable", lua.array_metatable())?;
+
+    table.set("null", lua.null())?;
+
+    table.set("EncodeConfig", lua.create_proxy::<EncodeConfig>()?)?;
+
+    table.set("DecodeConfig", lua.create_proxy::<DecodeConfig>()?)?;
+
+    table.set(
+        "encode",
+        lua.create_function(
+            |lua,
+             (value, config, options): (
+                mlua::Value,
+                Option<EncodeConfig>,
+                Option<YamlEncodeOptions>,
+            )| { encode::encode(lua, &value, config, options) },
+        )?,
+    )?;
+
+    table.set(
+        "decode",
+        lua.create_function(
+            |lua,
+             (json, config, options): (
+                mlua::BorrowedBytes,
+                Option<DecodeConfig>,
+                Option<YamlDecodeOptions>,
+            )| { decode::decode(lua, &json, config, options) },
+        )?,
+    )?;
+
+    Ok(table)
+}
+
+#[cfg(test)]
+mod test {
+    use mlua::ObjectLike;
+
+    use super::*;
+
+    fn setup_lua() -> mlua::Lua {
+        let lua = mlua::Lua::new();
+
+        let table = rsjson_lua(&lua).unwrap();
+        lua.globals().set("rsjson", table).unwrap();
+
+        lua
+    }
+
+    #[test]
+    fn it_rsjson_table() {
+        let lua = setup_lua();
+
+        let table: mlua::Table = lua.globals().get("rsjson").unwrap();
+
+        let encode_func: mlua::Value = table.get("encode").unwrap();
+        let decode_func: mlua::Value = table.get("decode").unwrap();
+        let null_val: mlua::Value = table.get("null").unwrap();
+        let array_metatable: mlua::Value = table.get("array_metatable").unwrap();
+        let enc_conf: mlua::Value = table.get("EncodeConfig").unwrap();
+        let dec_conf: mlua::Value = table.get("DecodeConfig").unwrap();
+
+        assert!(encode_func.is_function());
+        assert!(decode_func.is_function());
+        assert!(null_val.is_null());
+        assert!(array_metatable.is_table());
+        assert!(
+            array_metatable
+                .equals(&lua.array_metatable().to_value())
+                .unwrap()
+        );
+        assert!(enc_conf.is_userdata());
+        assert!(dec_conf.is_userdata());
+    }
+}
