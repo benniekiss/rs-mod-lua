@@ -11,8 +11,8 @@ use mlua::LuaSerdeExt;
 
 use crate::config::{YamlDecodeOptions, YamlEncodeOptions};
 
-#[cfg_attr(feature = "module", mlua::lua_module(name = "rsjson"))]
-pub fn rsjson_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
+#[cfg_attr(feature = "module", mlua::lua_module(name = "rsyaml"))]
+pub fn rsyaml_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
     table.set("array_metatable", lua.array_metatable())?;
@@ -59,7 +59,7 @@ mod test {
     fn setup_lua() -> mlua::Lua {
         let lua = mlua::Lua::new();
 
-        let table = rsjson_lua(&lua).unwrap();
+        let table = rsyaml_lua(&lua).unwrap();
         lua.globals().set("rsjson", table).unwrap();
 
         lua
