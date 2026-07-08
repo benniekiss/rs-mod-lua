@@ -3,4 +3,5 @@ members = [
     "crates/minijinja-lua",
     "crates/rsjson-lua",
     "crates/rsre-lua",
+    "crates/rsast-lua",
 ]
