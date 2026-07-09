@@ -1,13 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+  "diagnostics": {
+    "globals": [
+      "pandoc"
+    ]
+  },
   "doc": {
     "syntax": "myst"
   },
   "runtime": {
     "version": "Lua5.4"
-  },
-  "diagnostics": {
-    "globals": [ "pandoc" ]
   },
   "workspace": {
     "ignoreDir": [
@@ -23,7 +25,23 @@
       "types/LLS-Addons/addons/busted/module/library",
       "crates/minijinja-lua/library",
       "crates/rsjson-lua/library",
-      "crates/rsre-lua/library"
+      "crates/rsre-lua/library",
+      ".lux/5.5/test_dependencies/5.5/01a3c364614bddff7370223a5a9c4580f8e62d144384148444c518ec5367a59b-mediator_lua@1.1.2-0/src",
+      ".lux/5.5/test_dependencies/5.5/1920813b0593111d3870293519b52b64ea736310985475c836b68197ed255013-luamark@1.1.2-1/src",
+      ".lux/5.5/test_dependencies/5.5/1c4eb58ac6785d5a42b7a71442247b69f44f180512e2f826254cef3b615725c6-rapidjson@0.7.2-1/src",
+      ".lux/5.5/test_dependencies/5.5/287e827f4a088d41bba04af5f61a13614346c16fe8150eb7c4246e67d6fd163e-lua-term@0.8-1/src",
+      ".lux/5.5/test_dependencies/5.5/2bd1c8e4fea66a88aeb65c1c8a3d0efdf188d681d2d47f163b976a771545aac9-penlight@1.15.0-1/src",
+      ".lux/5.5/test_dependencies/5.5/455cd98d50c6191a9685cffcda4ce783efbb957934625e134c39f43bd5df6818-luassert@1.9.0-1/src",
+      ".lux/5.5/test_dependencies/5.5/4e9592a499c9ced4f8ce366db9db7d9c0dd1424ea8d4c8c16c1550ea3a61a696-say@1.4.1-3/src",
+      ".lux/5.5/test_dependencies/5.5/4fc3dea26b8026d085b3b0ccf29add2849c42e62d1fb23f0b6fc6f3201307953-dkjson@2.10-1/src",
+      ".lux/5.5/test_dependencies/5.5/53ea714ba9651ef9185052dbfa7a2492a36ccc81ed15332fb8bf1ab4c05c3ec5-lpeg@1.1.0-2/src",
+      ".lux/5.5/test_dependencies/5.5/5abed54457baf9037ff989a1ec78172ee7483d87e794bc9175dbed61f08be72c-lua_cliargs@3.0.2-1/src",
+      ".lux/5.5/test_dependencies/5.5/611b19eca413e8557258c177563402d31094cde79f82d340f5648d2ac8f3b8a1-luafilesystem@1.9.0-1/src",
+      ".lux/5.5/test_dependencies/5.5/6ce29c2c535c40246c386c056f24689344cddb56ec397473931431e6b67694d2-say@1.4.1-3/src",
+      ".lux/5.5/test_dependencies/5.5/aa700d6a934caa749d578927c97e22211ffabf97234705d63e95dc6403f6aafe-busted@2.3.0-1/src",
+      ".lux/5.5/test_dependencies/5.5/b7fa2fc76ac7b515ab09c4982a9805528218639fda3b3a86a49825f3cf42bd0b-lua-cjson@2.1.0-1/src",
+      ".lux/5.5/test_dependencies/5.5/c210cfc2041fd86b788c1ac7592aaa44dce2236f8a1bf42690af9cd06abdc004-dkjson@2.10-1/src",
+      ".lux/5.5/test_dependencies/5.5/fe607fc3a725b032acf5722632cf6993702c56ffa7c9f65e28f9d0324c17be34-luasystem@0.7.1-1/src"
     ]
   }
 }
