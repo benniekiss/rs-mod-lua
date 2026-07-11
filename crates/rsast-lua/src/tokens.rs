@@ -2,6 +2,7 @@ use mlua::LuaSerdeExt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
 pub(crate) enum LuaToken {
     Start { rule: String, pos: usize },
     End { rule: String, pos: usize },

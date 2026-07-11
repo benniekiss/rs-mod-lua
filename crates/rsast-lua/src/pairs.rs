@@ -24,21 +24,21 @@ impl<'scope> mlua::UserData for LuaPair<'scope> {
         });
         methods.add_method("line_col", |_, this, ()| Ok(this.0.line_col()));
         methods.add_method(
-            "tokens",
-            |lua, this, callback: mlua::Function| -> mlua::Result<mlua::MultiValue> {
-                lua.scope(|scope| {
-                    let tokens = this.0.clone().tokens();
-                    let ud = scope.create_userdata::<LuaTokens>(tokens.into())?;
-                    callback.call(ud)
-                })
-            },
-        );
-        methods.add_method(
             "pairs",
             |lua, this, callback: mlua::Function| -> mlua::Result<mlua::MultiValue> {
                 lua.scope(|scope| {
                     let inner = this.0.clone().into_inner();
                     let ud = scope.create_userdata::<LuaPairs>(inner.into())?;
+                    callback.call(ud)
+                })
+            },
+        );
+        methods.add_method(
+            "tokens",
+            |lua, this, callback: mlua::Function| -> mlua::Result<mlua::MultiValue> {
+                lua.scope(|scope| {
+                    let tokens = this.0.clone().tokens();
+                    let ud = scope.create_userdata::<LuaTokens>(tokens.into())?;
                     callback.call(ud)
                 })
             },
@@ -81,26 +81,6 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                 }
             },
         );
-        methods.add_method(
-            "tokens",
-            |lua, this, callback: mlua::Function| -> mlua::Result<mlua::MultiValue> {
-                lua.scope(|scope| {
-                    let tokens = this.0.clone().tokens();
-                    let ud = scope.create_userdata::<LuaTokens>(tokens.into())?;
-                    callback.call(ud)
-                })
-            },
-        );
-        methods.add_method(
-            "tokens_flat",
-            |lua, this, callback: mlua::Function| -> mlua::Result<mlua::MultiValue> {
-                lua.scope(|scope| {
-                    let tokens = this.0.clone().flatten().tokens();
-                    let ud = scope.create_userdata::<LuaTokens>(tokens.into())?;
-                    callback.call(ud)
-                })
-            },
-        );
         methods.add_method("for_each", |lua, this, callback: mlua::Function| {
             lua.scope(|scope| {
                 for pair in this.0.clone() {
@@ -123,6 +103,26 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                 Ok(true)
             })
         });
+        methods.add_method(
+            "tokens",
+            |lua, this, callback: mlua::Function| -> mlua::Result<mlua::MultiValue> {
+                lua.scope(|scope| {
+                    let tokens = this.0.clone().tokens();
+                    let ud = scope.create_userdata::<LuaTokens>(tokens.into())?;
+                    callback.call(ud)
+                })
+            },
+        );
+        methods.add_method(
+            "tokens_flat",
+            |lua, this, callback: mlua::Function| -> mlua::Result<mlua::MultiValue> {
+                lua.scope(|scope| {
+                    let tokens = this.0.clone().flatten().tokens();
+                    let ud = scope.create_userdata::<LuaTokens>(tokens.into())?;
+                    callback.call(ud)
+                })
+            },
+        );
         methods.add_method("dump", |lua, this, ()| {
             lua.to_value(&this.0.clone().collect::<Vec<_>>())
         });
