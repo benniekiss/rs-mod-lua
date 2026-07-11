@@ -1,5 +1,3 @@
-// use crate::{spans::LuaSpan, tokens::LuaTokens};
-
 use mlua::LuaSerdeExt;
 
 use crate::tokens::LuaTokens;
@@ -9,12 +7,6 @@ pub(crate) struct LuaPair<'scope>(pest::iterators::Pair<'scope, &'scope str>);
 impl<'scope> From<pest::iterators::Pair<'scope, &'scope str>> for LuaPair<'scope> {
     fn from(value: pest::iterators::Pair<'scope, &'scope str>) -> Self {
         Self(value)
-    }
-}
-
-impl<'scope> From<LuaPair<'scope>> for pest::iterators::Pair<'scope, &'scope str> {
-    fn from(value: LuaPair<'scope>) -> Self {
-        value.0
     }
 }
 
@@ -51,10 +43,10 @@ impl<'scope> mlua::UserData for LuaPair<'scope> {
                 })
             },
         );
+        methods.add_method("dump", |lua, this, ()| lua.to_value(&this.0));
     }
 }
 
-#[derive(Clone)]
 pub(crate) struct LuaPairs<'scope>(pest::iterators::Pairs<'scope, &'scope str>);
 
 impl<'scope> From<pest::iterators::Pairs<'scope, &'scope str>> for LuaPairs<'scope> {
@@ -100,7 +92,7 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
             },
         );
         methods.add_method(
-            "tokens_flatten",
+            "tokens_flat",
             |lua, this, callback: mlua::Function| -> mlua::Result<mlua::MultiValue> {
                 lua.scope(|scope| {
                     let tokens = this.0.clone().flatten().tokens();
@@ -120,7 +112,7 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                 Ok(true)
             })
         });
-        methods.add_method("for_each_flatten", |lua, this, callback: mlua::Function| {
+        methods.add_method("for_each_flat", |lua, this, callback: mlua::Function| {
             lua.scope(|scope| {
                 for pair in this.0.clone().flatten() {
                     let ud = scope.create_userdata::<LuaPair>(pair.into())?;

@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::pairs::LuaPairs;
 
 #[derive(mlua::UserData)]
@@ -11,30 +9,10 @@ impl From<pest_vm::Vm> for LuaPestVm {
     }
 }
 
-impl From<LuaPestVm> for pest_vm::Vm {
-    fn from(value: LuaPestVm) -> Self {
-        value.0
-    }
-}
-
-impl AsRef<pest_vm::Vm> for LuaPestVm {
-    fn as_ref(&self) -> &pest_vm::Vm {
-        &self.0
-    }
-}
-
-impl Deref for LuaPestVm {
-    type Target = pest_vm::Vm;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 #[mlua::userdata_impl]
 impl LuaPestVm {
     #[lua(name = "new", infallible)]
-    fn lua_new(grammar: &str) -> (Option<Self>, Option<Vec<String>>) {
+    pub(crate) fn lua_new(grammar: &str) -> (Option<Self>, Option<Vec<String>>) {
         match pest_meta::parse_and_optimize(grammar) {
             Ok((_, rules)) => (Some(pest_vm::Vm::new(rules).into()), None),
             Err(err) => (
@@ -45,7 +23,7 @@ impl LuaPestVm {
     }
 
     #[lua(name = "parse")]
-    fn lua_parse(
+    pub(crate) fn lua_parse(
         &self,
         lua: &mlua::Lua,
         rule: &str,

@@ -10,7 +10,7 @@ mod vm;
 pub fn rsast_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set("Parser", lua.create_proxy::<LuaPestVm>()?)?;
+    table.set("Ast", lua.create_proxy::<LuaPestVm>()?)?;
 
     Ok(table)
 }

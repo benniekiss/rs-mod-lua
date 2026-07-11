@@ -39,6 +39,6 @@ lto = true
 panic = "unwind"
 codegen-units = 1
 rustflags = [
-    "-Zlocation-detail=none",
+    # "-Zlocation-detail=none",
     # "-Zfmt-debug=none",
 ]
