@@ -55,12 +55,6 @@ impl<'scope> From<pest::iterators::Pairs<'scope, &'scope str>> for LuaPairs<'sco
     }
 }
 
-impl<'scope> From<LuaPairs<'scope>> for pest::iterators::Pairs<'scope, &'scope str> {
-    fn from(value: LuaPairs<'scope>) -> Self {
-        value.0
-    }
-}
-
 impl<'scope> mlua::UserData for LuaPairs<'scope> {
     fn add_methods<M: mlua::prelude::LuaUserDataMethods<Self>>(methods: &mut M) {
         methods.add_method("as_str", |_, this, ()| Ok(this.0.as_str().to_string()));

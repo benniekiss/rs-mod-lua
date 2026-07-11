@@ -46,5 +46,9 @@ impl<'scope> From<pest::iterators::Tokens<'scope, &'scope str>> for LuaTokens<'s
 impl<'scope> mlua::UserData for LuaTokens<'scope> {
     fn add_methods<M: mlua::prelude::LuaUserDataMethods<Self>>(methods: &mut M) {
         methods.add_method_mut("next", |_, this, ()| Ok(this.0.next().map(LuaToken::from)));
+
+        methods.add_method_mut("next_back", |_, this, ()| {
+            Ok(this.0.next_back().map(LuaToken::from))
+        });
     }
 }
