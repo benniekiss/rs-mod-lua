@@ -53,7 +53,7 @@ rsast.Ast = {}
 
 ---@param grammar string
 ---
----@return rsast.Ast
+---@return rsast.Ast?, string[]?
 function rsast.Ast.new(grammar) end
 
 ---@generic R

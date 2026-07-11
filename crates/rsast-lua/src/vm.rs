@@ -1,11 +1,13 @@
+use std::sync::Arc;
+
 use crate::pairs::LuaPairs;
 
-#[derive(mlua::UserData)]
-pub(crate) struct LuaPestVm(pest_vm::Vm);
+#[derive(Clone, mlua::UserData, mlua::FromLua)]
+pub(crate) struct LuaPestVm(Arc<pest_vm::Vm>);
 
 impl From<pest_vm::Vm> for LuaPestVm {
     fn from(value: pest_vm::Vm) -> Self {
-        Self(value)
+        Self(Arc::new(value))
     }
 }
 
