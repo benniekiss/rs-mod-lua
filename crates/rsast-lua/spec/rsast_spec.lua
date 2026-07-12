@@ -45,52 +45,32 @@ describe("rsast", function ()
             local ex = {
                 ["pairs"] = {
                     [1] = {
-                        ["inner"] = {
-                            ["pairs"] = {
-                                [1] = {
-                                    ["inner"] = "65279",
-                                    ["pos"] = {
-                                        [1] = 0,
-                                        [2] = 5,
-                                    },
-                                    ["rule"] = '"field"',
-                                },
-                                [2] = {
-                                    ["inner"] = "1179403647",
-                                    ["pos"] = {
-                                        [1] = 6,
-                                        [2] = 16,
-                                    },
-                                    ["rule"] = '"field"',
-                                },
-                                [3] = {
-                                    ["inner"] = "1463895090",
-                                    ["pos"] = {
-                                        [1] = 17,
-                                        [2] = 27,
-                                    },
-                                    ["rule"] = '"field"',
-                                },
-                            },
-                            ["pos"] = {
-                                [1] = 0,
-                                [2] = 27,
-                            },
-                        },
+                        ["inner"] = "65279",
                         ["pos"] = {
                             [1] = 0,
-                            [2] = 27,
+                            [2] = 5,
                         },
-                        ["rule"] = '"record"',
+                        ["rule"] = '"field"',
                     },
                 },
                 ["pos"] = {
                     [1] = 0,
-                    [2] = 27,
+                    [2] = 5,
                 },
             }
 
-            local res = ast:parse("record", data)
+            local res = ast:parse("field", data)
+
+            assert.Same(ex, res)
+        end)
+
+        it("parse_callback#ast", function ()
+            local ast = rsast.Ast.new(grammar)
+            ---@cast ast - nil
+
+            local ex = "65279"
+
+            local res = ast:parse("field", data, function (pair) return pair:as_str() end)
 
             assert.Same(ex, res)
         end)
@@ -141,15 +121,114 @@ runtime error:  --> 1:1
             local res = ast:parse("record", data, function (pairs) return pairs:is_empty() end)
 
             assert.False(res)
+
+            res = ast:parse("record", data, function (pairs)
+                pairs:next()
+                return pairs:is_empty()
+            end)
+
+            assert.True(res)
         end)
 
         it("peek#pairs", function ()
             local res = ast:parse("record", data, function (pairs)
-                local p = pairs:peek(function (pair) return pair:as_str() end)
-                return p
+                return pairs:peek(function (pair)
+                    return pair:pairs(function (ps) return ps:peek() end)
+                end)
             end)
 
-            local ex = "65279,1179403647,1463895090"
+            local ex = {
+                ["inner"] = "65279",
+                ["pos"] = {
+                    [1] = 0,
+                    [2] = 5,
+                },
+                ["rule"] = '"field"',
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("peek_callback#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:peek(function (pair)
+                    return pair:pairs(
+                        function (ps) return ps:peek(function (p) return p:as_str() end) end
+                    )
+                end)
+            end)
+
+            local ex = "65279"
+
+            assert.Equal(ex, res)
+        end)
+
+        it("next#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:pairs(
+                        function (ps) return ps:next() end
+                    )
+                end)
+            end)
+
+            local ex = {
+                ["inner"] = "65279",
+                ["pos"] = {
+                    [1] = 0,
+                    [2] = 5,
+                },
+                ["rule"] = '"field"',
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("next_callback#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:pairs(
+                        function (ps) return ps:next(function (p) return p:as_str() end) end
+                    )
+                end)
+            end)
+
+            local ex = "65279"
+
+            assert.Equal(ex, res)
+        end)
+
+        it("next_back#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next_back(function (pair)
+                    return pair:pairs(
+                        function (ps) return ps:next_back() end
+                    )
+                end)
+            end)
+
+            local ex = {
+                ["inner"] = "1463895090",
+                ["pos"] = {
+                    [1] = 17,
+                    [2] = 27,
+                },
+                ["rule"] = '"field"',
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("next_back_callback#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next_back(function (pair)
+                    return pair:pairs(
+                        function (ps) return ps:next_back(function (p) return p:as_str() end) end
+                    )
+                end)
+            end)
+
+            local ex = "1463895090"
 
             assert.Equal(ex, res)
         end)
