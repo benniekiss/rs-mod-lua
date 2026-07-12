@@ -20,9 +20,9 @@ local rsast = {}
 ---
 ---@field rule  string
 ---@field pos   [integer, integer]
----@field inner string | rsast.Ast
+---@field inner string | rsast.Tree
 
----@class rsast.Ast: table
+---@class rsast.Tree: table
 ---
 ---@field pairs rsast.Node[]
 ---@field pos   [integer, integer]
@@ -54,7 +54,7 @@ local rsast = {}
 ---@field line_col    fun(self): (integer, integer)
 ---@field dump        fun(self): rsast.Node
 ---@field tokens      fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[]
----@field pairs       fun(self, callback?: rsast.PairsCallback<R>): R | rsast.Ast
+---@field pairs       fun(self, callback?: rsast.PairsCallback<R>): R | rsast.Tree
 
 ---@class rsast.Pairs
 ---
@@ -64,8 +64,8 @@ local rsast = {}
 ---@field get_input  fun(self): string
 ---@field concat     fun(self): string
 ---@field is_empty   fun(self): boolean
----@field dump       fun(self): rsast.Ast
----@field dump_flat  fun(self): rsast.Ast
+---@field dump       fun(self): rsast.Tree
+---@field dump_flat  fun(self): rsast.Tree
 ---@field peek       fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
 ---@field next       fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
 ---@field next_back  fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
@@ -90,7 +90,7 @@ function rsast.Ast.new(grammar) end
 ---@param input     string
 ---@param callback? rsast.PairsCallback<R>
 ---
----@return R | rsast.Ast
+---@return R | rsast.Tree
 function rsast.Ast:parse(rule, input, callback) end
 
 return rsast
