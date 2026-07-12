@@ -1,4 +1,6 @@
-use mlua::LuaSerdeExt;
+use std::ops::ControlFlow;
+
+use mlua::{IntoLua, LuaSerdeExt};
 
 use crate::tokens::{LuaToken, LuaTokens};
 
@@ -67,7 +69,7 @@ impl<'scope> From<pest::iterators::Pairs<'scope, &'scope str>> for LuaPairs<'sco
 }
 
 impl<'scope> mlua::UserData for LuaPairs<'scope> {
-    fn add_methods<M: mlua::prelude::LuaUserDataMethods<Self>>(methods: &mut M) {
+    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
         methods.add_method("as_str", |_, this, ()| Ok(this.0.as_str().to_string()));
         methods.add_method("get_input", |_, this, ()| {
             Ok(this.0.get_input().to_string())
@@ -123,10 +125,22 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
             "fold",
             |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
                 lua.scope(|scope| {
-                    this.0.try_fold(init, |v, pair| {
-                        let ud = scope.create_userdata::<LuaPair>(pair.into())?;
-                        callback.call((v, ud))
-                    })
+                    match this.0.try_fold(init, |value, pair| {
+                        scope
+                            .create_userdata::<LuaPair>(pair.into())
+                            .and_then(|ud| {
+                                callback.call::<(mlua::Value, Option<bool>)>((value, ud))
+                            })
+                            .map(|(res, flow)| match flow {
+                                Some(false) => ControlFlow::Break(res),
+                                _ => ControlFlow::Continue(res),
+                            })
+                            .unwrap_or_else(|err| {
+                                ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
+                            })
+                    }) {
+                        ControlFlow::Continue(val) | ControlFlow::Break(val) => Ok(val),
+                    }
                 })
             },
         );
@@ -134,10 +148,22 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
             "fold_flat",
             |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
                 lua.scope(|scope| {
-                    this.0.clone().flatten().try_fold(init, |v, pair| {
-                        let ud = scope.create_userdata::<LuaPair>(pair.into())?;
-                        callback.call((v, ud))
-                    })
+                    match this.0.clone().flatten().try_fold(init, |value, pair| {
+                        scope
+                            .create_userdata::<LuaPair>(pair.into())
+                            .and_then(|ud| {
+                                callback.call::<(mlua::Value, Option<bool>)>((value, ud))
+                            })
+                            .map(|(res, flow)| match flow {
+                                Some(false) => ControlFlow::Break(res),
+                                _ => ControlFlow::Continue(res),
+                            })
+                            .unwrap_or_else(|err| {
+                                ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
+                            })
+                    }) {
+                        ControlFlow::Continue(val) | ControlFlow::Break(val) => Ok(val),
+                    }
                 })
             },
         );
@@ -145,10 +171,22 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
             "rfold",
             |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
                 lua.scope(|scope| {
-                    this.0.try_rfold(init, |v, pair| {
-                        let ud = scope.create_userdata::<LuaPair>(pair.into())?;
-                        callback.call((v, ud))
-                    })
+                    match this.0.try_rfold(init, |value, pair| {
+                        scope
+                            .create_userdata::<LuaPair>(pair.into())
+                            .and_then(|ud| {
+                                callback.call::<(mlua::Value, Option<bool>)>((value, ud))
+                            })
+                            .map(|(res, flow)| match flow {
+                                Some(false) => ControlFlow::Break(res),
+                                _ => ControlFlow::Continue(res),
+                            })
+                            .unwrap_or_else(|err| {
+                                ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
+                            })
+                    }) {
+                        ControlFlow::Continue(val) | ControlFlow::Break(val) => Ok(val),
+                    }
                 })
             },
         );
@@ -156,10 +194,22 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
             "rfold_flat",
             |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
                 lua.scope(|scope| {
-                    this.0.clone().flatten().try_rfold(init, |v, pair| {
-                        let ud = scope.create_userdata::<LuaPair>(pair.into())?;
-                        callback.call((v, ud))
-                    })
+                    match this.0.clone().flatten().try_rfold(init, |value, pair| {
+                        scope
+                            .create_userdata::<LuaPair>(pair.into())
+                            .and_then(|ud| {
+                                callback.call::<(mlua::Value, Option<bool>)>((value, ud))
+                            })
+                            .map(|(res, flow)| match flow {
+                                Some(false) => ControlFlow::Break(res),
+                                _ => ControlFlow::Continue(res),
+                            })
+                            .unwrap_or_else(|err| {
+                                ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
+                            })
+                    }) {
+                        ControlFlow::Continue(val) | ControlFlow::Break(val) => Ok(val),
+                    }
                 })
             },
         );

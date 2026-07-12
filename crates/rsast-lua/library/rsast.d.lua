@@ -4,6 +4,18 @@
 
 local rsast = {}
 
+---
+---@alias rsast.NodeCallback<R> fun(pair: rsast.Pair): R
+
+---
+---@alias rsast.TokenCallback<R> fun(tokens: rsast.Tokens): R
+
+---
+---@alias rsast.FoldCallback<T> fun(acc: T, pair: rsast.Pair): (T, boolean?)
+
+---
+---@alias rsast.PairsCallback<R> fun(pairs: rsast.Pairs): R
+
 ---@class rsast.Node: table
 ---
 ---@field rule  string
@@ -41,26 +53,26 @@ local rsast = {}
 ---@field get_input   fun(self): string
 ---@field line_col    fun(self): (integer, integer)
 ---@field dump        fun(self): rsast.Node
----@field pairs       fun(self, callback?: fun(pairs: rsast.Pairs): R): R | rsast.Ast
----@field tokens      fun(self, callback?: fun(tokens: rsast.Tokens): R): R | rsast.Token[]
+---@field tokens      fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[]
+---@field pairs       fun(self, callback?: rsast.PairsCallback<R>): R | rsast.Ast
 
 ---@class rsast.Pairs
 ---
----@generic R: any, I: any
+---@generic R: any, T: any
 ---
 ---@field as_str      fun(self): string
 ---@field get_input   fun(self): string
 ---@field concat      fun(self): string
 ---@field is_empty    fun(self): boolean
----@field peek        fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
----@field next        fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
----@field next_back   fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
----@field tokens      fun(self, callback?: fun(tokens: rsast.Tokens): R): R | rsast.Token[]
----@field tokens_flat fun(self, callback?: fun(tokens: rsast.Tokens): R): R | rsast.Token[]
----@field fold        fun(self, init: I, callback: fun(pair: rsast.Pair): I): I
----@field fold_flat   fun(self, init: I, callback: fun(pair: rsast.Pair): I): I
----@field rfold       fun(self, init: I, callback: fun(pair: rsast.Pair): I): I
----@field rfold_flat  fun(self, init: I, callback: fun(pair: rsast.Pair): I): I
+---@field peek        fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
+---@field next        fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
+---@field next_back   fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
+---@field tokens      fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[]
+---@field tokens_flat fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[]
+---@field fold        fun(self, acc: T, callback: rsast.FoldCallback<T>): T
+---@field fold_flat   fun(self, acc: T, callback: rsast.FoldCallback<T>): T
+---@field rfold       fun(self, acc: T, callback: rsast.FoldCallback<T>): T
+---@field rfold_flat  fun(self, acc: T, callback: rsast.FoldCallback<T>): T
 ---@field dump        fun(self): rsast.Ast
 ---@field dump_flat   fun(self): rsast.Ast
 
@@ -77,7 +89,7 @@ function rsast.Ast.new(grammar) end
 ---
 ---@param rule      string
 ---@param input     string
----@param callback? fun(pairs: rsast.Pairs): R
+---@param callback? rsast.PairsCallback<R>
 ---
 ---@return R | rsast.Ast
 function rsast.Ast:parse(rule, input, callback) end
