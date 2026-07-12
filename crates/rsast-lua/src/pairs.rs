@@ -119,28 +119,50 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                 }
             },
         );
-        methods.add_method("for_each", |lua, this, callback: mlua::Function| {
-            lua.scope(|scope| {
-                for pair in this.0.clone() {
-                    let ud = scope.create_userdata::<LuaPair>(pair.into())?;
-                    if let Some(false) = callback.call::<Option<bool>>(ud)? {
-                        return Ok(false);
-                    }
-                }
-                Ok(true)
-            })
-        });
-        methods.add_method("for_each_flat", |lua, this, callback: mlua::Function| {
-            lua.scope(|scope| {
-                for pair in this.0.clone().flatten() {
-                    let ud = scope.create_userdata::<LuaPair>(pair.into())?;
-                    if let Some(false) = callback.call::<Option<bool>>(ud)? {
-                        return Ok(false);
-                    }
-                }
-                Ok(true)
-            })
-        });
+        methods.add_method_mut(
+            "fold",
+            |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
+                lua.scope(|scope| {
+                    this.0.try_fold(init, |v, pair| {
+                        let ud = scope.create_userdata::<LuaPair>(pair.into())?;
+                        callback.call((v, ud))
+                    })
+                })
+            },
+        );
+        methods.add_method(
+            "fold_flat",
+            |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
+                lua.scope(|scope| {
+                    this.0.clone().flatten().try_fold(init, |v, pair| {
+                        let ud = scope.create_userdata::<LuaPair>(pair.into())?;
+                        callback.call((v, ud))
+                    })
+                })
+            },
+        );
+        methods.add_method_mut(
+            "rfold",
+            |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
+                lua.scope(|scope| {
+                    this.0.try_rfold(init, |v, pair| {
+                        let ud = scope.create_userdata::<LuaPair>(pair.into())?;
+                        callback.call((v, ud))
+                    })
+                })
+            },
+        );
+        methods.add_method(
+            "rfold_flat",
+            |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
+                lua.scope(|scope| {
+                    this.0.clone().flatten().try_rfold(init, |v, pair| {
+                        let ud = scope.create_userdata::<LuaPair>(pair.into())?;
+                        callback.call((v, ud))
+                    })
+                })
+            },
+        );
         methods.add_method(
             "tokens",
             |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {

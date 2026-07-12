@@ -46,21 +46,23 @@ local rsast = {}
 
 ---@class rsast.Pairs
 ---
----@generic R: any
+---@generic R: any, I: any
 ---
----@field as_str        fun(self): string
----@field get_input     fun(self): string
----@field concat        fun(self): string
----@field is_empty      fun(self): boolean
----@field peek          fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
----@field next          fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
----@field next_back     fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
----@field tokens        fun(self, callback?: fun(tokens: rsast.Tokens): R): R | rsast.Token[]
----@field tokens_flat   fun(self, callback?: fun(tokens: rsast.Tokens): R): R | rsast.Token[]
----@field for_each      fun(self, callback: fun(pair: rsast.Pair): bool?): bool
----@field for_each_flat fun(self, callback: fun(pair: rsast.Pair): bool?): bool
----@field dump          fun(self): rsast.Ast
----@field dump_flat     fun(self): rsast.Ast
+---@field as_str      fun(self): string
+---@field get_input   fun(self): string
+---@field concat      fun(self): string
+---@field is_empty    fun(self): boolean
+---@field peek        fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
+---@field next        fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
+---@field next_back   fun(self, callback?: fun(pair: rsast.Pair): R): R | rsast.Node | nil
+---@field tokens      fun(self, callback?: fun(tokens: rsast.Tokens): R): R | rsast.Token[]
+---@field tokens_flat fun(self, callback?: fun(tokens: rsast.Tokens): R): R | rsast.Token[]
+---@field fold        fun(self, init: I, callback: fun(pair: rsast.Pair): I): I
+---@field fold_flat   fun(self, init: I, callback: fun(pair: rsast.Pair): I): I
+---@field rfold       fun(self, init: I, callback: fun(pair: rsast.Pair): I): I
+---@field rfold_flat  fun(self, init: I, callback: fun(pair: rsast.Pair): I): I
+---@field dump        fun(self): rsast.Ast
+---@field dump_flat   fun(self): rsast.Ast
 
 ---@class rsast.Ast: userdata
 ---

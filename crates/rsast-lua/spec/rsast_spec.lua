@@ -239,7 +239,10 @@ runtime error:  --> 1:1
         it("dump#pairs", function () end)
         it("dump_flat#pairs", function () end)
 
-        describe("for_each#pairs", function () end)
-        describe("for_each_flat#pairs", function () end)
+        describe("fold#pairs", function () end)
+        describe("fold_flat#pairs", function () end)
+
+        describe("rfold#pairs", function () end)
+        describe("rfold_flat#pairs", function () end)
     end)
 end)
