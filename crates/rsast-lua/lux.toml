@@ -28,3 +28,7 @@ features = ["module"]
 
 [test]
 type = "busted"
+
+# [test_dependencies]
+# luamark = "1.1.2-1"
+# lpeg = "1.1.0-2"

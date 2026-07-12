@@ -7,6 +7,7 @@
 The following modules are contained in this repo:
 
 - [`minijinja-lua`][minijinja-lua]
+- [`rsast-lua`][rsast-lua]
 - [`rsjson-lua`][rsjson-lua]
 - [`rsre-lua`][rsre-lua]
 
@@ -24,5 +25,6 @@ The following modules are contained in this repo:
 - [`release-plz`](https://github.com/release-plz/release-plz)
 
 [minijinja-lua]: crates/minijinja-lua/README.md
+[rsast-lua]: crates/rsast-lua/README.md
 [rsjson-lua]: crates/rsjson-lua/README.md
 [rsre-lua]: crates/rsre-lua/README.md

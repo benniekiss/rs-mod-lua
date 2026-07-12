@@ -4,6 +4,7 @@
 ```
 
 [minijinja-lua]: crates/minijinja-lua/index.md
+[rsast-lua]: crates/rsast-lua/index.md
 [rsjson-lua]: crates/rsjson-lua/index.md
 [rsre-lua]: crates/rsre-lua/index.md
 
@@ -25,6 +26,7 @@ source/contributing
 :includehidden:
 
 crates/minijinja-lua/index
+crates/rsast-lua/index
 crates/rsjson-lua/index
 crates/rsre-lua/index
 ```
