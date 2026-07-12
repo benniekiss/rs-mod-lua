@@ -4,7 +4,6 @@
 ```
 
 [minijinja-lua]: crates/minijinja-lua/index.md
-[jsonschema-lua]: crates/jsonschema-lua/index.md
 [rsjson-lua]: crates/rsjson-lua/index.md
 [rsre-lua]: crates/rsre-lua/index.md
 
