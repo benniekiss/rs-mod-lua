@@ -46,7 +46,7 @@ local rsast = {}
 ---@generic R: any
 ---
 ---@field start       fun(self): integer
----@field end         fun(self): integer
+---@field stop        fun(self): integer
 ---@field as_rule     fun(self): string
 ---@field as_str      fun(self): string
 ---@field as_node_tag fun(self): string

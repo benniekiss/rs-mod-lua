@@ -2,7 +2,7 @@ local rsast = require("rsast")
 
 grammar = [[
 field = { (ASCII_DIGIT | "." | "-")+ }
-record = { field ~ ("," ~ field)* }
+record = { #tag = field ~ ("," ~ field)* }
 file = { SOI ~ (record ~ ("\r\n" | "\n"))* ~ EOI }
 ]]
 
@@ -17,7 +17,7 @@ data = [[
 describe("rsast", function ()
     assert:set_parameter("TableFormatLevel", 15)
 
-    describe("ast", function ()
+    describe("ast#rsast", function ()
         it("new#ast", function ()
             local ast, errors = rsast.Ast.new(grammar)
             assert.Not.Nil(ast)
@@ -94,7 +94,7 @@ runtime error:  --> 1:1
         end)
     end)
 
-    describe("pairs", function ()
+    describe("pairs#rsast", function ()
         local ast = rsast.Ast.new(grammar)
         ---@cast ast - nil
 
@@ -674,6 +674,220 @@ runtime error:  --> 1:1
             end
 
             assert.matches_error(should_error, message)
+        end)
+    end)
+
+    describe("pair#rsast", function ()
+        local ast = rsast.Ast.new(grammar)
+        ---@cast ast - nil
+
+        it("start#pair", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps)
+                        ps:next()
+                        return ps:next(function (p) return p:start() end)
+                    end)
+                end)
+            end)
+
+            local ex = 6
+
+            assert.Equal(ex, res)
+        end)
+
+        it("stop#pair", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps)
+                        ps:next()
+                        return ps:next(function (p) return p:stop() end)
+                    end)
+                end)
+            end)
+
+            local ex = 16
+
+            assert.Equal(ex, res)
+        end)
+
+        it("as_rule#pair", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps)
+                        ps:next()
+                        return ps:next(function (p) return p:as_rule() end)
+                    end)
+                end)
+            end)
+
+            local ex = "field"
+
+            assert.Equal(ex, res)
+        end)
+
+        it("as_str#pair", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair) return pair:as_str() end)
+            end)
+
+            local ex = "65279,1179403647,1463895090"
+
+            assert.Equal(ex, res)
+        end)
+
+        it("as_node_tag#pair", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:fold_flat({}, function (val, pair)
+                    table.insert(val, tostring(pair:as_node_tag()))
+                    return val
+                end)
+            end)
+
+            local ex = "tag"
+
+            assert.Same(ex, res[2])
+        end)
+
+        it("get_input#pair", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair) return pair:get_input() end)
+            end)
+
+            assert.Equal(data, res)
+        end)
+
+        it("line_col#pair", function ()
+            local res_line, res_col = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps)
+                        ps:next()
+                        return ps:next(function (p) return p:line_col() end)
+                    end)
+                end)
+            end)
+
+            local ex_line = 1
+            local ex_col = 7
+
+            assert.Equal(ex_line, res_line)
+            assert.Equal(ex_col, res_col)
+        end)
+
+        it("dump#pair", function ()
+            local res = ast:parse("field", data, function (pairs)
+                return pairs:next(function (pair) return pair:dump() end)
+            end)
+
+            local ex = {
+                ["inner"] = "65279",
+                ["pos"] = {
+                    [1] = 0,
+                    [2] = 5,
+                },
+                ["rule"] = '"field"',
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("tokens#pairs", function ()
+            local res = ast:parse(
+                "field",
+                data,
+                function (pairs) return pairs:next(function (pair) return pair:tokens() end) end
+            )
+
+            local ex = {
+                [1] = {
+                    ["pos"] = 0,
+                    ["rule"] = "field",
+                    ["type"] = "start",
+                },
+                [2] = {
+                    ["pos"] = 5,
+                    ["rule"] = "field",
+                    ["type"] = "end",
+                },
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("tokens_callback#pairs", function ()
+            local res_first, res_last, res_none = ast:parse("field", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:tokens(function (tokens)
+                        local last = tokens:next_back()
+                        local first = tokens:next()
+                        local none = tokens:next()
+
+                        return first, last, none
+                    end)
+                end)
+            end)
+
+            local ex_first = { ["pos"] = 0, ["rule"] = "field", ["type"] = "start" }
+            local ex_last = { ["pos"] = 5, ["rule"] = "field", ["type"] = "end" }
+
+            assert.Same(ex_first, res_first)
+            assert.Same(ex_last, res_last)
+            assert.Nil(res_none)
+        end)
+
+        it("pairs#pair", function ()
+            local res = ast:parse(
+                "record",
+                data,
+                function (pairs) return pairs:next(function (pair) return pair:pairs() end) end
+            )
+
+            local ex = {
+                ["pairs"] = {
+                    [1] = {
+                        ["inner"] = "65279",
+                        ["pos"] = {
+                            [1] = 0,
+                            [2] = 5,
+                        },
+                        ["rule"] = '"field"',
+                    },
+                    [2] = {
+                        ["inner"] = "1179403647",
+                        ["pos"] = {
+                            [1] = 6,
+                            [2] = 16,
+                        },
+                        ["rule"] = '"field"',
+                    },
+                    [3] = {
+                        ["inner"] = "1463895090",
+                        ["pos"] = {
+                            [1] = 17,
+                            [2] = 27,
+                        },
+                        ["rule"] = '"field"',
+                    },
+                },
+                ["pos"] = {
+                    [1] = 0,
+                    [2] = 27,
+                },
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("pairs_callback#pair", function ()
+            local res = ast:parse("record", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps) return ps:as_str() end)
+                end)
+            end)
+
+            local ex = "65279,1179403647,1463895090"
+
+            assert.Equal(ex, res)
         end)
     end)
 end)

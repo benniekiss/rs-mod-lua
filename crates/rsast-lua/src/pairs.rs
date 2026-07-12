@@ -15,7 +15,7 @@ impl<'scope> From<pest::iterators::Pair<'scope, &'scope str>> for LuaPair<'scope
 impl<'scope> mlua::UserData for LuaPair<'scope> {
     fn add_methods<M: mlua::prelude::LuaUserDataMethods<Self>>(methods: &mut M) {
         methods.add_method("start", |_, this, ()| Ok(this.0.as_span().start()));
-        methods.add_method("end", |_, this, ()| Ok(this.0.as_span().end()));
+        methods.add_method("stop", |_, this, ()| Ok(this.0.as_span().end()));
         methods.add_method("as_rule", |_, this, ()| Ok(this.0.as_rule().to_string()));
         methods.add_method("as_str", |_, this, ()| Ok(this.0.as_str().to_string()));
         methods.add_method("as_node_tag", |_, this, ()| {
