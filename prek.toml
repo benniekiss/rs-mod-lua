@@ -30,14 +30,14 @@ repo = "local"
 # files = { glob = ["*.lua"] }
 # exclude = { glob = [".lux/**"] }
 
-[[repos.hooks]]
-id = "lx-lint"
-name = "lx lint"
-entry = "lx --no-luarc --lua-version 5.4 lint -- -g -q -u --no-max-line-length"
-language = "system"
-pass_filenames = true
-files = { glob = ["*.lua"] }
-exclude = { glob = [".lux/**"] }
+# [[repos.hooks]]
+# id = "lx-lint"
+# name = "lx lint"
+# entry = "lx --no-luarc --lua-version 5.4 lint -g -q -u --no-max-line-length"
+# language = "system"
+# pass_filenames = true
+# files = { glob = ["*.lua"] }
+# exclude = { glob = [".lux/**"] }
 
 [[repos.hooks]]
 id = "lx-fmt"

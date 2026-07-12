@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use mlua::LuaSerdeExt;
+
 use crate::pairs::LuaPairs;
 
 #[derive(Clone, mlua::UserData, mlua::FromLua)]
@@ -30,12 +32,18 @@ impl LuaPestVm {
         lua: &mlua::Lua,
         rule: &str,
         input: &str,
-        callback: mlua::Function,
+        callback: Option<mlua::Function>,
     ) -> mlua::Result<mlua::MultiValue> {
-        lua.scope(|scope| {
-            let pairs = self.0.parse(rule, input).map_err(mlua::Error::runtime)?;
-            let ud = scope.create_userdata::<LuaPairs>(pairs.into())?;
-            callback.call(ud)
-        })
+        let pairs = self.0.parse(rule, input).map_err(mlua::Error::runtime)?;
+
+        match callback {
+            Some(f) => lua.scope(|scope| {
+                let ud = scope.create_userdata::<LuaPairs>(pairs.into())?;
+                f.call(ud)
+            }),
+            None => lua
+                .to_value(&pairs)
+                .map(|v| mlua::MultiValue::from_vec(vec![v])),
+        }
     }
 }

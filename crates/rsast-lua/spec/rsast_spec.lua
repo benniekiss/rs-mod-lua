@@ -1,52 +1,22 @@
 local rsast = require("rsast")
 
 grammar = [[
-WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
-
-object = {
-    "{" ~ "}" |
-    "{" ~ pair ~ ("," ~ pair)* ~ "}"
-}
-pair = { string ~ ":" ~ value }
-
-array = {
-    "[" ~ "]" |
-    "[" ~ value ~ ("," ~ value)* ~ "]"
-}
-
-value = _{ object | array | string | number | boolean | null }
-
-boolean = { "true" | "false" }
-
-null = { "null" }
-
-string = ${ "\"" ~ inner ~ "\"" }
-inner = @{ char* }
-char = {
-    !("\"" | "\\") ~ ANY
-    | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
-    | "\\" ~ ("u" ~ ASCII_HEX_DIGIT{4})
-}
-
-number = @{
-    "-"?
-    ~ ("0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)
-    ~ ("." ~ ASCII_DIGIT*)?
-    ~ (^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+)?
-}
-
-json = _{ SOI ~ (object | array) ~ EOI }
+field = { (ASCII_DIGIT | "." | "-")+ }
+record = { field ~ ("," ~ field)* }
+file = { SOI ~ (record ~ ("\r\n" | "\n"))* ~ EOI }
 ]]
 
 data = [[
-{
-    "nesting": { "inner object": {} },
-    "an array": [1.5, true, null, 1e-6],
-    "string with escaped double quotes" : "\"quick brown foxes\""
-}
+65279,1179403647,1463895090
+3.1415927,2.7182817,1.618034
+-40,-273.15
+13,42
+65537
 ]]
 
 describe("rsast", function ()
+    assert:set_parameter("TableFormatLevel", 15)
+
     describe("ast", function ()
         it("new#ast", function ()
             local ast, errors = rsast.Ast.new(grammar)
@@ -72,9 +42,57 @@ describe("rsast", function ()
             local ast = rsast.Ast.new(grammar)
             ---@cast ast - nil
 
-            assert.Not.Error(function ()
-                ast:parse("json", data, function () end)
-            end)
+            local ex = {
+                ["pairs"] = {
+                    [1] = {
+                        ["inner"] = {
+                            ["pairs"] = {
+                                [1] = {
+                                    ["inner"] = "65279",
+                                    ["pos"] = {
+                                        [1] = 0,
+                                        [2] = 5,
+                                    },
+                                    ["rule"] = '"field"',
+                                },
+                                [2] = {
+                                    ["inner"] = "1179403647",
+                                    ["pos"] = {
+                                        [1] = 6,
+                                        [2] = 16,
+                                    },
+                                    ["rule"] = '"field"',
+                                },
+                                [3] = {
+                                    ["inner"] = "1463895090",
+                                    ["pos"] = {
+                                        [1] = 17,
+                                        [2] = 27,
+                                    },
+                                    ["rule"] = '"field"',
+                                },
+                            },
+                            ["pos"] = {
+                                [1] = 0,
+                                [2] = 27,
+                            },
+                        },
+                        ["pos"] = {
+                            [1] = 0,
+                            [2] = 27,
+                        },
+                        ["rule"] = '"record"',
+                    },
+                },
+                ["pos"] = {
+                    [1] = 0,
+                    [2] = 27,
+                },
+            }
+
+            local res = ast:parse("record", data)
+
+            assert.Same(ex, res)
         end)
 
         it("parse_error#ast", function ()
@@ -82,18 +100,67 @@ describe("rsast", function ()
             ---@cast ast - nil
 
             assert.matches_error(function ()
-                ast:parse("json", "invalid data", function () end)
+                ast:parse("file", "invalid data", function () end)
             end, [[
 runtime error:  --> 1:1
   |
 1 | invalid data
   | ^---
   |
-  = expected "array" or "object"]], nil, true)
+  = expected "file"]], nil, true)
         end)
     end)
 
-    describe("pairs", function () end)
+    describe("pairs", function ()
+        local ast = rsast.Ast.new(grammar)
+        ---@cast ast - nil
 
-    describe("tokens", function () end)
+        it("as_str#pairs", function ()
+            local res = ast:parse("record", data, function (pairs) return pairs:as_str() end)
+
+            local ex = "65279,1179403647,1463895090"
+
+            assert.Equal(ex, res)
+        end)
+
+        it("get_input#pairs", function ()
+            local res = ast:parse("record", data, function (pairs) return pairs:get_input() end)
+
+            assert.Equal(data, res)
+        end)
+
+        it("concat#pairs", function ()
+            local res = ast:parse("record", data, function (pairs) return pairs:concat() end)
+
+            local ex = "65279,1179403647,1463895090"
+
+            assert.Equal(ex, res)
+        end)
+
+        it("is_empty#pairs", function ()
+            local res = ast:parse("record", data, function (pairs) return pairs:is_empty() end)
+
+            assert.False(res)
+        end)
+
+        it("peek#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                local p = pairs:peek(function (pair) return pair:as_str() end)
+                return p
+            end)
+
+            local ex = "65279,1179403647,1463895090"
+
+            assert.Equal(ex, res)
+        end)
+
+        it("tokens#pairs", function () end)
+        it("tokens_flat#pairs", function () end)
+
+        it("dump#pairs", function () end)
+        it("dump_flat#pairs", function () end)
+
+        describe("for_each#pairs", function () end)
+        describe("for_each_flat#pairs", function () end)
+    end)
 end)
