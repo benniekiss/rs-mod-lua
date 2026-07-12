@@ -402,10 +402,278 @@ runtime error:  --> 1:1
             assert.Same(ex, res)
         end)
 
-        describe("fold#pairs", function () end)
-        describe("fold_flat#pairs", function () end)
+        it("fold#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local acc = {}
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps)
+                        return ps:fold(acc, function (val, p)
+                            table.insert(val, p:as_rule())
+                            return val
+                        end)
+                    end)
+                end)
+            end)
 
-        describe("rfold#pairs", function () end)
-        describe("rfold_flat#pairs", function () end)
+            local ex = {
+                "record",
+                "record",
+                "record",
+                "record",
+                "record",
+                "EOI",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("fold_break#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local acc = {}
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps)
+                        return ps:fold(acc, function (val, p)
+                            table.insert(val, p:as_rule())
+
+                            return val, #val < 3
+                        end)
+                    end)
+                end)
+            end)
+
+            local ex = {
+                "record",
+                "record",
+                "record",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("fold_error#pairs", function ()
+            local message = "FOLD ERROR"
+
+            local should_error = function ()
+                ast:parse("file", data, function (pairs)
+                    local acc = {}
+                    return pairs:next(function (pair)
+                        return pair:pairs(function (ps)
+                            return ps:fold(acc, function (_, _)
+                                error(message)
+                            end)
+                        end)
+                    end)
+                end)
+            end
+
+            assert.matches_error(should_error, message)
+        end)
+
+        it("fold_flat#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local acc = {}
+                return pairs:fold_flat(acc, function (val, pair)
+                    table.insert(val, pair:as_rule())
+                    return val
+                end)
+            end)
+
+            local ex = {
+                "file",
+                "record",
+                "field",
+                "field",
+                "field",
+                "record",
+                "field",
+                "field",
+                "field",
+                "record",
+                "field",
+                "field",
+                "record",
+                "field",
+                "field",
+                "record",
+                "field",
+                "EOI",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("fold_flat_break#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local acc = {}
+                return pairs:fold_flat(acc, function (val, pair)
+                    table.insert(val, pair:as_rule())
+                    return val, #val < 3
+                end)
+            end)
+
+            local ex = {
+                "file",
+                "record",
+                "field",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("fold_flat_error#pairs", function ()
+            local message = "FOLD ERROR"
+
+            local should_error = function ()
+                ast:parse("file", data, function (pairs)
+                    local acc = {}
+                    return pairs:next(function (pair)
+                        return pair:pairs(function (ps)
+                            return ps:fold_flat(acc, function (_, _)
+                                error(message)
+                            end)
+                        end)
+                    end)
+                end)
+            end
+
+            assert.matches_error(should_error, message)
+        end)
+
+        it("rfold#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local acc = {}
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps)
+                        return ps:rfold(acc, function (val, p)
+                            table.insert(val, p:as_rule())
+                            return val
+                        end)
+                    end)
+                end)
+            end)
+
+            local ex = {
+                "EOI",
+                "record",
+                "record",
+                "record",
+                "record",
+                "record",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("rfold_break#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local acc = {}
+                return pairs:next(function (pair)
+                    return pair:pairs(function (ps)
+                        return ps:rfold(acc, function (val, p)
+                            table.insert(val, p:as_rule())
+
+                            return val, #val < 3
+                        end)
+                    end)
+                end)
+            end)
+
+            local ex = {
+                "EOI",
+                "record",
+                "record",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("rfold_error#pairs", function ()
+            local message = "FOLD ERROR"
+
+            local should_error = function ()
+                ast:parse("file", data, function (pairs)
+                    local acc = {}
+                    return pairs:next(function (pair)
+                        return pair:pairs(function (ps)
+                            return ps:rfold(acc, function (_, _)
+                                error(message)
+                            end)
+                        end)
+                    end)
+                end)
+            end
+
+            assert.matches_error(should_error, message)
+        end)
+
+        it("rfold_flat#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local acc = {}
+                return pairs:rfold_flat(acc, function (val, pair)
+                    table.insert(val, pair:as_rule())
+                    return val
+                end)
+            end)
+
+            local ex = {
+                "EOI",
+                "field",
+                "record",
+                "field",
+                "field",
+                "record",
+                "field",
+                "field",
+                "record",
+                "field",
+                "field",
+                "field",
+                "record",
+                "field",
+                "field",
+                "field",
+                "record",
+                "file",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("rfold_flat_break#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local acc = {}
+                return pairs:rfold_flat(acc, function (val, pair)
+                    table.insert(val, pair:as_rule())
+                    return val, #val < 3
+                end)
+            end)
+
+            local ex = {
+                "EOI",
+                "field",
+                "record",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("rfold_flat_error#pairs", function ()
+            local message = "FOLD ERROR"
+
+            local should_error = function ()
+                ast:parse("file", data, function (pairs)
+                    local acc = {}
+                    return pairs:next(function (pair)
+                        return pair:pairs(function (ps)
+                            return ps:rfold_flat(acc, function (_, _)
+                                error(message)
+                            end)
+                        end)
+                    end)
+                end)
+            end
+
+            assert.matches_error(should_error, message)
+        end)
     end)
 end)

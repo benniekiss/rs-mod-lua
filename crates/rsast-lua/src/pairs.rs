@@ -160,7 +160,10 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                                 ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
                             })
                     }) {
-                        ControlFlow::Continue(val) | ControlFlow::Break(val) => Ok(val),
+                        ControlFlow::Continue(val) | ControlFlow::Break(val) => match val {
+                            mlua::Value::Error(err) => Err(*err),
+                            _ => Ok(val),
+                        },
                     }
                 })
             },
@@ -183,7 +186,10 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                                 ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
                             })
                     }) {
-                        ControlFlow::Continue(val) | ControlFlow::Break(val) => Ok(val),
+                        ControlFlow::Continue(val) | ControlFlow::Break(val) => match val {
+                            mlua::Value::Error(err) => Err(*err),
+                            _ => Ok(val),
+                        },
                     }
                 })
             },
@@ -206,7 +212,10 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                                 ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
                             })
                     }) {
-                        ControlFlow::Continue(val) | ControlFlow::Break(val) => Ok(val),
+                        ControlFlow::Continue(val) | ControlFlow::Break(val) => match val {
+                            mlua::Value::Error(err) => Err(*err),
+                            _ => Ok(val),
+                        },
                     }
                 })
             },
@@ -229,7 +238,10 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                                 ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
                             })
                     }) {
-                        ControlFlow::Continue(val) | ControlFlow::Break(val) => Ok(val),
+                        ControlFlow::Continue(val) | ControlFlow::Break(val) => match val {
+                            mlua::Value::Error(err) => Err(*err),
+                            _ => Ok(val),
+                        },
                     }
                 })
             },
