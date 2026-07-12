@@ -60,21 +60,20 @@ local rsast = {}
 ---
 ---@generic R: any, T: any
 ---
----@field as_str      fun(self): string
----@field get_input   fun(self): string
----@field concat      fun(self): string
----@field is_empty    fun(self): boolean
----@field peek        fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
----@field next        fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
----@field next_back   fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
----@field tokens      fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[]
----@field tokens_flat fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[]
----@field fold        fun(self, acc: T, callback: rsast.FoldCallback<T>): T
----@field fold_flat   fun(self, acc: T, callback: rsast.FoldCallback<T>): T
----@field rfold       fun(self, acc: T, callback: rsast.FoldCallback<T>): T
----@field rfold_flat  fun(self, acc: T, callback: rsast.FoldCallback<T>): T
----@field dump        fun(self): rsast.Ast
----@field dump_flat   fun(self): rsast.Ast
+---@field as_str     fun(self): string
+---@field get_input  fun(self): string
+---@field concat     fun(self): string
+---@field is_empty   fun(self): boolean
+---@field dump       fun(self): rsast.Ast
+---@field dump_flat  fun(self): rsast.Ast
+---@field peek       fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
+---@field next       fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
+---@field next_back  fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil
+---@field tokens     fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[]
+---@field fold       fun(self, acc: T, callback: rsast.FoldCallback<T>): T
+---@field fold_flat  fun(self, acc: T, callback: rsast.FoldCallback<T>): T
+---@field rfold      fun(self, acc: T, callback: rsast.FoldCallback<T>): T
+---@field rfold_flat fun(self, acc: T, callback: rsast.FoldCallback<T>): T
 
 ---@class rsast.Ast: userdata
 ---
