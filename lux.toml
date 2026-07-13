@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "crates/minijinja-lua",
+    "crates/rsast-lua",
     "crates/rsjson-lua",
     "crates/rsre-lua",
-    "crates/rsast-lua",
 ]

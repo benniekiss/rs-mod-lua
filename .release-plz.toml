@@ -9,6 +9,12 @@ publish = true
 publish_features = ["vendored", "contrib"]
 
 [[package]]
+name = "rsast-lua"
+release = false
+publish = false
+publish_features = ["vendored"]
+
+[[package]]
 name = "rsjson-lua"
 release = true
 publish = true
