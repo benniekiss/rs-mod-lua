@@ -3,7 +3,7 @@ version = "0.1.0"
 lua = ">=5.1"
 
 [description]
-summary = "an ast parsing lua module using the pest rust crate"
+summary = "a PEG lua module using the pest rust crate"
 maintainer = "benniekiss"
 homepage = "https://github.com/benniekiss/rs-mod-lua"
 issues_url = "https://github.com/benniekiss/rs-mod-lua/issues"
