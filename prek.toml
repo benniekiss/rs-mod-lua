@@ -11,7 +11,7 @@ args = ["--markdown-linebreak-ext=md"]
 
 [[repos.hooks]]
 id = "end-of-file-fixer"
-exclude = { glob = ["*.lock", "*.json"] }
+exclude = { glob = ["*.lock"] }
 
 [[repos.hooks]]
 id = "check-added-large-files"
