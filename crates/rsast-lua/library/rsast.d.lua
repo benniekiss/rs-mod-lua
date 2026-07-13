@@ -18,6 +18,13 @@ local rsast = {}
 ---
 ---@alias rsast.NodeCallback<R> fun(pair: rsast.Pair): R
 
+--- A callback for use with [`rsast.Ast:parse()`](lua-rsast.Ast.parse) or
+--- [`rsast.Pair:pairs()`](lua-rsast.Pair.pairs)
+---
+--- It is passed an [`rsast.Pairs`](lua-rsast.Pairs) as the only argument.
+---
+---@alias rsast.PairsCallback<R> fun(pairs: rsast.Pairs): R
+
 --- A callback for use with `fold`, `fold_flat`, `rfold`, and `rfold_flat` of
 --- [`rsast.Pairs`](lua-rsast.Pairs).
 ---
@@ -27,13 +34,6 @@ local rsast = {}
 --- to determine whether iteration should continue.
 ---
 ---@alias rsast.FoldCallback<T> fun(acc: T, pair: rsast.Pair): (T, boolean?)
-
---- A callback for use with [`rsast.Ast:parse()`](lua-rsast.Ast.parse) or
---- [`rsast.Pair:pairs()`](lua-rsast.Pair.pairs)
----
---- It is passed an [`rsast.Pairs`](lua-rsast.Pairs) as the only argument.
----
----@alias rsast.PairsCallback<R> fun(pairs: rsast.Pairs): R
 
 --- A single AST node.
 ---
@@ -64,7 +64,7 @@ local rsast = {}
 ---
 --- It can only be accessed and used within an [`rsast.TokenCallback`](lua-rsast.TokenCallback)
 ---
----@class Tokens: userdata
+---@class rsast.Tokens: userdata
 ---
 ---@field peek      fun(self): rsast.Token? Get the next token without advancing the iterator
 ---@field next      fun(self): rsast.Token? Get the next token
@@ -77,18 +77,36 @@ local rsast = {}
 ---
 ---@class rsast.Pair: userdata
 ---
----@generic R: any
+---@field start       fun(self): integer            The start byte position of the pair
+---@field stop        fun(self): integer            The end byte position of the pair
+---@field as_rule     fun(self): string             The name of the rule which matched the pair
+---@field as_str      fun(self): string             The text between `start` and `stop` of this pair
+---@field as_node_tag fun(self): string             The current node tag
+---@field get_input   fun(self): string             The input from which the pair was parsed
+---@field line_col    fun(self): (integer, integer) The line and column number of `start`
+---@field dump        fun(self): rsast.Node         Output the pair to an [`rsast.Node`](lua-rsast.Node)
 ---
----@field start       fun(self): integer                                              The start byte position of the pair
----@field stop        fun(self): integer                                              The end byte position of the pair
----@field as_rule     fun(self): string                                               The name of the rule which matched the pair
----@field as_str      fun(self): string                                               The text between `start` and `stop` of this pair
----@field as_node_tag fun(self): string                                               The current node tag
----@field get_input   fun(self): string                                               The input from which the pair was parsed
----@field line_col    fun(self): (integer, integer)                                   The line and column number of `start`
----@field dump        fun(self): rsast.Node                                           Output the pair to an [`rsast.Node`](lua-rsast.Node)
----@field tokens      fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[] Invoke a callback with an [`rsast.Tokens`](lua-rsast.Tokens) iterator
----@field pairs       fun(self, callback?: rsast.PairsCallback<R>): R | rsast.Tree    Invoke a callback with an [`rsast.Pairs`](lua-rsast.Pairs) iterator
+rsast.Pair = {}
+
+--- Invoke a callback with an [`rsast.Tokens`](lua-rsast.Tokens) iterator
+---
+---@generic R
+---
+---@param callback? rsast.TokenCallback<R>
+---
+---@return rsast.Token[] | R
+---
+function rsast.Pair:tokens(callback) end
+
+--- Invoke a callback with an [`rsast.Pairs`](lua-rsast.Pairs) iterator
+---
+---@generic R
+---
+---@param callback? rsast.PairsCallback<R>
+---
+---@return rsast.Tree | R
+---
+function rsast.Pair:pairs(callback) end
 
 --- An iterator over [`rsast.Pair`](lua-rsast.Pair)
 ---
@@ -96,22 +114,114 @@ local rsast = {}
 ---
 ---@class rsast.Pairs
 ---
----@generic R: any, T: any
+---@field as_str    fun(self): string     The text between `start` of the first pair and `stop` of the last
+---@field get_input fun(self): string     The input from which the pairs were parsed
+---@field concat    fun(self): string     The concatenated text of the pairs
+---@field is_empty  fun(self): boolean    Whether the iterator is empty
+---@field dump      fun(self): rsast.Tree Output the pairs to an [`rsast.Tree`](lua.rsast.Tree)
+---@field dump_flat fun(self): rsast.Tree Flatten nested pairs and output to an [`rsast.Tree`](lua.rsast.Tree)
 ---
----@field as_str     fun(self): string                                                 The text between `start` of the first pair and `stop` of the last
----@field get_input  fun(self): string                                                 The input from which the pairs were parsed
----@field concat     fun(self): string                                                 The concatenated text of the pairs
----@field is_empty   fun(self): boolean                                                Whether the iterator is empty
----@field dump       fun(self): rsast.Tree                                             Output the pairs to an [`rsast.Tree`](lua.rsast.Tree)
----@field dump_flat  fun(self): rsast.Tree                                             Flatten nested pairs and output to an [`rsast.Tree`](lua.rsast.Tree)
----@field peek       fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil Get the next pair without advancing the iterator. Returns `nil` if the iterator is exhausted
----@field next       fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil Get the next pair. Returns `nil` if the iterator is exhausted
----@field next_back  fun(self, callback?: rsast.NodeCallback<R>): R | rsast.Node | nil Get the next token from the end. Returns `nil` if the iterator is exhausted
----@field tokens     fun(self, callback?: rsast.TokenCallback<R>): R | rsast.Token[]   Invoke a callback with an [`rsast.Tokens`](lua-rsast.Tokens) iterator
----@field fold       fun(self, acc: T, callback: rsast.FoldCallback<T>): T             Fold the pairs with `callback`
----@field fold_flat  fun(self, acc: T, callback: rsast.FoldCallback<T>): T             Flatten nested pairs and fold with `callback`
----@field rfold      fun(self, acc: T, callback: rsast.FoldCallback<T>): T             Reverse fold the pairs with `callback`
----@field rfold_flat fun(self, acc: T, callback: rsast.FoldCallback<T>): T             Flatten nested pairs and reverse fold with `callback`
+rsast.Pairs = {}
+
+--- Get the next pair without advancing the iterator.
+---
+--- Returns `nil` if the iterator is exhausted
+---
+---@generic R
+---
+---@param callback? rsast.NodeCallback<R>
+---
+---@return rsast.Node | R | nil
+---
+function rsast.Pairs:peek(callback) end
+
+--- Get the next pair.
+---
+--- Returns `nil` if the iterator is exhausted
+---
+---@generic R
+---
+---@param callback? rsast.NodeCallback<R>
+---
+---@return rsast.Node | R | nil
+---
+function rsast.Pairs:next(callback) end
+
+--- Get the next pair from the end.
+---
+--- Returns `nil` if the iterator is exhausted
+---
+---@generic R
+---
+---@param callback? rsast.NodeCallback<R>
+---
+---@return rsast.Node | R | nil
+---
+function rsast.Pairs:next_back(callback) end
+
+---  Invoke a callback with an [`rsast.Tokens`](lua-rsast.Tokens) iterator
+---
+---@generic R
+---
+---@param callback? rsast.TokenCallback<R>
+---
+---@return rsast.Token[] | R
+---
+function rsast.Pairs:tokens(callback) end
+
+--- Fold the pairs with `callback`
+---
+--- The method is called with an initial value, `acc`, which is passed to the
+--- callback along with an [`rsast.Pair`](lua-rsast.Pair). The return value of
+--- `callback` is then passed as the initial value on the next iteration
+---
+---@generic T
+---
+---@param acc       T
+---@param callback? rsast.FoldCallback<T>
+---
+---@return T
+---
+function rsast.Pairs:fold(acc, callback) end
+
+--- Flatten nested pairs and fold with `callback`
+---
+---@see rsast.Pairs.fold
+---
+---@generic T
+---
+---@param acc       T
+---@param callback? rsast.FoldCallback<T>
+---
+---@return T
+---
+function rsast.Pairs:fold_flat(acc, callback) end
+
+--- Reverse fold the pairs with `callback`
+---
+---@see rsast.Pairs.fold
+---
+---@generic T
+---
+---@param acc       T
+---@param callback? rsast.FoldCallback<T>
+---
+---@return T
+---
+function rsast.Pairs:rfold(acc, callback) end
+
+--- Flatten nested pairs and reverse fold with `callback`
+---
+---@see rsast.Pairs.fold
+---
+---@generic T
+---
+---@param acc       T
+---@param callback? rsast.FoldCallback<T>
+---
+---@return T
+---
+function rsast.Pairs:rfold_flat(acc, callback) end
 
 --- A PEG grammar parser
 ---
@@ -127,7 +237,9 @@ rsast.Ast = {}
 ---
 ---@param grammar string The grammar to load
 ---
----@return rsast.Ast?, string[]? # Returns the parser or a list of errors encountered when loading the grammar
+---@return rsast.Ast? # A parser for the provided grammar, returns nil of it could not be loaded
+---@return string[]?  # Errors encountered while loading the grammar, or nil if there were none.
+---
 function rsast.Ast.new(grammar) end
 
 --- Parse an input with the loaded grammar.
@@ -138,13 +250,14 @@ function rsast.Ast.new(grammar) end
 ---
 --- If `callback` is not provided, the input is parsed into an [`rsast.Tree`](lua-rsast.Tree).
 ---
----@generic R: any
+---@generic R
 ---
 ---@param rule      string The rule to parse
 ---@param input     string The input to parse
 ---@param callback? rsast.PairsCallback<R>
 ---
----@return R | rsast.Tree # Returns the result of `callback`, or an [`rsast.Tree`](lua-rsast.Tree) if no callback was provided
+---@return rsast.Tree | R # Returns the result of `callback`, or an [`rsast.Tree`](lua-rsast.Tree) if no callback was provided
+---
 function rsast.Ast:parse(rule, input, callback) end
 
 return rsast
