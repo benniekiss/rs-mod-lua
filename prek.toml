@@ -33,7 +33,7 @@ repo = "local"
 [[repos.hooks]]
 id = "lx-lint"
 name = "lx lint"
-entry = "lx --no-luarc --lua-version 5.4 lint -g -q -u --no-max-line-length"
+entry = "lx --no-luarc --lua-version 5.4 lint -- -g -q -u --no-max-line-length"
 language = "system"
 pass_filenames = true
 files = { glob = ["*.lua"] }
