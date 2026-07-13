@@ -2,7 +2,10 @@ use std::ops::ControlFlow;
 
 use mlua::{IntoLua, LuaSerdeExt};
 
-use crate::tokens::{LuaToken, LuaTokens};
+use crate::{
+    lines::LuaLines,
+    tokens::{LuaToken, LuaTokens},
+};
 
 pub(crate) struct LuaPair<'scope>(pest::iterators::Pair<'scope, &'scope str>);
 
@@ -25,6 +28,7 @@ impl<'scope> mlua::UserData for LuaPair<'scope> {
             Ok(this.0.get_input().to_string())
         });
         methods.add_method("line_col", |_, this, ()| Ok(this.0.line_col()));
+        methods.add_method("dump", |lua, this, ()| lua.to_value(&this.0));
         methods.add_method(
             "pairs",
             |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
@@ -32,8 +36,9 @@ impl<'scope> mlua::UserData for LuaPair<'scope> {
 
                 match callback {
                     Some(f) => lua.scope(|scope| {
-                        let ud = scope.create_userdata::<LuaPairs>(pairs.into())?;
-                        f.call(ud)
+                        scope
+                            .create_userdata::<LuaPairs>(pairs.into())
+                            .and_then(|ud| f.call(ud))
                     }),
                     None => lua
                         .to_value(&pairs)
@@ -47,16 +52,37 @@ impl<'scope> mlua::UserData for LuaPair<'scope> {
                 let tokens = this.0.clone().tokens();
                 match callback {
                     Some(f) => lua.scope(|scope| {
-                        let ud = scope.create_userdata::<LuaTokens>(tokens.into())?;
-                        f.call(ud)
+                        scope
+                            .create_userdata::<LuaTokens>(tokens.into())
+                            .and_then(|ud| f.call(ud))
                     }),
-                    None => lua
-                        .to_value(&tokens.map(LuaToken::from).collect::<Vec<_>>())
+                    None => tokens
+                        .map(LuaToken::from)
+                        .collect::<Vec<_>>()
+                        .into_lua(lua)
                         .map(|v| mlua::MultiValue::from_vec(vec![v])),
                 }
             },
         );
-        methods.add_method("dump", |lua, this, ()| lua.to_value(&this.0));
+        methods.add_method(
+            "lines",
+            |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
+                match callback {
+                    Some(f) => lua.scope(|scope| {
+                        scope
+                            .create_userdata::<LuaLines>(this.0.as_span().into())
+                            .and_then(|ud| f.call(ud))
+                    }),
+                    None => this
+                        .0
+                        .as_span()
+                        .lines()
+                        .collect::<Vec<_>>()
+                        .into_lua(lua)
+                        .map(|v| mlua::MultiValue::from_vec(vec![v])),
+                }
+            },
+        );
     }
 }
 
@@ -87,8 +113,9 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
             |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
                 match this.0.peek() {
                     Some(pair) if let Some(f) = callback => lua.scope(|scope| {
-                        let ud = scope.create_userdata::<LuaPair>(pair.into());
-                        f.call(ud)
+                        scope
+                            .create_userdata::<LuaPair>(pair.into())
+                            .and_then(|ud| f.call(ud))
                     }),
                     Some(pair) => lua
                         .to_value(&pair)
@@ -102,8 +129,9 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
             |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
                 match this.0.next() {
                     Some(pair) if let Some(f) = callback => lua.scope(|scope| {
-                        let ud = scope.create_userdata::<LuaPair>(pair.into());
-                        f.call(ud)
+                        scope
+                            .create_userdata::<LuaPair>(pair.into())
+                            .and_then(|ud| f.call(ud))
                     }),
                     Some(pair) => lua
                         .to_value(&pair)
@@ -117,8 +145,9 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
             |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
                 match this.0.next_back() {
                     Some(pair) if let Some(f) = callback => lua.scope(|scope| {
-                        let ud = scope.create_userdata::<LuaPair>(pair.into());
-                        f.call(ud)
+                        scope
+                            .create_userdata::<LuaPair>(pair.into())
+                            .and_then(|ud| f.call(ud))
                     }),
                     Some(pair) => lua
                         .to_value(&pair)
@@ -133,11 +162,14 @@ impl<'scope> mlua::UserData for LuaPairs<'scope> {
                 let tokens = this.0.clone().tokens();
                 match callback {
                     Some(f) => lua.scope(|scope| {
-                        let ud = scope.create_userdata::<LuaTokens>(tokens.into())?;
-                        f.call(ud)
+                        scope
+                            .create_userdata::<LuaTokens>(tokens.into())
+                            .and_then(|ud| f.call(ud))
                     }),
-                    None => lua
-                        .to_value(&tokens.map(LuaToken::from).collect::<Vec<_>>())
+                    None => tokens
+                        .map(LuaToken::from)
+                        .collect::<Vec<_>>()
+                        .into_lua(lua)
                         .map(|v| mlua::MultiValue::from_vec(vec![v])),
                 }
             },

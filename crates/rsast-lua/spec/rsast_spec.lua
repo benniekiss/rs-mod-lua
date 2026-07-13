@@ -815,24 +815,71 @@ runtime error:  --> 1:1
         end)
 
         it("tokens_callback#pairs", function ()
-            local res_first, res_last, res_none = ast:parse("field", data, function (pairs)
+            local callback = function (pairs)
                 return pairs:next(function (pair)
                     return pair:tokens(function (tokens)
+                        local peek = tokens:peek()
                         local last = tokens:next_back()
                         local first = tokens:next()
                         local none = tokens:next()
 
-                        return first, last, none
+                        return peek, first, last, none
                     end)
                 end)
-            end)
+            end
+
+            local res_peek, res_first, res_last, res_none = ast:parse(
+                "field",
+                data,
+                callback
+            )
 
             local ex_first = { ["pos"] = 0, ["rule"] = "field", ["type"] = "start" }
             local ex_last = { ["pos"] = 5, ["rule"] = "field", ["type"] = "end" }
 
+            assert.Same(res_peek, res_first)
             assert.Same(ex_first, res_first)
             assert.Same(ex_last, res_last)
             assert.Nil(res_none)
+        end)
+
+        it("lines#pairs", function ()
+            local res = ast:parse(
+                "file",
+                data,
+                function (pairs) return pairs:next(function (pair) return pair:lines() end) end
+            )
+
+            local ex = {
+                "65279,1179403647,1463895090\n",
+                "3.1415927,2.7182817,1.618034\n",
+                "-40,-273.15\n",
+                "13,42\n",
+                "65537\n",
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("lines_callback#pairs", function ()
+            local res_peek, res_first, res_sec = ast:parse("file", data, function (pairs)
+                return pairs:next(function (pair)
+                    return pair:lines(function (lines)
+                        local peek = { lines:peek() }
+                        local first = { lines:next() }
+                        local sec = { lines:next() }
+
+                        return peek, first, sec
+                    end)
+                end)
+            end)
+
+            local ex_first = { "65279,1179403647,1463895090\n", 0, 28 }
+            local ex_sec = { "3.1415927,2.7182817,1.618034\n", 28, 57 }
+
+            assert.Same(res_peek, res_first)
+            assert.Same(ex_first, res_first)
+            assert.Same(ex_sec, res_sec)
         end)
 
         it("pairs#pair", function ()

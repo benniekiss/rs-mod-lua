@@ -2,6 +2,7 @@
 
 use crate::vm::LuaPestVm;
 
+mod lines;
 mod pairs;
 mod tokens;
 mod vm;

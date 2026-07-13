@@ -18,6 +18,12 @@ local rsast = {}
 ---
 ---@alias rsast.NodeCallback<R> fun(pair: rsast.Pair): R
 
+--- A callback used with [`rsast.Pair:lines()`](lua-rsast.Pair.lines)
+---
+--- It is passed an [`rsast.Lines`](lua-rsast.Lines) as the only argument.
+---
+---@alias rsast.LineCallback<R> fun(lines: rsast.Lines): R
+
 --- A callback for use with [`rsast.Ast:parse()`](lua-rsast.Ast.parse) or
 --- [`rsast.Pair:pairs()`](lua-rsast.Pair.pairs)
 ---
@@ -70,6 +76,15 @@ local rsast = {}
 ---@field next      fun(self): rsast.Token? Get the next token
 ---@field next_back fun(self): rsast.Token? Get the next token from the end
 
+--- An iterator over the lines covered by an [`rsast.Pair`](lua-rsast.Pair)
+---
+--- It can only be accessed and used within an [`rsast.LineCallback`](lua-rsast.LineCallback)
+---
+---@class rsast.Lines: userdata
+---
+---@field peek fun(self): (string, integer, integer) Get the text, start, and stop position of the next line without advancing the iterator
+---@field next fun(self): (string, integer, integer) Get the text, start, and stop position of the next line
+
 --- A matching pair of [`rsast.Token`](lua-rsast.Token) and everything between them
 ---
 --- It can only be accessed and used within an [`rsast.NodeCallback`](lua-rsast.NodeCallback)
@@ -97,6 +112,15 @@ rsast.Pair = {}
 ---@return rsast.Token[] | R
 ---
 function rsast.Pair:tokens(callback) end
+
+--- Invoke a callback with an [`rsast.Lines`](lua-rsast.Lines) iterator
+---
+---@generic R
+---
+---@param callback? rsast.LineCallback<R>
+---
+---@return string[] | R
+function rsast.Pair:lines(callback) end
 
 --- Invoke a callback with an [`rsast.Pairs`](lua-rsast.Pairs) iterator
 ---
