@@ -9,27 +9,27 @@ local rsast = {}
 ---
 --- It is passed an [`rsast.Tokens`](lua-rsast.Tokens) as the only argument.
 ---
----@alias rsast.TokenCallback<R> fun(tokens: rsast.Tokens): R
+---@alias rsast.TokenCallback<R> fun(tokens: rsast.Tokens): R...
 
 --- A callback for use with the `peek`, `next`, and `next_back` methods of
 --- [`rsast.Pairs`](lua-rsast.Pairs).
 ---
 --- It is passed an [`rsast.Pair`](lua-rsast.Pair) as the only argument.
 ---
----@alias rsast.NodeCallback<R> fun(pair: rsast.Pair): R
+---@alias rsast.NodeCallback<R> fun(pair: rsast.Pair): R...
 
 --- A callback used with [`rsast.Pair:lines()`](lua-rsast.Pair.lines)
 ---
 --- It is passed an [`rsast.Lines`](lua-rsast.Lines) as the only argument.
 ---
----@alias rsast.LineCallback<R> fun(lines: rsast.Lines): R
+---@alias rsast.LineCallback<R> fun(lines: rsast.Lines): R...
 
 --- A callback for use with [`rsast.Ast:parse()`](lua-rsast.Ast.parse) or
 --- [`rsast.Pair:pairs()`](lua-rsast.Pair.pairs)
 ---
 --- It is passed an [`rsast.Pairs`](lua-rsast.Pairs) as the only argument.
 ---
----@alias rsast.PairsCallback<R> fun(pairs: rsast.Pairs): R
+---@alias rsast.PairsCallback<R> fun(pairs: rsast.Pairs): R...
 
 --- A callback for use with `fold`, `fold_flat`, `rfold`, and `rfold_flat` of
 --- [`rsast.Pairs`](lua-rsast.Pairs).
@@ -109,7 +109,7 @@ rsast.Pair = {}
 ---
 ---@param callback? rsast.TokenCallback<R>
 ---
----@return rsast.Token[] | R
+---@return rsast.Token[] | R...
 ---
 function rsast.Pair:tokens(callback) end
 
@@ -119,7 +119,7 @@ function rsast.Pair:tokens(callback) end
 ---
 ---@param callback? rsast.LineCallback<R>
 ---
----@return string[] | R
+---@return string[] | R...
 function rsast.Pair:lines(callback) end
 
 --- Invoke a callback with an [`rsast.Pairs`](lua-rsast.Pairs) iterator
@@ -128,7 +128,7 @@ function rsast.Pair:lines(callback) end
 ---
 ---@param callback? rsast.PairsCallback<R>
 ---
----@return rsast.Tree | R
+---@return rsast.Tree | R...
 ---
 function rsast.Pair:pairs(callback) end
 
@@ -155,7 +155,7 @@ rsast.Pairs = {}
 ---
 ---@param callback? rsast.NodeCallback<R>
 ---
----@return rsast.Node | R | nil
+---@return rsast.Node | R... | nil
 ---
 function rsast.Pairs:peek(callback) end
 
@@ -167,7 +167,7 @@ function rsast.Pairs:peek(callback) end
 ---
 ---@param callback? rsast.NodeCallback<R>
 ---
----@return rsast.Node | R | nil
+---@return rsast.Node | R... | nil
 ---
 function rsast.Pairs:next(callback) end
 
@@ -179,7 +179,7 @@ function rsast.Pairs:next(callback) end
 ---
 ---@param callback? rsast.NodeCallback<R>
 ---
----@return rsast.Node | R | nil
+---@return rsast.Node | R... | nil
 ---
 function rsast.Pairs:next_back(callback) end
 
@@ -189,7 +189,7 @@ function rsast.Pairs:next_back(callback) end
 ---
 ---@param callback? rsast.TokenCallback<R>
 ---
----@return rsast.Token[] | R
+---@return rsast.Token[] | R...
 ---
 function rsast.Pairs:tokens(callback) end
 
@@ -288,7 +288,7 @@ function rsast.Ast:validate(rule, input) end
 ---@param input    string                 The input to parse
 ---@param callback rsast.PairsCallback<R>
 ---
----@return R # Returns the result of `callback`
+---@return R... # Returns the result of `callback`
 ---
 function rsast.Ast:parse(rule, input, callback) end
 
