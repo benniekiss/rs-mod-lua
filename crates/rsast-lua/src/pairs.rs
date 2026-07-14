@@ -19,13 +19,18 @@ impl<'scope> mlua::UserData for LuaPair<'scope> {
     fn add_methods<M: mlua::prelude::LuaUserDataMethods<Self>>(methods: &mut M) {
         methods.add_method("start", |_, this, ()| Ok(this.0.as_span().start()));
         methods.add_method("stop", |_, this, ()| Ok(this.0.as_span().end()));
-        methods.add_method("as_rule", |_, this, ()| Ok(this.0.as_rule().to_string()));
-        methods.add_method("as_str", |_, this, ()| Ok(this.0.as_str().to_string()));
-        methods.add_method("as_node_tag", |_, this, ()| {
-            Ok(this.0.as_node_tag().map(|s| s.to_string()))
+        methods.add_method("as_rule", |lua, this, ()| {
+            lua.create_string(this.0.as_rule())
         });
-        methods.add_method("get_input", |_, this, ()| {
-            Ok(this.0.get_input().to_string())
+        methods.add_method("as_str", |lua, this, ()| lua.create_string(this.0.as_str()));
+        methods.add_method("as_node_tag", |lua, this, ()| {
+            this.0
+                .as_node_tag()
+                .map(|s| lua.create_string(s))
+                .transpose()
+        });
+        methods.add_method("get_input", |lua, this, ()| {
+            lua.create_string(this.0.get_input())
         });
         methods.add_method("line_col", |_, this, ()| Ok(this.0.line_col()));
         methods.add_method("dump", |lua, this, ()| lua.to_value(&this.0));
@@ -96,11 +101,11 @@ impl<'scope> From<pest::iterators::Pairs<'scope, &'scope str>> for LuaPairs<'sco
 
 impl<'scope> mlua::UserData for LuaPairs<'scope> {
     fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("as_str", |_, this, ()| Ok(this.0.as_str().to_string()));
-        methods.add_method("get_input", |_, this, ()| {
-            Ok(this.0.get_input().to_string())
+        methods.add_method("as_str", |lua, this, ()| lua.create_string(this.0.as_str()));
+        methods.add_method("get_input", |lua, this, ()| {
+            lua.create_string(this.0.get_input())
         });
-        methods.add_method("concat", |_, this, ()| Ok(this.0.concat().to_string()));
+        methods.add_method("concat", |lua, this, ()| lua.create_string(this.0.concat()));
         methods.add_method("is_empty", |_, this, ()| Ok(this.0.is_empty()));
         methods.add_method("dump", |lua, this, ()| {
             lua.to_value(&this.0.clone().collect::<Vec<_>>())
