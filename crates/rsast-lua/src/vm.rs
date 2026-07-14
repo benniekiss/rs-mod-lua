@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mlua::LuaSerdeExt;
+use mlua::IntoLua;
 
 use crate::pairs::LuaPairs;
 
@@ -26,24 +26,43 @@ impl LuaPestVm {
         }
     }
 
+    #[lua(name = "validate")]
+    pub(crate) fn lua_validate(
+        &self,
+        lua: &mlua::Lua,
+        rule: &str,
+        input: &str,
+    ) -> mlua::Result<mlua::MultiValue> {
+        let pairs = self.0.parse(rule, input);
+        let mut mv = mlua::MultiValue::with_capacity(2);
+        match pairs {
+            Ok(_) => {
+                mv.push_back(mlua::Value::Boolean(true));
+                mv.push_back(mlua::Nil);
+            },
+            Err(err) => {
+                mv.push_back(mlua::Value::Boolean(false));
+                mv.push_back(err.to_string().into_lua(lua)?);
+            },
+        }
+
+        Ok(mv)
+    }
+
     #[lua(name = "parse")]
     pub(crate) fn lua_parse(
         &self,
         lua: &mlua::Lua,
         rule: &str,
         input: &str,
-        callback: Option<mlua::Function>,
+        callback: mlua::Function,
     ) -> mlua::Result<mlua::MultiValue> {
         let pairs = self.0.parse(rule, input).map_err(mlua::Error::runtime)?;
 
-        match callback {
-            Some(f) => lua.scope(|scope| {
-                let ud = scope.create_userdata::<LuaPairs>(pairs.into())?;
-                f.call(ud)
-            }),
-            None => lua
-                .to_value(&pairs)
-                .map(|v| mlua::MultiValue::from_vec(vec![v])),
-        }
+        lua.scope(|scope| {
+            scope
+                .create_userdata::<LuaPairs>(pairs.into())
+                .and_then(|ud| callback.call(ud))
+        })
     }
 }

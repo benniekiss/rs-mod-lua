@@ -38,33 +38,33 @@ describe("rsast", function ()
             }, errors)
         end)
 
-        it("parse#ast", function ()
+        it("validate#ast", function ()
             local ast = rsast.Ast.new(grammar)
             ---@cast ast - nil
 
-            local ex = {
-                ["pairs"] = {
-                    [1] = {
-                        ["inner"] = "65279",
-                        ["pos"] = {
-                            [1] = 0,
-                            [2] = 5,
-                        },
-                        ["rule"] = '"field"',
-                    },
-                },
-                ["pos"] = {
-                    [1] = 0,
-                    [2] = 5,
-                },
-            }
+            local res = ast:validate("field", data)
 
-            local res = ast:parse("field", data)
-
-            assert.Same(ex, res)
+            assert.True(res)
         end)
 
-        it("parse_callback#ast", function ()
+        it("validate_invalid#ast", function ()
+            local ast = rsast.Ast.new(grammar)
+            ---@cast ast - nil
+
+            local res, err = ast:validate("file", "123foobar")
+
+            local ex_error = [[
+ --> 1:1
+  |
+1 | 123foobar
+  | ^---
+  |
+  = expected "EOI"]]
+            assert.False(res)
+            assert.Equal(ex_error, err)
+        end)
+
+        it("parse#ast", function ()
             local ast = rsast.Ast.new(grammar)
             ---@cast ast - nil
 

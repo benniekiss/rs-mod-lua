@@ -266,21 +266,29 @@ rsast.Ast = {}
 ---
 function rsast.Ast.new(grammar) end
 
+--- Validate in input against the grammar
+---
+---
+---@param rule  string The rule to parse
+---@param input string The input to parse
+---
+---@return boolean, string? # Whether the input was valid, and any errors if it was not.
+---
+function rsast.Ast:validate(rule, input) end
+
 --- Parse an input with the loaded grammar.
 ---
---- If `callback` is provided, it is called with an [`rsast.Pairs`](lua-rsast.Pairs)
---- iterator as the first argument, and the return value of the function is returned
+--- `callback` is called with an [`rsast.Pairs`](lua-rsast.Pairs) iterator as
+--- the first argument, and the return value of the function is returned
 --- from [`parse`](lua-rsast.Ast.parse).
----
---- If `callback` is not provided, the input is parsed into an [`rsast.Tree`](lua-rsast.Tree).
 ---
 ---@generic R
 ---
----@param rule      string The rule to parse
----@param input     string The input to parse
----@param callback? rsast.PairsCallback<R>
+---@param rule     string                 The rule to parse
+---@param input    string                 The input to parse
+---@param callback rsast.PairsCallback<R>
 ---
----@return rsast.Tree | R # Returns the result of `callback`, or an [`rsast.Tree`](lua-rsast.Tree) if no callback was provided
+---@return R # Returns the result of `callback`
 ---
 function rsast.Ast:parse(rule, input, callback) end
 
