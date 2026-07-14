@@ -128,7 +128,7 @@ function rsjson.DecodeConfig:set_array_metatable(enable) end
 
 --- Serialize a Lua object into a JSON string
 ---
----@param obj     any Any Lua object
+---@param obj     any                 Any Lua object
 ---@param config? rsjson.EncodeConfig
 ---
 ---@return string # The serialized Lua object
@@ -136,7 +136,7 @@ function rsjson.encode(obj, config) end
 
 --- Deserialize a JSON string into a Lua object
 ---
----@param str     string The JSON string
+---@param str     string              The JSON string
 ---@param config? rsjson.DecodeConfig
 ---
 ---@return any # The deserialized JSON object
