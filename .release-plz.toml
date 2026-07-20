@@ -10,8 +10,8 @@ publish_features = ["vendored", "contrib"]
 
 [[package]]
 name = "rsast-lua"
-release = false
-publish = false
+release = true
+publish = true
 publish_features = ["vendored"]
 
 [[package]]
