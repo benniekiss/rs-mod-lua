@@ -46,7 +46,7 @@ entry = "lx --no-luarc --lua-version 5.4 fmt --backend luafmt --path"
 language = "system"
 pass_filenames = 1
 files = { glob = ["*.lua"] }
-exclude = { glob = [".lux/**"] }
+exclude = { glob = [".lux/**", "**/minijinja.d.lua"] }
 
 [[repos.hooks]]
 id = "cargo-clippy"
