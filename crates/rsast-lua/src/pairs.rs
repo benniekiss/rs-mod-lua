@@ -1,287 +1,211 @@
-use std::ops::ControlFlow;
+use std::rc::Rc;
 
-use mlua::{IntoLua, LuaSerdeExt};
+#[derive(Clone, mlua::UserData, mlua::FromLua)]
+pub(crate) struct LuaPair {
+    #[lua(skip)]
+    input: Rc<String>,
+    #[lua(skip)]
+    start: usize,
+    #[lua(skip)]
+    stop: usize,
+    #[lua(skip)]
+    rule: Rc<String>,
+    #[lua(skip)]
+    node_tag: Option<Rc<String>>,
+    #[lua(skip)]
+    line: usize,
+    #[lua(skip)]
+    col: usize,
+    #[lua(skip)]
+    pairs: LuaPairs,
+}
 
-use crate::{
-    lines::LuaLines,
-    tokens::{LuaToken, LuaTokens},
-};
+#[mlua::userdata_impl]
+impl LuaPair {
+    #[lua(skip)]
+    pub(crate) fn new(input: &Rc<String>, pair: pest::iterators::Pair<'_, &str>) -> Self {
+        let span = pair.as_span();
+        let (line, col) = pair.line_col();
 
-pub(crate) struct LuaPair<'scope>(pest::iterators::Pair<'scope, &'scope str>);
+        Self {
+            input: Rc::clone(input),
+            start: span.start(),
+            stop: span.end(),
+            rule: Rc::new(pair.as_rule().to_string()),
+            node_tag: pair.as_node_tag().map(|s| Rc::new(s.to_string())),
+            line,
+            col,
+            pairs: LuaPairs::new(input, pair.into_inner()),
+        }
+    }
 
-impl<'scope> From<pest::iterators::Pair<'scope, &'scope str>> for LuaPair<'scope> {
-    fn from(value: pest::iterators::Pair<'scope, &'scope str>) -> Self {
-        Self(value)
+    #[lua(name = "start", infallible)]
+    pub(crate) fn lua_start(&self) -> usize {
+        self.start
+    }
+
+    #[lua(name = "stop", infallible)]
+    pub(crate) fn lua_stop(&self) -> usize {
+        self.stop
+    }
+
+    #[lua(name = "as_rule", infallible)]
+    pub(crate) fn lua_as_rule(&self) -> String {
+        self.rule.to_string()
+    }
+
+    #[lua(name = "as_str", infallible)]
+    pub(crate) fn lua_as_str(&self) -> String {
+        self.input[self.start..self.stop].to_string()
+    }
+
+    #[lua(name = "as_node_tag", infallible)]
+    pub(crate) fn lua_as_node_tag(&self) -> Option<String> {
+        self.node_tag.clone().map(|s| s.to_string())
+    }
+
+    #[lua(name = "get_input", infallible)]
+    pub(crate) fn lua_get_input(&self) -> String {
+        self.input.to_string()
+    }
+
+    #[lua(name = "line_col", infallible)]
+    pub(crate) fn lua_line_col(&self) -> (usize, usize) {
+        (self.line, self.col)
+    }
+
+    #[lua(name = "pairs", infallible)]
+    pub(crate) fn lua_pairs(&self) -> LuaPairs {
+        self.pairs.clone()
     }
 }
 
-impl<'scope> mlua::UserData for LuaPair<'scope> {
-    fn add_methods<M: mlua::prelude::LuaUserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("start", |_, this, ()| Ok(this.0.as_span().start()));
-        methods.add_method("stop", |_, this, ()| Ok(this.0.as_span().end()));
-        methods.add_method("as_rule", |lua, this, ()| {
-            lua.create_string(this.0.as_rule())
-        });
-        methods.add_method("as_str", |lua, this, ()| lua.create_string(this.0.as_str()));
-        methods.add_method("as_node_tag", |lua, this, ()| {
-            this.0
-                .as_node_tag()
-                .map(|s| lua.create_string(s))
-                .transpose()
-        });
-        methods.add_method("get_input", |lua, this, ()| {
-            lua.create_string(this.0.get_input())
-        });
-        methods.add_method("line_col", |_, this, ()| Ok(this.0.line_col()));
-        methods.add_method("dump", |lua, this, ()| lua.to_value(&this.0));
-        methods.add_method(
-            "pairs",
-            |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
-                let pairs = this.0.clone().into_inner();
+#[derive(Clone, mlua::UserData, mlua::FromLua)]
+pub(crate) struct LuaPairs {
+    #[lua(skip)]
+    input: Rc<String>,
+    #[lua(skip)]
+    start: usize,
+    #[lua(skip)]
+    stop: usize,
+    #[lua(skip)]
+    idx: usize,
+    #[lua(skip)]
+    rdx: usize,
+    #[lua(skip)]
+    rem: usize,
+    #[lua(skip)]
+    pairs: Rc<Vec<LuaPair>>,
+}
 
-                match callback {
-                    Some(f) => lua.scope(|scope| {
-                        scope
-                            .create_userdata::<LuaPairs>(pairs.into())
-                            .and_then(|ud| f.call(ud))
-                    }),
-                    None => lua
-                        .to_value(&pairs)
-                        .map(|v| mlua::MultiValue::from_vec(vec![v])),
-                }
-            },
-        );
-        methods.add_method(
-            "tokens",
-            |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
-                let tokens = this.0.clone().tokens();
-                match callback {
-                    Some(f) => lua.scope(|scope| {
-                        scope
-                            .create_userdata::<LuaTokens>(tokens.into())
-                            .and_then(|ud| f.call(ud))
-                    }),
-                    None => tokens
-                        .map(LuaToken::from)
-                        .collect::<Vec<_>>()
-                        .into_lua(lua)
-                        .map(|v| mlua::MultiValue::from_vec(vec![v])),
-                }
-            },
-        );
-        methods.add_method(
-            "lines",
-            |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
-                match callback {
-                    Some(f) => lua.scope(|scope| {
-                        scope
-                            .create_userdata::<LuaLines>(this.0.as_span().into())
-                            .and_then(|ud| f.call(ud))
-                    }),
-                    None => this
-                        .0
-                        .as_span()
-                        .lines()
-                        .collect::<Vec<_>>()
-                        .into_lua(lua)
-                        .map(|v| mlua::MultiValue::from_vec(vec![v])),
-                }
-            },
-        );
+impl LuaPairs {
+    fn peek(&self) -> Option<LuaPair> {
+        if self.idx >= self.rdx {
+            return None;
+        }
+
+        Some(self.pairs[self.idx].clone())
     }
 }
 
-pub(crate) struct LuaPairs<'scope>(pest::iterators::Pairs<'scope, &'scope str>);
+impl Iterator for LuaPairs {
+    type Item = LuaPair;
 
-impl<'scope> From<pest::iterators::Pairs<'scope, &'scope str>> for LuaPairs<'scope> {
-    fn from(value: pest::iterators::Pairs<'scope, &'scope str>) -> Self {
-        Self(value)
+    fn next(&mut self) -> Option<Self::Item> {
+        let pair = self.peek()?;
+
+        self.idx += 1;
+        self.rem -= 1;
+
+        Some(pair)
     }
 }
 
-impl<'scope> mlua::UserData for LuaPairs<'scope> {
-    fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("as_str", |lua, this, ()| lua.create_string(this.0.as_str()));
-        methods.add_method("get_input", |lua, this, ()| {
-            lua.create_string(this.0.get_input())
-        });
-        methods.add_method("concat", |lua, this, ()| lua.create_string(this.0.concat()));
-        methods.add_method("is_empty", |_, this, ()| Ok(this.0.is_empty()));
-        methods.add_method("dump", |lua, this, ()| {
-            lua.to_value(&this.0.clone().collect::<Vec<_>>())
-        });
-        methods.add_method("dump_flat", |lua, this, ()| {
-            lua.to_value(&this.0.clone().flatten().collect::<Vec<_>>())
-        });
-        methods.add_method(
-            "peek",
-            |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
-                match this.0.peek() {
-                    Some(pair) if let Some(f) = callback => lua.scope(|scope| {
-                        scope
-                            .create_userdata::<LuaPair>(pair.into())
-                            .and_then(|ud| f.call(ud))
-                    }),
-                    Some(pair) => lua
-                        .to_value(&pair)
-                        .map(|v| mlua::MultiValue::from_vec(vec![v])),
-                    None => Ok(mlua::MultiValue::new()),
-                }
-            },
-        );
-        methods.add_method_mut(
-            "next",
-            |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
-                match this.0.next() {
-                    Some(pair) if let Some(f) = callback => lua.scope(|scope| {
-                        scope
-                            .create_userdata::<LuaPair>(pair.into())
-                            .and_then(|ud| f.call(ud))
-                    }),
-                    Some(pair) => lua
-                        .to_value(&pair)
-                        .map(|v| mlua::MultiValue::from_vec(vec![v])),
-                    None => Ok(mlua::MultiValue::new()),
-                }
-            },
-        );
-        methods.add_method_mut(
-            "next_back",
-            |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
-                match this.0.next_back() {
-                    Some(pair) if let Some(f) = callback => lua.scope(|scope| {
-                        scope
-                            .create_userdata::<LuaPair>(pair.into())
-                            .and_then(|ud| f.call(ud))
-                    }),
-                    Some(pair) => lua
-                        .to_value(&pair)
-                        .map(|v| mlua::MultiValue::from_vec(vec![v])),
-                    None => Ok(mlua::MultiValue::new()),
-                }
-            },
-        );
-        methods.add_method(
-            "tokens",
-            |lua, this, callback: Option<mlua::Function>| -> mlua::Result<mlua::MultiValue> {
-                let tokens = this.0.clone().tokens();
-                match callback {
-                    Some(f) => lua.scope(|scope| {
-                        scope
-                            .create_userdata::<LuaTokens>(tokens.into())
-                            .and_then(|ud| f.call(ud))
-                    }),
-                    None => tokens
-                        .map(LuaToken::from)
-                        .collect::<Vec<_>>()
-                        .into_lua(lua)
-                        .map(|v| mlua::MultiValue::from_vec(vec![v])),
-                }
-            },
-        );
-        methods.add_method_mut(
-            "fold",
-            |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
-                lua.scope(|scope| {
-                    match this.0.try_fold(init, |value, pair| {
-                        scope
-                            .create_userdata::<LuaPair>(pair.into())
-                            .and_then(|ud| {
-                                callback.call::<(mlua::Value, Option<bool>)>((value, ud))
-                            })
-                            .map(|(res, flow)| match flow {
-                                Some(false) => ControlFlow::Break(res),
-                                _ => ControlFlow::Continue(res),
-                            })
-                            .unwrap_or_else(|err| {
-                                ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
-                            })
-                    }) {
-                        ControlFlow::Continue(val) | ControlFlow::Break(val) => match val {
-                            mlua::Value::Error(err) => Err(*err),
-                            _ => Ok(val),
-                        },
-                    }
-                })
-            },
-        );
-        methods.add_method(
-            "fold_flat",
-            |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
-                lua.scope(|scope| {
-                    match this.0.clone().flatten().try_fold(init, |value, pair| {
-                        scope
-                            .create_userdata::<LuaPair>(pair.into())
-                            .and_then(|ud| {
-                                callback.call::<(mlua::Value, Option<bool>)>((value, ud))
-                            })
-                            .map(|(res, flow)| match flow {
-                                Some(false) => ControlFlow::Break(res),
-                                _ => ControlFlow::Continue(res),
-                            })
-                            .unwrap_or_else(|err| {
-                                ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
-                            })
-                    }) {
-                        ControlFlow::Continue(val) | ControlFlow::Break(val) => match val {
-                            mlua::Value::Error(err) => Err(*err),
-                            _ => Ok(val),
-                        },
-                    }
-                })
-            },
-        );
-        methods.add_method_mut(
-            "rfold",
-            |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
-                lua.scope(|scope| {
-                    match this.0.try_rfold(init, |value, pair| {
-                        scope
-                            .create_userdata::<LuaPair>(pair.into())
-                            .and_then(|ud| {
-                                callback.call::<(mlua::Value, Option<bool>)>((value, ud))
-                            })
-                            .map(|(res, flow)| match flow {
-                                Some(false) => ControlFlow::Break(res),
-                                _ => ControlFlow::Continue(res),
-                            })
-                            .unwrap_or_else(|err| {
-                                ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
-                            })
-                    }) {
-                        ControlFlow::Continue(val) | ControlFlow::Break(val) => match val {
-                            mlua::Value::Error(err) => Err(*err),
-                            _ => Ok(val),
-                        },
-                    }
-                })
-            },
-        );
-        methods.add_method(
-            "rfold_flat",
-            |lua, this, (init, callback): (mlua::Value, mlua::Function)| {
-                lua.scope(|scope| {
-                    match this.0.clone().flatten().try_rfold(init, |value, pair| {
-                        scope
-                            .create_userdata::<LuaPair>(pair.into())
-                            .and_then(|ud| {
-                                callback.call::<(mlua::Value, Option<bool>)>((value, ud))
-                            })
-                            .map(|(res, flow)| match flow {
-                                Some(false) => ControlFlow::Break(res),
-                                _ => ControlFlow::Continue(res),
-                            })
-                            .unwrap_or_else(|err| {
-                                ControlFlow::Break(err.into_lua(lua).unwrap_or_default())
-                            })
-                    }) {
-                        ControlFlow::Continue(val) | ControlFlow::Break(val) => match val {
-                            mlua::Value::Error(err) => Err(*err),
-                            _ => Ok(val),
-                        },
-                    }
-                })
-            },
-        );
+impl DoubleEndedIterator for LuaPairs {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.rdx <= self.idx {
+            return None;
+        }
+
+        let pair = self.pairs[self.rdx].clone();
+
+        self.rdx -= 1;
+        self.rem -= 1;
+
+        Some(pair)
+    }
+}
+
+impl ExactSizeIterator for LuaPairs {
+    fn len(&self) -> usize {
+        self.rem
+    }
+}
+
+#[mlua::userdata_impl]
+impl LuaPairs {
+    #[lua(skip)]
+    pub(crate) fn new(input: &Rc<String>, pairs: pest::iterators::Pairs<'_, &str>) -> Self {
+        let pairs = pairs.map(|p| LuaPair::new(input, p)).collect::<Vec<_>>();
+
+        let start = pairs[0].start;
+        let stop = pairs[pairs.len() - 1].stop;
+        let idx = 0;
+        let rdx = pairs.len();
+        let rem = pairs.len();
+
+        Self {
+            input: Rc::clone(input),
+            start,
+            stop,
+            pairs: Rc::new(pairs),
+            idx,
+            rdx,
+            rem,
+        }
+    }
+
+    #[lua(name = "as_str", infallible)]
+    pub(crate) fn lua_as_str(&self) -> String {
+        self.input[self.start..self.stop].to_string()
+    }
+
+    #[lua(name = "get_input", infallible)]
+    pub(crate) fn lua_get_input(&self) -> String {
+        self.input.to_string()
+    }
+
+    #[lua(name = "is_empty", infallible)]
+    pub(crate) fn lua_is_empty(&self) -> bool {
+        self.pairs.is_empty()
+    }
+
+    #[lua(name = "peek", infallible)]
+    pub(crate) fn lua_peek(&mut self) -> Option<LuaPair> {
+        self.peek()
+    }
+
+    #[lua(name = "next", infallible)]
+    pub(crate) fn lua_next(&mut self) -> Option<LuaPair> {
+        self.next()
+    }
+
+    #[lua(name = "next_back", infallible)]
+    pub(crate) fn lua_next_back(&mut self) -> Option<LuaPair> {
+        self.next_back()
+    }
+
+    #[lua(name = "iter", infallible)]
+    pub(crate) fn lua_iter(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
+        let mut iter = self.clone();
+
+        lua.create_function_mut(move |_, ()| Ok(iter.next()))
+    }
+
+    #[lua(name = "reviter", infallible)]
+    pub(crate) fn lua_reviter(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
+        let mut iter = self.clone();
+
+        lua.create_function_mut(move |_, ()| Ok(iter.next_back()))
     }
 }

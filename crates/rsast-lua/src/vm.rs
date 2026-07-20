@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use mlua::IntoLua;
 
@@ -58,11 +58,7 @@ impl LuaPestVm {
         callback: mlua::Function,
     ) -> mlua::Result<mlua::MultiValue> {
         let pairs = self.0.parse(rule, input).map_err(mlua::Error::runtime)?;
-
-        lua.scope(|scope| {
-            scope
-                .create_userdata::<LuaPairs>(pairs.into())
-                .and_then(|ud| callback.call(ud))
-        })
+        lua.create_userdata::<LuaPairs>(LuaPairs::new(&Rc::new(input.to_string()), pairs))
+            .and_then(|ud| callback.call(ud))
     }
 }
