@@ -39,7 +39,9 @@ align_line_comments = true
 align_in_statements = false
 align_in_table_fields = true
 align_in_call_args = true
-align_in_params = true
+# disable until the following commit is released in lux:
+# https://github.com/EmmyLuaLs/emmylua-analyzer-rust/commit/76faea7361ea962f7c28130dfd247981d75c9bbf
+align_in_params = false
 align_across_standalone_comments = false
 align_same_kind_only = false
 space_after_comment_dash = true
