@@ -30,7 +30,7 @@ local rules = ast:parse("file", data, function(ps)
 
     local rules = {}
     for p in flat:iter() do
-        table.insert(rules, p:as_rule)
+        table.insert(rules, p:as_rule())
     end
 
     return rules
