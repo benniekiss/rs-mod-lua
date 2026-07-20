@@ -138,7 +138,7 @@ impl Iterator for LuaPairs {
 
 impl DoubleEndedIterator for LuaPairs {
     fn next_back(&mut self) -> Option<Self::Item> {
-        if self.rdx <= self.idx {
+        if self.rdx < self.idx {
             return None;
         }
 
@@ -200,7 +200,7 @@ impl LuaPairs {
 
     #[lua(name = "is_empty", infallible)]
     pub(crate) fn lua_is_empty(&self) -> bool {
-        self.pairs.is_empty()
+        self.len() == 0
     }
 
     #[lua(name = "peek", infallible)]
