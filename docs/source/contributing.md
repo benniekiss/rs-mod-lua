@@ -42,8 +42,8 @@ here](https://prek.j178.dev/installation/)
 
 ```shell
 # Clone the repo
-git clone https://github.com/benniekiss/rslua
-cd rslua
+git clone https://github.com/benniekiss/rs-mod-lua
+cd rs-mod-lua
 
 # Install the toolchain for the project
 rustup install
