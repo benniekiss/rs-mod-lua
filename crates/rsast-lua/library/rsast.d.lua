@@ -29,7 +29,7 @@ local rsast = {}
 ---@field as_node_tag fun(self): string             The current node tag
 ---@field get_input   fun(self): string             The input from which the pair was parsed
 ---@field line_col    fun(self): (integer, integer) The line and column number of `start`
----@field dump        fun(self): rsast.Node
+---@field dump        fun(self): rsast.Node         Output the pair to a table
 ---
 rsast.Pair = {}
 
@@ -46,7 +46,7 @@ function rsast.Pair:pairs() end
 ---@field as_str    fun(self): string     The text between `start` of the first pair and `stop` of the last
 ---@field get_input fun(self): string     The input from which the pairs were parsed
 ---@field is_empty  fun(self): boolean    Whether the iterator is empty
----@field dump      fun(self): rsast.Tree
+---@field dump      fun(self): rsast.Tree Output the pairs to a table
 ---
 rsast.Pairs = {}
 
@@ -92,7 +92,7 @@ function rsast.Pairs:reviter() end
 ---
 function rsast.Pairs:flatten() end
 
---- A PEG grammar parser
+--- A PEG parser
 ---
 ---@class rsast.Ast: userdata
 ---
@@ -106,18 +106,18 @@ rsast.Ast = {}
 ---
 ---@param grammar string The grammar to load
 ---
----@return rsast.Ast? # A parser for the provided grammar, returns nil of it could not be loaded
----@return string[]?  # Errors encountered while loading the grammar, or nil if there were none.
+---@return rsast.Ast? ast   A parser for the provided grammar, returns nil of it could not be loaded
+---@return string[]? errors Errors encountered while loading the grammar, or nil if there were none.
 ---
 function rsast.Ast.new(grammar) end
 
 --- Validate in input against the grammar
 ---
----
 ---@param rule  string The rule to parse
 ---@param input string The input to parse
 ---
----@return boolean, string? # Whether the input was valid, and any errors if it was not.
+---@return boolean valid  Whether the input was valid, and any errors if it was not.
+---@return string? errors Any errors encountered when parsing
 ---
 function rsast.Ast:validate(rule, input) end
 
