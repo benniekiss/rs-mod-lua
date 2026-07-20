@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.1...rsjson-lua-v0.6.2) - 2026-07-20
+
+### Fixed
+
+- *(deps)* update rust crate serde_json to 1.0.151 ([#72](https://github.com/benniekiss/rs-mod-lua/pull/72))
+- *(deps)* update rust crate serde to 1.0.229 ([#67](https://github.com/benniekiss/rs-mod-lua/pull/67))
+
+### Other
+
+- bump versions
+- cleanup some formatting
+
 ## [0.6.1](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.0...rsjson-lua-v0.6.1) - 2026-07-06
 
 ### Fixed
