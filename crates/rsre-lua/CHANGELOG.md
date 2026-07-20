@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.3.3...rsre-lua-v0.3.4) - 2026-07-20
+
+### Other
+
+- bump versions
+- additionally build all modules as rlib
+- *(deps)* update rust to nightly-2026-07-20 ([#57](https://github.com/benniekiss/rs-mod-lua/pull/57))
+
 ## [0.3.3](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.3.2...rsre-lua-v0.3.3) - 2026-07-06
 
 ### Fixed
