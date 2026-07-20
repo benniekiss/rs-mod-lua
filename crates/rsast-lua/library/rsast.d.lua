@@ -43,9 +43,10 @@ function rsast.Pair:pairs() end
 ---
 ---@class rsast.Pairs
 ---
----@field as_str    fun(self): string     The text between `start` of the first pair and `stop` of the last
----@field get_input fun(self): string     The input from which the pairs were parsed
----@field is_empty  fun(self): boolean    Whether the iterator is empty
+---@field as_str    fun(self): string      The text between `start` of the first pair and `stop` of the last
+---@field get_input fun(self): string      The input from which the pairs were parsed
+---@field is_empty  fun(self): boolean     Whether the iterator is empty
+---@field flatten   fun(self): rsast.Pairs Flatten nested nodes
 ---@field dump      fun(self): rsast.Tree
 ---
 rsast.Pairs = {}
@@ -76,13 +77,13 @@ function rsast.Pairs:next_back() end
 
 --- Iterate over the pairs
 ---
----@return fun(): rsast.Pair?
+---@return fun(): rsast.Pair
 ---
 function rsast.Pairs:iter() end
 
 --- Iterate over the pairs in reverse order
 ---
----@return fun(): rsast.Pair?
+---@return fun(): rsast.Pair
 ---
 function rsast.Pairs:reviter() end
 

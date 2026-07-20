@@ -134,17 +134,7 @@ runtime error:  --> 1:1
                     :dump()
             end)
 
-            local ex = {
-                ["node_tag"] = "tag",
-                ["pairs"] = {
-                    ["pairs"] = {},
-                    ["start"] = 0,
-                    ["stop"] = 0,
-                },
-                ["start"] = 0,
-                ["stop"] = 5,
-                ["rule"] = "field",
-            }
+            local ex = { ["node_tag"] = "tag", ["start"] = 0, ["stop"] = 5, ["rule"] = "field" }
 
             assert.Same(ex, res)
         end)
@@ -158,17 +148,7 @@ runtime error:  --> 1:1
                     :dump()
             end)
 
-            local ex = {
-                ["node_tag"] = "tag",
-                ["pairs"] = {
-                    ["pairs"] = {},
-                    ["start"] = 0,
-                    ["stop"] = 0,
-                },
-                ["start"] = 0,
-                ["stop"] = 5,
-                ["rule"] = "field",
-            }
+            local ex = { ["node_tag"] = "tag", ["start"] = 0, ["stop"] = 5, ["rule"] = "field" }
 
             assert.Same(ex, res)
         end)
@@ -182,15 +162,79 @@ runtime error:  --> 1:1
                     :dump()
             end)
 
+            local ex = { ["start"] = 17, ["stop"] = 27, ["rule"] = "field" }
+
+            assert.Same(ex, res)
+        end)
+
+        it("iter#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                local rules = {}
+
+                local record = pairs:next()
+                ---@cast record - nil
+
+                table.insert(rules, record:start())
+
+                for p in record:pairs():iter() do
+                    table.insert(rules, p:start())
+                end
+
+                return rules
+            end)
+
             local ex = {
-                ["pairs"] = {
-                    ["pairs"] = {},
-                    ["start"] = 0,
-                    ["stop"] = 0,
-                },
-                ["start"] = 17,
-                ["stop"] = 27,
-                ["rule"] = "field",
+                0,
+                0,
+                6,
+                17,
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("reviter#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                local rules = {}
+
+                local record = pairs:next()
+                ---@cast record - nil
+
+                table.insert(rules, record:start())
+
+                for p in record:pairs():reviter() do
+                    table.insert(rules, p:start())
+                end
+
+                return rules
+            end)
+
+            local ex = {
+                0,
+                17,
+                6,
+                0,
+            }
+
+            assert.Same(ex, res)
+        end)
+
+        it("flatten#pairs", function ()
+            local res = ast:parse("record", data, function (pairs)
+                local flat = pairs:flatten()
+
+                local rules = {}
+                for p in flat:iter() do
+                    table.insert(rules, p:start())
+                end
+                return rules
+            end)
+
+            local ex = {
+                0,
+                0,
+                6,
+                17,
             }
 
             assert.Same(ex, res)
@@ -206,31 +250,16 @@ runtime error:  --> 1:1
                             ['pairs'] = {
                                 [1] = {
                                     ["node_tag"] = "tag",
-                                    ['pairs'] = {
-                                        ['pairs'] = {},
-                                        ['start'] = 0,
-                                        ['stop'] = 0,
-                                    },
                                     ['rule'] = "field",
                                     ['start'] = 0,
                                     ['stop'] = 5,
                                 },
                                 [2] = {
-                                    ['pairs'] = {
-                                        ['pairs'] = {},
-                                        ['start'] = 0,
-                                        ['stop'] = 0,
-                                    },
                                     ['rule'] = "field",
                                     ['start'] = 6,
                                     ['stop'] = 16,
                                 },
                                 [3] = {
-                                    ['pairs'] = {
-                                        ['pairs'] = {},
-                                        ['start'] = 0,
-                                        ['stop'] = 0,
-                                    },
                                     ['rule'] = "field",
                                     ['start'] = 17,
                                     ['stop'] = 27,
@@ -356,16 +385,7 @@ runtime error:  --> 1:1
                 return pairs:next():dump()
             end)
 
-            local ex = {
-                ["pairs"] = {
-                    ["pairs"] = {},
-                    ["start"] = 0,
-                    ["stop"] = 0,
-                },
-                ["rule"] = "field",
-                ["start"] = 0,
-                ["stop"] = 5,
-            }
+            local ex = { ["rule"] = "field", ["start"] = 0, ["stop"] = 5 }
 
             assert.Same(ex, res)
         end)
@@ -382,31 +402,16 @@ runtime error:  --> 1:1
                 ["pairs"] = {
                     [1] = {
                         ["node_tag"] = "tag",
-                        ["pairs"] = {
-                            ["pairs"] = {},
-                            ["start"] = 0,
-                            ["stop"] = 0,
-                        },
                         ["rule"] = "field",
                         ["start"] = 0,
                         ["stop"] = 5,
                     },
                     [2] = {
-                        ["pairs"] = {
-                            ["pairs"] = {},
-                            ["start"] = 0,
-                            ["stop"] = 0,
-                        },
                         ["rule"] = "field",
                         ["start"] = 6,
                         ["stop"] = 16,
                     },
                     [3] = {
-                        ["pairs"] = {
-                            ["pairs"] = {},
-                            ["start"] = 0,
-                            ["stop"] = 0,
-                        },
                         ["rule"] = "field",
                         ["start"] = 17,
                         ["stop"] = 27,

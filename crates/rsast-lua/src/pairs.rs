@@ -22,7 +22,7 @@ pub(crate) struct LuaPair {
     #[lua(skip)]
     col: usize,
     #[lua(skip)]
-    pairs: LuaPairs,
+    pairs: Option<LuaPairs>,
 }
 
 #[mlua::userdata_impl]
@@ -30,17 +30,25 @@ impl LuaPair {
     #[lua(skip)]
     pub(crate) fn new(input: &Rc<String>, pair: pest::iterators::Pair<'_, &str>) -> Self {
         let span = pair.as_span();
+        let rule = Rc::new(pair.as_rule().to_string());
+        let node_tag = pair.as_node_tag().map(|s| Rc::new(s.to_string()));
         let (line, col) = pair.line_col();
+
+        let inner = pair.into_inner();
+        let mut pairs = None;
+        if !inner.is_empty() {
+            pairs = Some(inner.into())
+        }
 
         Self {
             input: Rc::clone(input),
             start: span.start(),
             stop: span.end(),
-            rule: Rc::new(pair.as_rule().to_string()),
-            node_tag: pair.as_node_tag().map(|s| Rc::new(s.to_string())),
+            rule,
+            node_tag,
             line,
             col,
-            pairs: LuaPairs::new(input, pair.into_inner()),
+            pairs,
         }
     }
 
@@ -80,7 +88,7 @@ impl LuaPair {
     }
 
     #[lua(name = "pairs", infallible)]
-    pub(crate) fn lua_pairs(&self) -> LuaPairs {
+    pub(crate) fn lua_pairs(&self) -> Option<LuaPairs> {
         self.pairs.clone()
     }
 
@@ -111,6 +119,14 @@ pub(crate) struct LuaPairs {
     rem: usize,
     #[lua(skip)]
     pairs: Rc<Vec<LuaPair>>,
+}
+
+impl From<pest::iterators::Pairs<'_, &str>> for LuaPairs {
+    fn from(value: pest::iterators::Pairs<'_, &str>) -> Self {
+        let input = Rc::new(value.get_input().to_string());
+        let pairs = value.map(|p| LuaPair::new(&input, p)).collect::<Vec<_>>();
+        Self::new(&input, pairs)
+    }
 }
 
 impl LuaPairs {
@@ -158,9 +174,7 @@ impl ExactSizeIterator for LuaPairs {
 #[mlua::userdata_impl]
 impl LuaPairs {
     #[lua(skip)]
-    pub(crate) fn new(input: &Rc<String>, pairs: pest::iterators::Pairs<'_, &str>) -> Self {
-        let pairs = pairs.map(|p| LuaPair::new(input, p)).collect::<Vec<_>>();
-
+    pub(crate) fn new(input: &Rc<String>, pairs: Vec<LuaPair>) -> Self {
         let idx = 0;
         let rdx = pairs.len();
         let rem = pairs.len();
@@ -181,6 +195,25 @@ impl LuaPairs {
             rdx,
             rem,
             pairs: Rc::new(pairs),
+        }
+    }
+
+    #[lua(skip)]
+    fn flatten_into(out: &mut Vec<LuaPair>, pairs: LuaPairs) {
+        let mut stack = vec![pairs];
+
+        while let Some(mut iter) = stack.pop() {
+            if let Some(pair) = iter.next() {
+                if !iter.len() != 0 {
+                    stack.push(iter);
+                }
+
+                out.push(pair.clone());
+
+                if let Some(p) = pair.pairs {
+                    stack.push(p.clone());
+                }
+            }
         }
     }
 
@@ -228,6 +261,13 @@ impl LuaPairs {
         lua.create_function_mut(move |_, ()| Ok(iter.next_back()))
     }
 
+    #[lua(name = "flatten", infallible)]
+    pub(crate) fn lua_flatten(&self) -> LuaPairs {
+        let mut flat = Vec::with_capacity(self.pairs.len());
+        Self::flatten_into(&mut flat, self.clone());
+        Self::new(&self.input, flat)
+    }
+
     #[lua(name = "dump")]
     pub(crate) fn lua_dump(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
         let config = mlua::serde::SerializeOptions::new().serialize_none_to_null(false);
@@ -259,7 +299,7 @@ mod tests {
 
         let input = Rc::new(INPUT.to_string());
         let pairs = vm.parse("record", INPUT).unwrap();
-        let lua_pairs = LuaPairs::new(&input, pairs.clone());
+        let lua_pairs: LuaPairs = pairs.clone().into();
 
         let mapped_pairs = pairs.map(|p| LuaPair::new(&input, p)).collect::<Vec<_>>();
 
@@ -272,7 +312,7 @@ mod tests {
 
         let input = Rc::new(INPUT.to_string());
         let mut pairs = vm.parse("record", INPUT).unwrap();
-        let mut lua_pairs = LuaPairs::new(&input, pairs.clone());
+        let mut lua_pairs: LuaPairs = pairs.clone().into();
 
         let mut pest_vec = vec![];
         while let Some(p) = pairs.next() {
@@ -293,7 +333,7 @@ mod tests {
 
         let input = Rc::new(INPUT.to_string());
         let mut pairs = vm.parse("record", INPUT).unwrap();
-        let mut lua_pairs = LuaPairs::new(&input, pairs.clone());
+        let mut lua_pairs: LuaPairs = pairs.clone().into();
 
         let mut pest_vec = vec![];
         while let Some(p) = pairs.next_back() {
@@ -302,6 +342,68 @@ mod tests {
 
         let mut lua_vec = vec![];
         while let Some(p) = lua_pairs.next_back() {
+            lua_vec.push(p)
+        }
+
+        assert_eq!(lua_vec, pest_vec)
+    }
+
+    #[test]
+    fn test_flat_iteration() {
+        let vm = setup();
+
+        let input = Rc::new(INPUT.to_string());
+        let pairs = vm.parse("record", INPUT).unwrap();
+        let lua_pairs: LuaPairs = pairs.clone().into();
+
+        let mapped_pairs = pairs
+            .flatten()
+            .map(|p| LuaPair::new(&input, p))
+            .collect::<Vec<_>>();
+
+        assert_eq!(lua_pairs.lua_flatten().collect::<Vec<_>>(), mapped_pairs)
+    }
+
+    #[test]
+    fn test_flat_next() {
+        let vm = setup();
+
+        let input = Rc::new(INPUT.to_string());
+        let pairs = vm.parse("record", INPUT).unwrap();
+        let lua_pairs: LuaPairs = pairs.clone().into();
+
+        let mut flat_pairs = pairs.flatten();
+        let mut pest_vec = vec![];
+        while let Some(p) = flat_pairs.next() {
+            pest_vec.push(LuaPair::new(&input, p))
+        }
+
+        let mut flat_lua_pairs = lua_pairs.lua_flatten();
+        let mut lua_vec = vec![];
+        while let Some(p) = flat_lua_pairs.next() {
+            lua_vec.push(p)
+        }
+
+        assert_eq!(lua_vec, pest_vec)
+    }
+
+    #[test]
+    fn test_flat_next_back() {
+        let vm = setup();
+
+        let input = Rc::new(INPUT.to_string());
+        let pairs = vm.parse("record", INPUT).unwrap();
+        let lua_pairs: LuaPairs = pairs.clone().into();
+
+        let mut flat_pairs = pairs.flatten();
+        let mut pest_vec = vec![];
+        while let Some(p) = flat_pairs.next_back() {
+            pest_vec.push(LuaPair::new(&input, p))
+        }
+
+        let mut flat_lua_pairs = lua_pairs.lua_flatten();
+        let mut lua_vec = vec![];
+        while let Some(p) = flat_lua_pairs.next_back() {
             lua_vec.push(p)
         }
 
