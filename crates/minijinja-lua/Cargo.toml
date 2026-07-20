@@ -11,7 +11,7 @@ description = "a minijinja lua module using the minijinja rust crate"
 
 [lib]
 name = "minijinja_lua"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["lua54", "vendored", "contrib"]
