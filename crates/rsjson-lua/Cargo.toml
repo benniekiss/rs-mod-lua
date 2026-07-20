@@ -28,7 +28,7 @@ arbitrary_precision = ["serde_json/arbitrary_precision"]
 
 [dependencies]
 mlua = { version = "0.12.0", features = ["serde", "macros"] }
-serde = { version = "1.0.228", features = ["derive"] }
+serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.150", features = [
     "preserve_order",
     "float_roundtrip",
