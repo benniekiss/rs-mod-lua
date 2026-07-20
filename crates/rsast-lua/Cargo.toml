@@ -7,7 +7,7 @@ edition = "2024"
 readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
-description = "an PEG parsing lua module using the pest rust crate"
+description = "a PEG lua module using the pest rust crate"
 
 [lib]
 name = "rsast_lua"
