@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use mlua::LuaSerdeExt;
 
-#[derive(Clone, mlua::UserData, mlua::FromLua, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, mlua::UserData, mlua::FromLua, serde::Serialize)]
 pub(crate) struct LuaPair {
     #[serde(skip)]
     #[lua(skip)]
@@ -91,7 +91,7 @@ impl LuaPair {
     }
 }
 
-#[derive(Clone, mlua::UserData, mlua::FromLua, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, mlua::UserData, mlua::FromLua, serde::Serialize)]
 pub(crate) struct LuaPairs {
     #[serde(skip)]
     #[lua(skip)]
@@ -138,16 +138,14 @@ impl Iterator for LuaPairs {
 
 impl DoubleEndedIterator for LuaPairs {
     fn next_back(&mut self) -> Option<Self::Item> {
-        if self.rdx < self.idx {
+        if self.rdx <= self.idx {
             return None;
         }
-
-        let pair = self.pairs[self.rdx].clone();
 
         self.rdx -= 1;
         self.rem -= 1;
 
-        Some(pair)
+        Some(self.pairs[self.rdx].clone())
     }
 }
 
@@ -164,17 +162,15 @@ impl LuaPairs {
         let pairs = pairs.map(|p| LuaPair::new(input, p)).collect::<Vec<_>>();
 
         let idx = 0;
-        let mut rdx = 0;
+        let rdx = pairs.len();
+        let rem = pairs.len();
 
         let mut start = 0;
         let mut stop = 0;
-        let rem = pairs.len();
 
         if !pairs.is_empty() {
-            rdx = pairs.len() - 1;
-
             start = pairs[0].start;
-            stop = pairs[rdx].stop;
+            stop = pairs[rdx - 1].stop;
         }
 
         Self {
@@ -236,5 +232,78 @@ impl LuaPairs {
     pub(crate) fn lua_dump(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
         let config = mlua::serde::SerializeOptions::new().serialize_none_to_null(false);
         lua.to_value_with(self, config)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    const GRAMMAR: &str = r#"
+    field = { (ASCII_DIGIT | "." | "-")+ }
+    record = { #tag = field ~ ("," ~ field)* }
+    "#;
+
+    const INPUT: &str = "65279,1179403647,1463895090";
+
+    fn setup() -> pest_vm::Vm {
+        let (_, rules) = pest_meta::parse_and_optimize(GRAMMAR).unwrap();
+        pest_vm::Vm::new(rules)
+    }
+
+    #[test]
+    fn test_iteration() {
+        let vm = setup();
+
+        let input = Rc::new(INPUT.to_string());
+        let pairs = vm.parse("record", INPUT).unwrap();
+        let lua_pairs = LuaPairs::new(&input, pairs.clone());
+
+        let mapped_pairs = pairs.map(|p| LuaPair::new(&input, p)).collect::<Vec<_>>();
+
+        assert_eq!(lua_pairs.collect::<Vec<_>>(), mapped_pairs)
+    }
+
+    #[test]
+    fn test_next() {
+        let vm = setup();
+
+        let input = Rc::new(INPUT.to_string());
+        let mut pairs = vm.parse("record", INPUT).unwrap();
+        let mut lua_pairs = LuaPairs::new(&input, pairs.clone());
+
+        let mut pest_vec = vec![];
+        while let Some(p) = pairs.next() {
+            pest_vec.push(LuaPair::new(&input, p))
+        }
+
+        let mut lua_vec = vec![];
+        while let Some(p) = lua_pairs.next() {
+            lua_vec.push(p)
+        }
+
+        assert_eq!(lua_vec, pest_vec)
+    }
+
+    #[test]
+    fn test_next_back() {
+        let vm = setup();
+
+        let input = Rc::new(INPUT.to_string());
+        let mut pairs = vm.parse("record", INPUT).unwrap();
+        let mut lua_pairs = LuaPairs::new(&input, pairs.clone());
+
+        let mut pest_vec = vec![];
+        while let Some(p) = pairs.next_back() {
+            pest_vec.push(LuaPair::new(&input, p))
+        }
+
+        let mut lua_vec = vec![];
+        while let Some(p) = lua_pairs.next_back() {
+            lua_vec.push(p)
+        }
+
+        assert_eq!(lua_vec, pest_vec)
     }
 }
