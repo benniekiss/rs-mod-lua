@@ -4,6 +4,20 @@
 
 local rsast = {}
 
+---@class rsast.Node: table
+---
+---@field start     integer
+---@field stop      integer
+---@field rule      string
+---@field node_tag? string
+---@field pairs     rsast.Tree
+
+---@class rsast.Tree: table
+---
+---@field start integer
+---@field stop  integer
+---@field pairs rsast.Node[]
+
 --- A matching pair of [`rsast.Token`](lua-rsast.Token) and everything between them
 ---
 ---@class rsast.Pair: userdata
@@ -15,6 +29,7 @@ local rsast = {}
 ---@field as_node_tag fun(self): string             The current node tag
 ---@field get_input   fun(self): string             The input from which the pair was parsed
 ---@field line_col    fun(self): (integer, integer) The line and column number of `start`
+---@field dump        fun(self): rsast.Node
 ---
 rsast.Pair = {}
 
@@ -28,9 +43,10 @@ function rsast.Pair:pairs() end
 ---
 ---@class rsast.Pairs
 ---
----@field as_str    fun(self): string  The text between `start` of the first pair and `stop` of the last
----@field get_input fun(self): string  The input from which the pairs were parsed
----@field is_empty  fun(self): boolean Whether the iterator is empty
+---@field as_str    fun(self): string     The text between `start` of the first pair and `stop` of the last
+---@field get_input fun(self): string     The input from which the pairs were parsed
+---@field is_empty  fun(self): boolean    Whether the iterator is empty
+---@field dump      fun(self): rsast.Tree
 ---
 rsast.Pairs = {}
 

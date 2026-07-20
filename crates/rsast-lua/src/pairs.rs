@@ -1,7 +1,10 @@
 use std::rc::Rc;
 
-#[derive(Clone, mlua::UserData, mlua::FromLua)]
+use mlua::LuaSerdeExt;
+
+#[derive(Clone, mlua::UserData, mlua::FromLua, serde::Serialize)]
 pub(crate) struct LuaPair {
+    #[serde(skip)]
     #[lua(skip)]
     input: Rc<String>,
     #[lua(skip)]
@@ -12,8 +15,10 @@ pub(crate) struct LuaPair {
     rule: Rc<String>,
     #[lua(skip)]
     node_tag: Option<Rc<String>>,
+    #[serde(skip)]
     #[lua(skip)]
     line: usize,
+    #[serde(skip)]
     #[lua(skip)]
     col: usize,
     #[lua(skip)]
@@ -78,20 +83,30 @@ impl LuaPair {
     pub(crate) fn lua_pairs(&self) -> LuaPairs {
         self.pairs.clone()
     }
+
+    #[lua(name = "dump")]
+    pub(crate) fn lua_dump(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        let config = mlua::serde::SerializeOptions::new().serialize_none_to_null(false);
+        lua.to_value_with(self, config)
+    }
 }
 
-#[derive(Clone, mlua::UserData, mlua::FromLua)]
+#[derive(Clone, mlua::UserData, mlua::FromLua, serde::Serialize)]
 pub(crate) struct LuaPairs {
+    #[serde(skip)]
     #[lua(skip)]
     input: Rc<String>,
     #[lua(skip)]
     start: usize,
     #[lua(skip)]
     stop: usize,
+    #[serde(skip)]
     #[lua(skip)]
     idx: usize,
+    #[serde(skip)]
     #[lua(skip)]
     rdx: usize,
+    #[serde(skip)]
     #[lua(skip)]
     rem: usize,
     #[lua(skip)]
@@ -215,5 +230,11 @@ impl LuaPairs {
         let mut iter = self.clone();
 
         lua.create_function_mut(move |_, ()| Ok(iter.next_back()))
+    }
+
+    #[lua(name = "dump")]
+    pub(crate) fn lua_dump(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        let config = mlua::serde::SerializeOptions::new().serialize_none_to_null(false);
+        lua.to_value_with(self, config)
     }
 }
