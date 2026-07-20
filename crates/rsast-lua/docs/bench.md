@@ -1,19 +1,18 @@
 # Benchmarks
 
 Benchmarks are in the `bench` folder, and they can be run with the following
-commands, where `{iters}` is the number of iterations to run (defaults to
+commands, where `{rep}` is the number of times to repeat the input text (defaults to
 `100`). They use the [`luamark`](https://github.com/jeffzi/luamark) module.
 
-Do note that these benchmarks are currently heavily biased towards `lpeg`, as `rsast`
-internally produces an AST with much more information available. An `lpeg` grammar
-that produces a similar AST is still more performant, but only within a 10x factor, not 100x.
+Before running the benchmarks, make sure to uncomment the `test_dependencies` table
+in `lux.toml`, then run `lx --lua-version 5.4 sync`.
 
 ```shell
 # time benchmarks
-lx --lua-version 5.4 lua --package=rsast-lua --test crates/rsast-lua/bench/time.lua {iters}
+lx --lua-version 5.4 lua --package=rsast-lua --test crates/rsast-lua/bench/time.lua {rep}
 
 # memory benchmarks
-lx --lua-version 5.4 lua --package=rsast-lua --test crates/rsast-lua/bench/mem.lua {iters}
+lx --lua-version 5.4 lua --package=rsast-lua --test crates/rsast-lua/bench/mem.lua {rep}
 ```
 
 Here is a comparison with `lpeg`. Performance is dramatically inferior to `lpeg`:
@@ -21,39 +20,29 @@ Here is a comparison with `lpeg`. Performance is dramatically inferior to `lpeg`
 Time:
 
 ```shell
-$ lx --lua-version 5.5 lua --test --package=rsast-lua crates/rsast-lua/bench/time.lua
+$ lx --lua-version 5.4 lua --package=rsast-lua --test crates/rsast-lua/bench/time.lua 10000
 
---------------------
-Parsing (Time): 100 iters
---------------------
-Name   Rank      Relative         Median      Ops  
------  ----  ----------------  ------------  ------
-lpeg      1  █             1x  200us ± 50us    5k/s
-rsast     2  ████████ ↓115.5x          23ms  43.3/s
-```
-
-Validation:
-
-```shell
---------------------
-Validation (Time): 100 iters
---------------------
-Name   Rank    Relative     Median    Ops  
------  ----  -------------  ------  -------
-lpeg      1  █          1x   100us    10k/s
-rsast     2  ████████ ↓13x     1ms  769.2/s
+----------------------------------------
+Parsing (Time): 810000 bytes
+----------------------------------------
+Name   Rank      Relative         Median       Ops  
+-----  ----  ----------------  -------------  ------
+lpeg      1  █             1x    13ms ± 50us  76.9/s
+rsast     2  ████████ ↓11.92x  155ms ± 575us   6.5/s
+----------------------------------------
 ```
 
 Memory:
 
 ```shell
-$ lx --lua-version 5.5 lua --test --package=rsast-lua crates/rsast-lua/bench/mem.lua
+$ lx --lua-version 5.4 lua --package=rsast-lua --test crates/rsast-lua/bench/mem.lua 10000
 
---------------------
-Parsing (Mem): 100 iters
---------------------
-Name   Rank      Relative         Median  
------  ----  ----------------  ------------
-lpeg      1  █             1x   18kB ± 501B
-rsast     2  ████████ ↓13.33x  239kB ± 12kB
+----------------------------------------
+Parsing (Time): 810000 bytes
+----------------------------------------
+Name   Rank     Relative        Median  
+-----  ----  ---------------  ----------
+lpeg     ≈1  ████         1x         7MB
+rsast    ≈1  ████████ ↓1.68x  12MB ± 6MB
+----------------------------------------
 ```
