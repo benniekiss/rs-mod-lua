@@ -3,15 +3,13 @@
 ```lua
 rsast = require("rsast")
 
-grammar = [[
+local grammar = [[
 field = { (ASCII_DIGIT | "." | "-")+ }
 record = { #tag = field ~ ("," ~ field)* }
 file = { SOI ~ (record ~ ("\r\n" | "\n"))* ~ EOI }
 ]]
 
-local ast = rsast.Ast.new(grammar)
-
-data = [[
+local input = [[
 65279,1179403647,1463895090
 3.1415927,2.7182817,1.618034
 -40,-273.15
@@ -19,17 +17,23 @@ data = [[
 65537
 ]]
 
+local ast = rsast.Ast.new(grammar)
+
 -- Parse the input into a basic Ast.
 --
 -- see `rsast.Tree` for more information
-local tree = ast:parse("file", data)
+local tree = ast:parse("file", input, function(ps) return ps:dump() end)
 
--- Collect the rule names of the first three nodes
+-- Collect the rule names of the nodes
 local rules = ast:parse("file", data, function(ps)
-    return ps:fold_flat({}, function(val, p)
-        table.insert(val, p:as_rule())
-        return val, #val < 3
-    end)
+    local flat = ps:flatten()
+
+    local rules = {}
+    for p in flat:iter() do
+        table.insert(rules, p:as_rule)
+    end
+
+    return rules
 end)
 ```
 
