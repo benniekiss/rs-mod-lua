@@ -1,13 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+  "diagnostics": {
+    "globals": [
+      "pandoc"
+    ]
+  },
   "doc": {
     "syntax": "myst"
   },
   "runtime": {
     "version": "Lua5.4"
-  },
-  "diagnostics": {
-    "globals": [ "pandoc" ]
   },
   "workspace": {
     "ignoreDir": [
@@ -15,6 +17,7 @@
     ],
     "workspaceRoots": [
       "crates/minijinja-lua/library",
+      "crates/rsast-lua/library",
       "crates/rsre-lua/library",
       "crates/rsjson-lua/library"
     ],
@@ -22,6 +25,7 @@
       "types/LLS-Addons/addons/luassert/module/library",
       "types/LLS-Addons/addons/busted/module/library",
       "crates/minijinja-lua/library",
+      "crates/rsast-lua/library",
       "crates/rsjson-lua/library",
       "crates/rsre-lua/library"
     ]

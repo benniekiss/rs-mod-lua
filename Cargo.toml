@@ -4,6 +4,7 @@ cargo-features = ["profile-rustflags", "panic-immediate-abort"]
 resolver = "3"
 members = [
     "crates/minijinja-lua",
+    "crates/rsast-lua",
     "crates/rsjson-lua",
     "crates/rsre-lua",
 ]

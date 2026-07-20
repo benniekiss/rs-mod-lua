@@ -1,0 +1,96 @@
+local luamark = require("luamark")
+local assert = require("luassert")
+local rsjson = require("rsjson")
+local rsast = require("rsast")
+local lpeg = require("lpeg")
+
+local P, S, R, C, Ct = lpeg.P, lpeg.S, lpeg.R, lpeg.C, lpeg.Ct
+
+---@param pairs rsast.Pairs
+function rsast_parse(pairs)
+    local file = pairs:next()
+    ---@cast file - nil
+
+    local ast = {}
+    for p in file:pairs():iter() do
+        if p:as_rule() == "record" then
+            local record = {}
+            for f in p:pairs():iter() do
+                if f:as_rule() == "field" then
+                    table.insert(record, f:as_str())
+                end
+            end
+
+            table.insert(ast, record)
+        end
+    end
+
+    return ast
+end
+
+function load_rsast()
+    local grammar = [[
+    field = { (ASCII_DIGIT | "." | "-")+ }
+    record = { #tag = field ~ ("," ~ field)* }
+    file = { SOI ~ (record ~ ("\r\n" | "\n"))* ~ EOI }
+    ]]
+
+    return rsast.Ast.new(grammar)
+end
+
+function load_lpeg()
+    -- field = { (ASCII_DIGIT | "." | "-")+ }
+    local field = C((R("09") + S(".-")) ^ 1)
+
+    -- record = { field ~ ("," ~ field)* }
+    local record = Ct(field * (P(",") * field) ^ 0)
+
+    -- newline = "\r\n" | "\n"
+    local newline = P("\r\n") + P("\n")
+
+    -- file = { SOI ~ (record ~ newline)* ~ EOI }
+    local file = Ct((record * newline) ^ 0) * -1
+
+    return file
+end
+
+local rsast_parser = load_rsast()
+local lpeg_parser = load_lpeg()
+
+local input = ([[
+65279,1179403647,1463895090
+3.1415927,2.7182817,1.618034
+-40,-273.15
+13,42
+65537
+]]):rep(math.tointeger(arg[1]) or 100)
+
+local parsing = luamark.compare_memory({
+    rsast = function (ctx)
+        rsast_parser:parse("file", input, rsast_parse)
+    end,
+    lpeg = function (ctx)
+        lpeg_parser:match(input)
+    end,
+})
+
+local sep = 40
+print(("-"):rep(sep))
+print("Parsing (Time): " .. input:len() .. " bytes")
+print(("-"):rep(sep))
+print(luamark.render(parsing))
+print()
+
+local rsast_output = rsast_parser:parse("file", input, rsast_parse)
+
+local lpeg_output = lpeg_parser:match(input)
+
+local config = rsjson.EncodeConfig.new()
+    :set_indent(4)
+
+print(("-"):rep(sep))
+if assert.Same(rsast_output, lpeg_output) then
+    print("Asts match")
+else
+    print("Asts do not match")
+end

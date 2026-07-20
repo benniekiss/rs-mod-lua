@@ -1,0 +1,47 @@
+cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+
+[package]
+name = "rsast-lua"
+version = "0.1.0"
+edition = "2024"
+readme = "README.md"
+repository = "https://github.com/benniekiss/rs-mod-lua"
+license = "MIT"
+description = "a PEG lua module using the pest rust crate"
+
+[lib]
+name = "rsast_lua"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["lua54", "vendored"]
+lua55 = ["mlua/lua55"]
+lua54 = ["mlua/lua54"]
+lua53 = ["mlua/lua53"]
+lua52 = ["mlua/lua52"]
+lua51 = ["mlua/lua51"]
+luajit = ["mlua/luajit"]
+luajit52 = ["mlua/luajit52"]
+vendored = ["mlua/vendored"]
+module = ["mlua/module"]
+
+[dependencies]
+mlua = { version = "0.12.0", features = ["macros", "serde"] }
+pest = { version = "2.8.7", features = ["miette-error", "pretty-print"] }
+pest_meta = { version = "2.8.7", features = ["grammar-extras"] }
+pest_vm = { version = "2.8.7", features = ["grammar-extras"] }
+serde = { version = "1.0.228", features = ["derive", "rc"] }
+
+[dev-dependencies]
+pest_derive = "2.8.7"
+
+[profile.release]
+strip = true
+opt-level = 3
+lto = true
+panic = "unwind"
+codegen-units = 1
+rustflags = [
+    # "-Zlocation-detail=none",
+    # "-Zfmt-debug=none",
+]

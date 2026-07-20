@@ -20,44 +20,6 @@
           "source": "sha256-+vWFn9IIG+Tp5PuIc6LcZffv8/2T1t0U2mX44SP8/5s="
         }
       },
-      "1920813b0593111d3870293519b52b64ea736310985475c836b68197ed255013": {
-        "name": "luamark",
-        "version": "1.1.2-1",
-        "pinned": false,
-        "opt": false,
-        "dependencies": [],
-        "constraint": "==1.1.2",
-        "binaries": [],
-        "source": "luarocks_rockspec+https://luarocks.org/",
-        "source_url": {
-          "type": "git",
-          "url": "https://github.com/jeffzi/luamark.git",
-          "ref": "v1.1.2"
-        },
-        "hashes": {
-          "rockspec": "sha256-5Io6310hhxlYBvEp5ee//KFwCSnPvHsErUlRWicOWOs=",
-          "source": "sha256-WmC81swuOeS1CASKl0vADs2QW/EUZXC86BZxpeO6I9g="
-        }
-      },
-      "1c4eb58ac6785d5a42b7a71442247b69f44f180512e2f826254cef3b615725c6": {
-        "name": "rapidjson",
-        "version": "0.7.2-1",
-        "pinned": false,
-        "opt": false,
-        "dependencies": [],
-        "constraint": "==0.7.2",
-        "binaries": [],
-        "source": "luarocks_rockspec+https://luarocks.org/",
-        "source_url": {
-          "type": "git",
-          "url": "https://github.com/xpol/lua-rapidjson",
-          "ref": "v0.7.2"
-        },
-        "hashes": {
-          "rockspec": "sha256-ECHK1m4M/o7UdhWaMyu1B44Wb8PzO3Uw9VuSknPgb7w=",
-          "source": "sha256-WdfGIgbwlMMItsasN+ZITd/iqSeHC0EVeYoUcolb1MU="
-        }
-      },
       "287e827f4a088d41bba04af5f61a13614346c16fe8150eb7c4246e67d6fd163e": {
         "name": "lua-term",
         "version": "0.8-1",
@@ -155,24 +117,6 @@
         "hashes": {
           "rockspec": "sha256-YiMY57okNVZhT9Vo6r98++fCzYJ588d5F8MaONJ2iUA=",
           "source": "sha256-6MeeBrXEhWQzllCPTEXm0e7GhdCL++dwQvQfOEJNWyQ="
-        }
-      },
-      "53ea714ba9651ef9185052dbfa7a2492a36ccc81ed15332fb8bf1ab4c05c3ec5": {
-        "name": "lpeg",
-        "version": "1.1.0-2",
-        "pinned": false,
-        "opt": false,
-        "dependencies": [],
-        "constraint": "==1.1.0",
-        "binaries": [],
-        "source": "luarocks_rockspec+https://luarocks.org/",
-        "source_url": {
-          "type": "url",
-          "url": "https://www.inf.puc-rio.br/~roberto/lpeg/lpeg-1.1.0.tar.gz"
-        },
-        "hashes": {
-          "rockspec": "sha256-RCmG2ljJgEOWkp3Rsmty33/7a4qqLfpc0IhOHLq2Cz0=",
-          "source": "sha256-SxVdZ9IkbB/6ete8RmweqJm7xA/vAlfMnAPOy67UNSo="
         }
       },
       "5abed54457baf9037ff989a1ec78172ee7483d87e794bc9175dbed61f08be72c": {
@@ -277,45 +221,6 @@
           "source": "sha256-ZSfnbsDiaIo/abVpwb/LV5Ktp5wFSZQNO0OdbnjqVSs="
         }
       },
-      "b7fa2fc76ac7b515ab09c4982a9805528218639fda3b3a86a49825f3cf42bd0b": {
-        "name": "lua-cjson",
-        "version": "2.1.0-1",
-        "pinned": false,
-        "opt": false,
-        "dependencies": [],
-        "constraint": "==2.1.0",
-        "binaries": [
-          "json2lua",
-          "lua2json"
-        ],
-        "source": "luarocks_rockspec+https://luarocks.org/",
-        "source_url": {
-          "type": "url",
-          "url": "https://luarocks.org/lua-cjson-2.1.0-1.src.rock"
-        },
-        "hashes": {
-          "rockspec": "sha256-L/6Yon2ek6NnEeifAy3qsnT2cMCB8IdaCgVeu3+1lvs=",
-          "source": "sha256-23r4ScVV0aR09yn+Sla1Uw6b57JHSet6fEdKfHIHuXI="
-        }
-      },
-      "c210cfc2041fd86b788c1ac7592aaa44dce2236f8a1bf42690af9cd06abdc004": {
-        "name": "dkjson",
-        "version": "2.10-1",
-        "pinned": false,
-        "opt": false,
-        "dependencies": [],
-        "constraint": "==2.10",
-        "binaries": [],
-        "source": "luarocks_rockspec+https://luarocks.org/",
-        "source_url": {
-          "type": "url",
-          "url": "https://dkolf.de/dkjson-lua/dkjson-2.10.tar.gz"
-        },
-        "hashes": {
-          "rockspec": "sha256-YiMY57okNVZhT9Vo6r98++fCzYJ588d5F8MaONJ2iUA=",
-          "source": "sha256-6MeeBrXEhWQzllCPTEXm0e7GhdCL++dwQvQfOEJNWyQ="
-        }
-      },
       "fe607fc3a725b032acf5722632cf6993702c56ffa7c9f65e28f9d0324c17be34": {
         "name": "luasystem",
         "version": "0.7.1-1",
@@ -337,22 +242,8 @@
       }
     },
     "entrypoints": [
-      "1920813b0593111d3870293519b52b64ea736310985475c836b68197ed255013",
-      "1920813b0593111d3870293519b52b64ea736310985475c836b68197ed255013",
-      "1920813b0593111d3870293519b52b64ea736310985475c836b68197ed255013",
-      "1c4eb58ac6785d5a42b7a71442247b69f44f180512e2f826254cef3b615725c6",
-      "1c4eb58ac6785d5a42b7a71442247b69f44f180512e2f826254cef3b615725c6",
-      "1c4eb58ac6785d5a42b7a71442247b69f44f180512e2f826254cef3b615725c6",
-      "53ea714ba9651ef9185052dbfa7a2492a36ccc81ed15332fb8bf1ab4c05c3ec5",
-      "53ea714ba9651ef9185052dbfa7a2492a36ccc81ed15332fb8bf1ab4c05c3ec5",
       "aa700d6a934caa749d578927c97e22211ffabf97234705d63e95dc6403f6aafe",
-      "aa700d6a934caa749d578927c97e22211ffabf97234705d63e95dc6403f6aafe",
-      "b7fa2fc76ac7b515ab09c4982a9805528218639fda3b3a86a49825f3cf42bd0b",
-      "b7fa2fc76ac7b515ab09c4982a9805528218639fda3b3a86a49825f3cf42bd0b",
-      "b7fa2fc76ac7b515ab09c4982a9805528218639fda3b3a86a49825f3cf42bd0b",
-      "c210cfc2041fd86b788c1ac7592aaa44dce2236f8a1bf42690af9cd06abdc004",
-      "c210cfc2041fd86b788c1ac7592aaa44dce2236f8a1bf42690af9cd06abdc004",
-      "c210cfc2041fd86b788c1ac7592aaa44dce2236f8a1bf42690af9cd06abdc004"
+      "aa700d6a934caa749d578927c97e22211ffabf97234705d63e95dc6403f6aafe"
     ]
   }
 }
