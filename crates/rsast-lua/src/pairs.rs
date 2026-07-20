@@ -236,6 +236,7 @@ impl LuaPairs {
 }
 
 #[cfg(test)]
+#[allow(clippy::while_let_on_iterator)]
 mod tests {
 
     use super::*;
