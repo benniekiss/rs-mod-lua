@@ -10,7 +10,7 @@ local rsast = {}
 ---@field stop      integer
 ---@field rule      string
 ---@field node_tag? string
----@field pairs     rsast.Tree
+---@field pairs?    rsast.Tree
 
 ---@class rsast.Tree: table
 ---
@@ -43,10 +43,9 @@ function rsast.Pair:pairs() end
 ---
 ---@class rsast.Pairs
 ---
----@field as_str    fun(self): string      The text between `start` of the first pair and `stop` of the last
----@field get_input fun(self): string      The input from which the pairs were parsed
----@field is_empty  fun(self): boolean     Whether the iterator is empty
----@field flatten   fun(self): rsast.Pairs Flatten nested nodes
+---@field as_str    fun(self): string     The text between `start` of the first pair and `stop` of the last
+---@field get_input fun(self): string     The input from which the pairs were parsed
+---@field is_empty  fun(self): boolean    Whether the iterator is empty
 ---@field dump      fun(self): rsast.Tree
 ---
 rsast.Pairs = {}
@@ -86,6 +85,12 @@ function rsast.Pairs:iter() end
 ---@return fun(): rsast.Pair
 ---
 function rsast.Pairs:reviter() end
+
+--- Flatten nested nodes into a single iterator
+---
+---@return rsast.Pairs
+---
+function rsast.Pairs:flatten() end
 
 --- A PEG grammar parser
 ---
