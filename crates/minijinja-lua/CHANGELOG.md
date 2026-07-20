@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.1...minijinja-lua-v0.4.2) - 2026-07-20
+
+### Other
+
+- bump versions
+- additionally build all modules as rlib
+- *(deps)* update rust to nightly-2026-07-20 ([#57](https://github.com/benniekiss/rs-mod-lua/pull/57))
+
 ## [0.4.1](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.0...minijinja-lua-v0.4.1) - 2026-07-20
 
 ### Fixed
