@@ -148,20 +148,28 @@ impl LuaPairs {
     pub(crate) fn new(input: &Rc<String>, pairs: pest::iterators::Pairs<'_, &str>) -> Self {
         let pairs = pairs.map(|p| LuaPair::new(input, p)).collect::<Vec<_>>();
 
-        let start = pairs[0].start;
-        let stop = pairs[pairs.len() - 1].stop;
         let idx = 0;
-        let rdx = pairs.len();
+        let mut rdx = 0;
+
+        let mut start = 0;
+        let mut stop = 0;
         let rem = pairs.len();
+
+        if !pairs.is_empty() {
+            rdx = pairs.len() - 1;
+
+            start = pairs[0].start;
+            stop = pairs[rdx].stop;
+        }
 
         Self {
             input: Rc::clone(input),
             start,
             stop,
-            pairs: Rc::new(pairs),
             idx,
             rdx,
             rem,
+            pairs: Rc::new(pairs),
         }
     }
 

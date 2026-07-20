@@ -6,25 +6,24 @@ local lpeg = require("lpeg")
 
 local P, S, R, C, Ct = lpeg.P, lpeg.S, lpeg.R, lpeg.C, lpeg.Ct
 
+---@param pairs rsast.Pairs
 function rsast_parse(pairs)
-    -- return pairs:dump()
+    local file = pairs:next()
+    ---@cast file - nil
 
-    local file = pairs:next():pairs()
-
-    local ast = file:fold({}, function (acc, pair)
-        if pair:as_rule() == "record" then
-            local record = pair:pairs():fold({}, function (c, p)
-                if p:as_rule() == "field" then
-                    table.insert(c, p:as_str())
+    local ast = {}
+    for p in file:pairs():iter() do
+        if p:as_rule() == "record" then
+            local record = {}
+            for f in p:pairs():iter() do
+                if f:as_rule() == "field" then
+                    table.insert(record, f:as_str())
                 end
-                return c
-            end)
+            end
 
-            table.insert(acc, record)
+            table.insert(ast, record)
         end
-
-        return acc
-    end)
+    end
 
     return ast
 end
