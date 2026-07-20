@@ -6,9 +6,6 @@ local rsast = {}
 
 --- A matching pair of [`rsast.Token`](lua-rsast.Token) and everything between them
 ---
---- It can only be accessed and used within an [`rsast.NodeCallback`](lua-rsast.NodeCallback)
---- or an [`rsast.FoldCallback`](lua-rsast.FoldCallback)
----
 ---@class rsast.Pair: userdata
 ---
 ---@field start       fun(self): integer            The start byte position of the pair
@@ -28,8 +25,6 @@ rsast.Pair = {}
 function rsast.Pair:pairs() end
 
 --- An iterator over [`rsast.Pair`](lua-rsast.Pair)
----
---- It can only be accessed and used within an [`rsast.PairsCallback`](lua-rsast.PairsCallback)
 ---
 ---@class rsast.Pairs
 ---
@@ -66,11 +61,13 @@ function rsast.Pairs:next_back() end
 --- Iterate over the pairs
 ---
 ---@return fun(): rsast.Pair?
+---
 function rsast.Pairs:iter() end
 
 --- Iterate over the pairs in reverse order
 ---
 ---@return fun(): rsast.Pair?
+---
 function rsast.Pairs:reviter() end
 
 --- A PEG grammar parser

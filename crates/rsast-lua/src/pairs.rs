@@ -100,7 +100,7 @@ pub(crate) struct LuaPairs {
 
 impl LuaPairs {
     fn peek(&self) -> Option<LuaPair> {
-        if self.idx >= self.rdx {
+        if self.idx > self.rdx {
             return None;
         }
 
