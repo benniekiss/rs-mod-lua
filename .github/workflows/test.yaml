@@ -11,6 +11,7 @@ on:
         options:
           - all
           - minijinja-lua
+          - rsast-lua
           - rsjson-lua
           - rsre-lua
 
@@ -23,6 +24,7 @@ env:
   ALL_PACKAGES: |-
     [
       "minijinja-lua",
+      "rsast-lua",
       "rsjson-lua",
       "rsre-lua"
     ]
@@ -49,6 +51,7 @@ jobs:
         with:
           filters: |
             minijinja-lua: 'crates/minijinja-lua/**'
+            rsast-lua: 'crates/rsast-lua/**'
             rsjson-lua: 'crates/rsjson-lua/**'
             rsre-lua: 'crates/rsre-lua/**'
 
