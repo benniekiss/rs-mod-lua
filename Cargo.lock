@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "minijinja-lua"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "jiff",
  "minijinja",
@@ -695,7 +695,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rsast-lua"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "mlua",
  "pest",
@@ -707,7 +707,7 @@ dependencies = [
 
 [[package]]
 name = "rsjson-lua"
-version = "0.6.3"
+version = "0.6.4"
 dependencies = [
  "mlua",
  "serde",

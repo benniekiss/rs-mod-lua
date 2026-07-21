@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.2...minijinja-lua-v0.4.3) - 2026-07-21
+
+### Other
+
+- bump version
+- fix `new()` method annotations
+
 ## [0.4.2](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.1...minijinja-lua-v0.4.2) - 2026-07-20
 
 ### Other
