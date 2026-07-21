@@ -186,7 +186,7 @@ minijinja.Environment = {}
 --- Create a new environment.
 ---
 ---@return minijinja.Environment
-function minijinja.Environment:new() end
+function minijinja.Environment.new() end
 
 --- Create an empty environment.
 ---

@@ -4,14 +4,14 @@ local Environment = minijinja.Environment
 describe("Environment tests", function ()
     describe("expressions#Environment", function ()
         it("basic#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local rv = env:eval("1 + b", { b = 42 })
             assert.Equal(43, rv)
         end)
 
         it("globals#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local rv
 
             env:add_global("life", 42)
@@ -25,7 +25,7 @@ describe("Environment tests", function ()
         end)
 
         it("callable#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local magic = function () return { 1, 2, 3 } end
 
@@ -34,7 +34,7 @@ describe("Environment tests", function ()
         end)
 
         it("callable object#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local foo = {}
             setmetatable(foo, foo)
@@ -47,7 +47,7 @@ describe("Environment tests", function ()
         end)
 
         it("methods#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local foo = {}
             function foo:bar()
@@ -59,7 +59,7 @@ describe("Environment tests", function ()
         end)
 
         it("attribute#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local foo = {}
             foo.bar = 99
@@ -69,7 +69,7 @@ describe("Environment tests", function ()
         end)
 
         it("nested attribute#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local foo = {}
             function foo:bar()
@@ -84,7 +84,7 @@ describe("Environment tests", function ()
         end)
 
         it("undefined attribute#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local foo = {}
 
@@ -93,7 +93,7 @@ describe("Environment tests", function ()
         end)
 
         it("index array#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local rv
 
             local foo = { 1, 2, 3 }
@@ -120,7 +120,7 @@ describe("Environment tests", function ()
         end)
 
         it("index table#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local rv
 
             local foo = { one = 1, two = 2, three = 3 }
@@ -147,7 +147,7 @@ describe("Environment tests", function ()
         end)
 
         it("types#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local x
 
             x = {}
@@ -182,7 +182,7 @@ describe("Environment tests", function ()
         end)
 
         it("filters#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local filter = function (_, val) return val:upper() end
 
@@ -193,7 +193,7 @@ describe("Environment tests", function ()
         end)
 
         it("tests#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local test = function (_, val) return val == "lua" end
             env:add_test("lua", test)
@@ -203,7 +203,7 @@ describe("Environment tests", function ()
         end)
 
         it("multivalue#expressions", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local test = function (_, val)
                 return 1, 2, { foo = "bar" }
@@ -219,7 +219,7 @@ describe("Environment tests", function ()
 
     describe("templates#Environment", function ()
         it("custom-syntax#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local config = minijinja.SyntaxConfig.builder()
                 :block_delimiters("<%", "%>")
                 :variable_delimiters("${", "}")
@@ -236,7 +236,7 @@ describe("Environment tests", function ()
         end)
 
         it("line-statements#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local config = minijinja.SyntaxConfig.builder()
                 :line_statement_prefix("#")
                 :line_comment_prefix("##")
@@ -249,7 +249,7 @@ describe("Environment tests", function ()
         end)
 
         it("keep-trailing-newlines#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local source = "foo\n"
 
             assert.Equal("foo", env:render_str(source))
@@ -259,7 +259,7 @@ describe("Environment tests", function ()
         end)
 
         it("trim-blocks#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local source = "{% if true %}\nfoo{% endif %}"
 
             assert.Equal("\nfoo", env:render_str(source))
@@ -269,7 +269,7 @@ describe("Environment tests", function ()
         end)
 
         it("lstrip-blocks#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local source = "  {% if true %}\nfoo{% endif %}"
 
             assert.Equal("  \nfoo", env:render_str(source))
@@ -279,7 +279,7 @@ describe("Environment tests", function ()
         end)
 
         it("trim_and_lstrip_blocks#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local source = "  {% if true %}\nfoo{% endif %}"
 
             assert.Equal("  \nfoo", env:render_str(source))
@@ -290,7 +290,7 @@ describe("Environment tests", function ()
         end)
 
         it("fuel#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local source = "{% for i in ['' * 10] %}{{ i | fuel_check }}{% endfor %}"
             local fuel = 10
 
@@ -318,7 +318,7 @@ describe("Environment tests", function ()
 
         describe("undefined_behavior#templates", function ()
             it("chainable#undefined_behavior", function ()
-                local env = Environment:new()
+                local env = Environment.new()
                 env.undefined_behavior = minijinja.UndefinedBehavior.CHAINABLE
 
                 local source = "{{ foo.bar.baz }}"
@@ -327,7 +327,7 @@ describe("Environment tests", function ()
             end)
 
             it("lenient#undefined_behavior", function ()
-                local env = Environment:new()
+                local env = Environment.new()
                 env.undefined_behavior = minijinja.UndefinedBehavior.LENIENT
 
                 local source = "{{ foo }}"
@@ -336,7 +336,7 @@ describe("Environment tests", function ()
             end)
 
             it("semi_strict#undefined_behavior", function ()
-                local env = Environment:new()
+                local env = Environment.new()
                 env.undefined_behavior = minijinja.UndefinedBehavior.SEMISTRICT
 
                 local source = "{% if not foo %}foo{% endif %}"
@@ -345,7 +345,7 @@ describe("Environment tests", function ()
             end)
 
             it("strict#undefined_behavior", function ()
-                local env = Environment:new()
+                local env = Environment.new()
                 env.undefined_behavior = minijinja.UndefinedBehavior.STRICT
 
                 local source = "{% if not foo %}foo{% endif %}"
@@ -357,7 +357,7 @@ describe("Environment tests", function ()
         end)
 
         it("recursion_limit#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             env.recursion_limit = 1
 
             local source = "{% for i in range(10) %}{{ loop(i) }}{% endfor %}"
@@ -368,7 +368,7 @@ describe("Environment tests", function ()
         end)
 
         it("undeclared-variables#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             env:add_template("foo.txt", "{{ x }} {{ bar.x }}")
             env:add_template("bar.txt", "{{ x }}")
@@ -388,7 +388,7 @@ describe("Environment tests", function ()
         end)
 
         it("loop-controls#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local rv = env:render_str(
                 [[
@@ -407,7 +407,7 @@ describe("Environment tests", function ()
         end)
 
         it("iterate array#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local foo = { 1, 2, 3 }
 
@@ -416,7 +416,7 @@ describe("Environment tests", function ()
         end)
 
         it("iterate table#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local rv
 
             local foo = { one = 1, two = 2, three = 3 }
@@ -436,7 +436,7 @@ describe("Environment tests", function ()
         end)
 
         it("sort#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local X = {}
             X.__index = X
@@ -475,7 +475,7 @@ describe("Environment tests", function ()
         end)
 
         it("path_loader#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local loader = minijinja.path_loader("spec/templates")
             env:set_loader(loader)
 
@@ -491,7 +491,7 @@ describe("Environment tests", function ()
         end)
 
         it("fromjson#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local te = [[{"3":1,"2":{"b":1,"c":2,"a":3},"1":3}]]
 
@@ -503,7 +503,7 @@ describe("Environment tests", function ()
         end)
 
         it("captured#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             env:add_template("foo.txt", "I am {% block baz %}baz{% endblock baz %}!")
 
             local rv, cb = env:render_captured("foo.txt", {}, function (state)
@@ -515,7 +515,7 @@ describe("Environment tests", function ()
         end)
 
         it("print_multivalue#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local ex = [=[[1, 2, {"foo": "bar"}]]=]
 
@@ -531,7 +531,7 @@ describe("Environment tests", function ()
         end)
 
         it("iterate_multivalue#templates", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local ex = [=[1 2 {"foo": "bar"} ]=]
 
@@ -549,7 +549,7 @@ describe("Environment tests", function ()
 
     describe("callbacks#Environment", function ()
         it("loader#callbacks", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local called = {}
             local function loader(name)
@@ -573,7 +573,7 @@ describe("Environment tests", function ()
         end)
 
         it("path-join#callbacks", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local function path_join(name, parent)
                 local dir = parent:match("^(.*)/") or ""
@@ -590,7 +590,7 @@ describe("Environment tests", function ()
         end)
 
         it("unknown-method#callbacks", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local function bar()
                 return "bar"
@@ -613,7 +613,7 @@ describe("Environment tests", function ()
         end)
 
         it("pycompat#callbacks", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local source = "{'x': 42}.get('x')"
 
             env:set_pycompat()
@@ -626,7 +626,7 @@ describe("Environment tests", function ()
         end)
 
         it("autoescape#callbacks", function ()
-            local env = Environment:new()
+            local env = Environment.new()
             local rv
 
             local function auto_escape(name)
@@ -648,7 +648,7 @@ describe("Environment tests", function ()
         end)
 
         it("formatter#callbacks", function ()
-            local env = Environment:new()
+            local env = Environment.new()
 
             local function formatter(state, value)
                 local val

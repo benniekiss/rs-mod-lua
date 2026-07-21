@@ -33,7 +33,7 @@ rsjson.EncodeConfig = {}
 --- Create a new `rsjson.EncodeConfig`
 ---
 ---@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:new() end
+function rsjson.EncodeConfig.new() end
 
 --- Set the indent level
 ---
@@ -103,7 +103,7 @@ rsjson.DecodeConfig = {}
 --- Create a new `rsjson.DecodeConfig`
 ---
 ---@return rsjson.DecodeConfig
-function rsjson.DecodeConfig:new() end
+function rsjson.DecodeConfig.new() end
 
 --- Whether to decode JSON `null` to `rsjson.null` or `nil`
 ---

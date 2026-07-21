@@ -263,7 +263,7 @@ end
 function filter.Pandoc(doc)
     doc = doc:walk({ Meta = Meta })
 
-    local env = minijinja.Environment:new()
+    local env = minijinja.Environment.new()
 
     if JinjaSettings.reload_before_render ~= nil then
         env.reload_before_render = JinjaSettings.reload_before_render

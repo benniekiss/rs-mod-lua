@@ -181,7 +181,7 @@ local encoding = luamark.compare_time({
             local pretty = p.pretty
 
             if pretty then
-                local rsjson_config = rsjson.EncodeConfig:new()
+                local rsjson_config = rsjson.EncodeConfig.new()
                     :set_indent(4)
                 local dkjson_config = { indent = pretty }
                 local rapidjson_config = { pretty = pretty }

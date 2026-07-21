@@ -2,13 +2,13 @@ local json = require("rsjson")
 
 describe("config", function ()
     describe("EncodeConfig#config", function ()
-        it("EncodeConfig:new()#config", function ()
+        it("EncodeConfig.new()#config", function ()
             assert.no_error(function ()
-                json.EncodeConfig:new()
+                json.EncodeConfig.new()
             end)
         end)
 
-        local conf = json.EncodeConfig:new()
+        local conf = json.EncodeConfig.new()
 
         it("EncodeConfig.indent#config", function ()
             conf:set_indent()
@@ -67,13 +67,13 @@ describe("config", function ()
     end)
 
     describe("DecodeConfig#config", function ()
-        it("DecodeConfig:new()#config", function ()
+        it("DecodeConfig.new()#config", function ()
             assert.no_error(function ()
-                json.DecodeConfig:new()
+                json.DecodeConfig.new()
             end)
         end)
 
-        local conf = json.DecodeConfig:new()
+        local conf = json.DecodeConfig.new()
 
         it("DecodeConfig.null#config", function ()
             conf:set_null(true)
@@ -124,7 +124,7 @@ describe("encode", function ()
     end)
 
     it("array_metatable#encode", function ()
-        local config = json.EncodeConfig:new()
+        local config = json.EncodeConfig.new()
 
         local te = { foo = "bar" }
         local ex = "[]"
@@ -137,7 +137,7 @@ describe("encode", function ()
     end)
 
     it("no_array_metatable#encode", function ()
-        local config = json.EncodeConfig:new()
+        local config = json.EncodeConfig.new()
 
         local te = { foo = "bar" }
         local ex = '{"foo":"bar"}'
@@ -192,7 +192,7 @@ describe("decode", function ()
     end)
 
     it("array_metatable#decode", function ()
-        local config = json.DecodeConfig:new()
+        local config = json.DecodeConfig.new()
         config:set_array_metatable(true)
 
         local te = '["one",2,"three"]'
@@ -206,7 +206,7 @@ describe("decode", function ()
     end)
 
     it("no_array_metatable#decode", function ()
-        local config = json.DecodeConfig:new()
+        local config = json.DecodeConfig.new()
         config:set_array_metatable(false)
 
         local te = '["one",2,"three"]'
