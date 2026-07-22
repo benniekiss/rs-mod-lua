@@ -122,6 +122,19 @@ rsast.Ast = {}
 ---
 function rsast.Ast.new(grammar) end
 
+--- Set callbacks to handle error formatting.
+---
+--- `rule_handler` is a callback which receives the name of a rule
+--- and returns a string to write in its place.
+---
+--- `ws_handler` is a callback which receives a text and returns a
+--- boolean as to whether the text should be considered whitespace
+---
+---@param rule_handler fun(rule: string): string? Formatter for rule names
+---@param ws_handler   fun(text: string): boolean Formatter for whitespace
+---
+function rsast.Ast:set_error_formatter(rule_handler, ws_handler) end
+
 --- Validate in input against the grammar
 ---
 ---@param rule  string The rule to parse
@@ -147,5 +160,26 @@ function rsast.Ast:validate(rule, input) end
 ---@return R... # Returns the result of `callback`
 ---
 function rsast.Ast:parse(rule, input, callback) end
+
+--- Sets the maximum call limit for the parser state.
+---
+--- If set, the calls are tracked as a running total over all non-terminal rules
+--- that can nest closures (which are passed to transform the parser state).
+---
+--- This can help prevent stack overflows or excessive execution times in some grammars.
+---
+--- Passing `limit` as `0` or `nil` disables any call limit.
+---
+---@param limit? integer
+---
+function rsast.set_call_limit(limit) end
+
+--- Sets whether information for more error details should be collected.
+---
+--- This can have a performance impact, so it is disabled by default.
+---
+---@param enable boolean
+---
+function rsast.set_error_detail(enable) end
 
 return rsast

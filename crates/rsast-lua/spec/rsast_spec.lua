@@ -17,6 +17,11 @@ data = [[
 describe("rsast", function ()
     assert:set_parameter("TableFormatLevel", 15)
 
+    after_each(function ()
+        rsast.set_call_limit(0)
+        rsast.set_error_detail(false)
+    end)
+
     describe("ast#rsast", function ()
         it("new#ast", function ()
             local ast, errors = rsast.Ast.new(grammar)
@@ -85,12 +90,64 @@ describe("rsast", function ()
             assert.matches_error(function ()
                 ast:parse("file", "invalid data", function () end)
             end, [[
-runtime error:  --> 1:1
+ --> 1:1
   |
 1 | invalid data
   | ^---
   |
   = expected "file"]], nil, true)
+        end)
+
+        it("set_call_limit#ast", function ()
+            rsast.set_call_limit(1)
+
+            local _, errors = rsast.Ast.new(grammar)
+
+            local ex = {
+                [[
+ --> 1:1
+  |
+1 | field = { (ASCII_DIGIT | "." | "-")+ }
+  | ^---
+  |
+  = call limit reached]],
+            }
+
+            assert.Same(ex, errors)
+        end)
+
+        it("set_error_detail#ast", function ()
+            rsast.set_error_detail(true)
+
+            local ast = rsast.Ast.new(grammar)
+            ---@cast ast - nil
+
+            ast:set_error_formatter(function (rule)
+                if rule == "field" then
+                    return "Expected a field"
+                elseif rule == "record" then
+                    return "Expected comma-separated values"
+                elseif rule == "file" then
+                    return "Could not parse file. Check to ensure it ends in a newline."
+                else
+                    return nil
+                end
+            end, function (text) return text:match("%s") ~= nil end)
+
+            local res, err = ast:validate("file", "123foobar")
+
+            local ex_error = [[
+ --> 1:4
+  |
+1 | 123foobar
+  |    ^---
+  |
+  = error: parsing error occurred.
+    note: expected one of tokens: WHITESPACE, `,`, `-`, `.`, `0..9`
+    help: Could not parse file. Check to ensure it ends in a newline.
+          - Expected a field]]
+            assert.False(res)
+            assert.Equal(ex_error, err)
         end)
     end)
 
