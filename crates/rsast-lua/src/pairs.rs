@@ -269,6 +269,18 @@ impl LuaPairs {
         self.flatten_into()
     }
 
+    #[lua(name = "find_tagged", infallible)]
+    pub(crate) fn lua_find_tagged(&self, tag: &str) -> Vec<LuaPair> {
+        self.flatten_into()
+            .pairs
+            .iter()
+            .filter_map(move |pair| match pair.node_tag {
+                Some(ref t) if **t == tag => Some(pair.clone()),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+    }
+
     #[lua(name = "dump")]
     pub(crate) fn lua_dump(&self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
         let config = mlua::serde::SerializeOptions::new().serialize_none_to_null(false);

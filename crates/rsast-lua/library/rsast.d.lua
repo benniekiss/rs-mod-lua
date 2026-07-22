@@ -92,6 +92,15 @@ function rsast.Pairs:reviter() end
 ---
 function rsast.Pairs:flatten() end
 
+--- Searches through the flattened list of nodes
+--- for all nodes marked with `tag`
+---
+---@param tag string
+---
+---@return rsast.Pair[]
+---
+function rsast.Pairs:find_tagged(tag) end
+
 --- A PEG parser
 ---
 ---@class rsast.Ast: userdata

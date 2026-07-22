@@ -240,6 +240,22 @@ runtime error:  --> 1:1
             assert.Same(ex, res)
         end)
 
+        it("find_tagged#pairs", function ()
+            local res = ast:parse("file", data, function (pairs)
+                local found = pairs:find_tagged("tag")
+                local tagged = {}
+                for _, t in ipairs(found) do
+                    table.insert(tagged, t:start())
+                end
+
+                return tagged
+            end)
+
+            local ex = { 0, 28, 57, 69, 75 }
+
+            assert.Same(ex, res)
+        end)
+
         it("dump#pairs", function ()
             local res = ast:parse("record", data, function (pairs) return pairs:dump() end)
 
