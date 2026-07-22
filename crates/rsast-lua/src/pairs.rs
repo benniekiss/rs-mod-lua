@@ -199,8 +199,9 @@ impl LuaPairs {
     }
 
     #[lua(skip)]
-    fn flatten_into(out: &mut Vec<LuaPair>, pairs: LuaPairs) {
-        let mut stack = vec![pairs];
+    fn flatten_into(&self) -> LuaPairs {
+        let mut out = Vec::with_capacity(self.pairs.len());
+        let mut stack = vec![self.clone()];
 
         while let Some(mut iter) = stack.pop() {
             if let Some(pair) = iter.next() {
@@ -215,6 +216,8 @@ impl LuaPairs {
                 }
             }
         }
+
+        Self::new(&self.input, out)
     }
 
     #[lua(name = "as_str", infallible)]
@@ -263,9 +266,7 @@ impl LuaPairs {
 
     #[lua(name = "flatten", infallible)]
     pub(crate) fn lua_flatten(&self) -> LuaPairs {
-        let mut flat = Vec::with_capacity(self.pairs.len());
-        Self::flatten_into(&mut flat, self.clone());
-        Self::new(&self.input, flat)
+        self.flatten_into()
     }
 
     #[lua(name = "dump")]
@@ -361,7 +362,7 @@ mod tests {
             .map(|p| LuaPair::new(&input, p))
             .collect::<Vec<_>>();
 
-        assert_eq!(lua_pairs.lua_flatten().collect::<Vec<_>>(), mapped_pairs)
+        assert_eq!(lua_pairs.flatten_into().collect::<Vec<_>>(), mapped_pairs)
     }
 
     #[test]
@@ -378,7 +379,7 @@ mod tests {
             pest_vec.push(LuaPair::new(&input, p))
         }
 
-        let mut flat_lua_pairs = lua_pairs.lua_flatten();
+        let mut flat_lua_pairs = lua_pairs.flatten_into();
         let mut lua_vec = vec![];
         while let Some(p) = flat_lua_pairs.next() {
             lua_vec.push(p)
@@ -401,7 +402,7 @@ mod tests {
             pest_vec.push(LuaPair::new(&input, p))
         }
 
-        let mut flat_lua_pairs = lua_pairs.lua_flatten();
+        let mut flat_lua_pairs = lua_pairs.flatten_into();
         let mut lua_vec = vec![];
         while let Some(p) = flat_lua_pairs.next_back() {
             lua_vec.push(p)
