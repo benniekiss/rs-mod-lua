@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.5](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.4...rsjson-lua-v0.6.5) - 2026-07-22
+
+### Other
+
+- bump lua module version
+- add keywords and categories to Cargo.toml
+
 ## [0.6.4](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.3...rsjson-lua-v0.6.4) - 2026-07-21
 
 ### Other
