@@ -8,6 +8,8 @@ readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
 description = "a minijinja lua module using the minijinja rust crate"
+keywords = ["minijinja", "templating", "module", "mlua", "lua"]
+categories = ["template-engine"]
 
 [lib]
 name = "minijinja_lua"

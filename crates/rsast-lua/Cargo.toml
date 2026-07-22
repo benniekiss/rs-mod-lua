@@ -8,6 +8,8 @@ readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
 description = "a PEG lua module using the pest rust crate"
+keywords = ["pest", "parsing", "module", "mlua", "lua"]
+categories = ["parsing"]
 
 [lib]
 name = "rsast_lua"

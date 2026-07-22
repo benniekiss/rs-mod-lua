@@ -8,6 +8,8 @@ readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
 description = "a regex lua module using the fancy-regex rust crate"
+keywords = ["fancy-regex", "regex", "module", "mlua", "lua"]
+categories = ["text-processing"]
 
 [lib]
 name = "rsre_lua"

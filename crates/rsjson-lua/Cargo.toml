@@ -8,6 +8,8 @@ readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
 description = "a json lua module using the serde-json rust crate"
+keywords = ["serde-json", "json", "module", "mlua", "lua"]
+categories = ["encoding"]
 
 [lib]
 name = "rsjson_lua"
