@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use mlua::LuaSerdeExt;
 
@@ -6,15 +6,15 @@ use mlua::LuaSerdeExt;
 pub(crate) struct LuaPair {
     #[serde(skip)]
     #[lua(skip)]
-    input: Rc<String>,
+    input: Arc<String>,
     #[lua(skip)]
     start: usize,
     #[lua(skip)]
     stop: usize,
     #[lua(skip)]
-    rule: Rc<String>,
+    rule: Arc<String>,
     #[lua(skip)]
-    node_tag: Option<Rc<String>>,
+    node_tag: Option<Arc<String>>,
     #[serde(skip)]
     #[lua(skip)]
     line: usize,
@@ -28,10 +28,10 @@ pub(crate) struct LuaPair {
 #[mlua::userdata_impl]
 impl LuaPair {
     #[lua(skip)]
-    pub(crate) fn new(input: &Rc<String>, pair: pest::iterators::Pair<'_, &str>) -> Self {
+    pub(crate) fn new(input: &Arc<String>, pair: pest::iterators::Pair<'_, &str>) -> Self {
         let span = pair.as_span();
-        let rule = Rc::new(pair.as_rule().to_string());
-        let node_tag = pair.as_node_tag().map(|s| Rc::new(s.to_string()));
+        let rule = Arc::new(pair.as_rule().to_string());
+        let node_tag = pair.as_node_tag().map(|s| Arc::new(s.to_string()));
         let (line, col) = pair.line_col();
 
         let inner = pair.into_inner();
@@ -41,7 +41,7 @@ impl LuaPair {
         }
 
         Self {
-            input: Rc::clone(input),
+            input: Arc::clone(input),
             start: span.start(),
             stop: span.end(),
             rule,
@@ -103,7 +103,7 @@ impl LuaPair {
 pub(crate) struct LuaPairs {
     #[serde(skip)]
     #[lua(skip)]
-    input: Rc<String>,
+    input: Arc<String>,
     #[lua(skip)]
     start: usize,
     #[lua(skip)]
@@ -118,12 +118,12 @@ pub(crate) struct LuaPairs {
     #[lua(skip)]
     rem: usize,
     #[lua(skip)]
-    pairs: Rc<Vec<LuaPair>>,
+    pairs: Arc<Vec<LuaPair>>,
 }
 
 impl From<pest::iterators::Pairs<'_, &str>> for LuaPairs {
     fn from(value: pest::iterators::Pairs<'_, &str>) -> Self {
-        let input = Rc::new(value.get_input().to_string());
+        let input = Arc::new(value.get_input().to_string());
         let pairs = value.map(|p| LuaPair::new(&input, p)).collect::<Vec<_>>();
         Self::new(&input, pairs)
     }
@@ -174,7 +174,7 @@ impl ExactSizeIterator for LuaPairs {
 #[mlua::userdata_impl]
 impl LuaPairs {
     #[lua(skip)]
-    pub(crate) fn new(input: &Rc<String>, pairs: Vec<LuaPair>) -> Self {
+    pub(crate) fn new(input: &Arc<String>, pairs: Vec<LuaPair>) -> Self {
         let idx = 0;
         let rdx = pairs.len();
         let rem = pairs.len();
@@ -188,13 +188,13 @@ impl LuaPairs {
         }
 
         Self {
-            input: Rc::clone(input),
+            input: Arc::clone(input),
             start,
             stop,
             idx,
             rdx,
             rem,
-            pairs: Rc::new(pairs),
+            pairs: Arc::new(pairs),
         }
     }
 
@@ -310,7 +310,7 @@ mod tests {
     fn test_iteration() {
         let vm = setup();
 
-        let input = Rc::new(INPUT.to_string());
+        let input = Arc::new(INPUT.to_string());
         let pairs = vm.parse("record", INPUT).unwrap();
         let lua_pairs: LuaPairs = pairs.clone().into();
 
@@ -323,7 +323,7 @@ mod tests {
     fn test_next() {
         let vm = setup();
 
-        let input = Rc::new(INPUT.to_string());
+        let input = Arc::new(INPUT.to_string());
         let mut pairs = vm.parse("record", INPUT).unwrap();
         let mut lua_pairs: LuaPairs = pairs.clone().into();
 
@@ -344,7 +344,7 @@ mod tests {
     fn test_next_back() {
         let vm = setup();
 
-        let input = Rc::new(INPUT.to_string());
+        let input = Arc::new(INPUT.to_string());
         let mut pairs = vm.parse("record", INPUT).unwrap();
         let mut lua_pairs: LuaPairs = pairs.clone().into();
 
@@ -365,7 +365,7 @@ mod tests {
     fn test_flat_iteration() {
         let vm = setup();
 
-        let input = Rc::new(INPUT.to_string());
+        let input = Arc::new(INPUT.to_string());
         let pairs = vm.parse("record", INPUT).unwrap();
         let lua_pairs: LuaPairs = pairs.clone().into();
 
@@ -381,7 +381,7 @@ mod tests {
     fn test_flat_next() {
         let vm = setup();
 
-        let input = Rc::new(INPUT.to_string());
+        let input = Arc::new(INPUT.to_string());
         let pairs = vm.parse("record", INPUT).unwrap();
         let lua_pairs: LuaPairs = pairs.clone().into();
 
@@ -404,7 +404,7 @@ mod tests {
     fn test_flat_next_back() {
         let vm = setup();
 
-        let input = Rc::new(INPUT.to_string());
+        let input = Arc::new(INPUT.to_string());
         let pairs = vm.parse("record", INPUT).unwrap();
         let lua_pairs: LuaPairs = pairs.clone().into();
 
