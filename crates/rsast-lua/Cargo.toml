@@ -33,7 +33,7 @@ pest_vm = { version = "2.8.7", features = ["grammar-extras"] }
 serde = { version = "1.0.229", features = ["derive", "rc"] }
 
 [dev-dependencies]
-pest_derive = "2.8.7"
+pest_derive = "2.8.8"
 
 [profile.release]
 strip = true
