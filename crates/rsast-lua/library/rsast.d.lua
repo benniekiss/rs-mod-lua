@@ -33,9 +33,11 @@ local rsast = {}
 ---
 rsast.Pair = {}
 
---- Invoke a callback with an [`rsast.Pairs`](lua-rsast.Pairs) iterator
+--- Returns any inner nodes as an [`rsast.Pairs`](lua-rsast.Pairs)
 ---
----@return rsast.Pairs
+--- If there are no inner nodes, returns `nil`
+---
+---@return rsast.Pairs?
 ---
 function rsast.Pair:pairs() end
 
