@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.1.2...rsast-lua-v0.1.3) - 2026-07-22
+
+### Added
+
+- *(rsast-lua)* add `find_tagged` method
+
+### Fixed
+
+- *(deps)* update pest to 2.8.8 ([#86](https://github.com/benniekiss/rs-mod-lua/pull/86))
+- *(rsast-lua)* mark `as_node_tag` as optional return
+
+### Other
+
+- *(rsast-lua)* bump version
+- *(rsast-lua)* refactor `flatten` methods
+
 ## [0.1.2](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.1.1...rsast-lua-v0.1.2) - 2026-07-21
 
 ### Other
