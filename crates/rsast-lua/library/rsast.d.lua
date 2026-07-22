@@ -26,7 +26,7 @@ local rsast = {}
 ---@field stop        fun(self): integer            The end byte position of the pair
 ---@field as_rule     fun(self): string             The name of the rule which matched the pair
 ---@field as_str      fun(self): string             The text between `start` and `stop` of this pair
----@field as_node_tag fun(self): string             The current node tag
+---@field as_node_tag fun(self): string?            The current node tag
 ---@field get_input   fun(self): string             The input from which the pair was parsed
 ---@field line_col    fun(self): (integer, integer) The line and column number of `start`
 ---@field dump        fun(self): rsast.Node         Output the pair to a table
