@@ -31,6 +31,18 @@
     },
     "packageRules": [
         {
+            "matchPackageNames": [
+                "/pest/i"
+            ],
+            "groupName": "pest"
+        },
+        {
+            "matchPackageNames": [
+                "/minijinja/i"
+            ],
+            "groupName": "minijinja"
+        },
+        {
             "matchManagers": [
                 "rust-toolchain"
             ],
