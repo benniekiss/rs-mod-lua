@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.1.3...rsast-lua-v0.2.0) - 2026-07-22
+
+### Added
+
+- *(rsast-lua)* allow configuring call limit and error reporting
+
+### Fixed
+
+- *(rsast-lua)* use optional return type on Pair:pairs()
+
+### Other
+
+- add keywords and categories to Cargo.toml
+- *(rsast-lua)* [**breaking**] bump version
+- *(rsast-lua)* replace Rc with Arc
+
 ## [0.1.3](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.1.2...rsast-lua-v0.1.3) - 2026-07-22
 
 ### Added
