@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use rsjson_lua::config::EncodeConfig;
 
 use crate::{
@@ -20,26 +18,6 @@ impl From<jsonschema::Validator> for LuaValidator {
 impl From<jsonschema::meta::MetaValidator<'_>> for LuaValidator {
     fn from(value: jsonschema::meta::MetaValidator) -> Self {
         Self(value.clone())
-    }
-}
-
-impl From<LuaValidator> for jsonschema::Validator {
-    fn from(value: LuaValidator) -> Self {
-        value.0
-    }
-}
-
-impl AsRef<jsonschema::Validator> for LuaValidator {
-    fn as_ref(&self) -> &jsonschema::Validator {
-        &self.0
-    }
-}
-
-impl Deref for LuaValidator {
-    type Target = jsonschema::Validator;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
@@ -111,26 +89,6 @@ pub(crate) struct LuaValidatorMap(jsonschema::ValidatorMap);
 impl From<jsonschema::ValidatorMap> for LuaValidatorMap {
     fn from(value: jsonschema::ValidatorMap) -> Self {
         Self(value)
-    }
-}
-
-impl From<LuaValidatorMap> for jsonschema::ValidatorMap {
-    fn from(value: LuaValidatorMap) -> Self {
-        value.0
-    }
-}
-
-impl AsRef<jsonschema::ValidatorMap> for LuaValidatorMap {
-    fn as_ref(&self) -> &jsonschema::ValidatorMap {
-        &self.0
-    }
-}
-
-impl Deref for LuaValidatorMap {
-    type Target = jsonschema::ValidatorMap;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 

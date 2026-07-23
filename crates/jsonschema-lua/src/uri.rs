@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use mlua::LuaSerdeExt;
 use serde::{Deserialize, Serialize};
 
@@ -22,26 +20,6 @@ impl From<&jsonschema::Uri<String>> for LuaUri {
 impl From<jsonschema::Uri<&str>> for LuaUri {
     fn from(value: jsonschema::Uri<&str>) -> Self {
         Self(value.to_owned())
-    }
-}
-
-impl From<LuaUri> for jsonschema::Uri<String> {
-    fn from(value: LuaUri) -> Self {
-        value.0
-    }
-}
-
-impl AsRef<jsonschema::Uri<String>> for LuaUri {
-    fn as_ref(&self) -> &jsonschema::Uri<String> {
-        &self.0
-    }
-}
-
-impl Deref for LuaUri {
-    type Target = jsonschema::Uri<String>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
