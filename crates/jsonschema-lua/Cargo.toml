@@ -8,10 +8,12 @@ readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
 description = "a json schema validation lua module using the jsonschema rust crate"
+keywords = ["jsonschema", "module", "lua", "mlua"]
+categories = ["encoding"]
 
 [lib]
 name = "jsonschema_lua"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["lua54", "vendored", "async"]
