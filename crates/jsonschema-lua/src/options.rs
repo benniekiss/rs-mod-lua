@@ -207,26 +207,6 @@ impl From<jsonschema::ValidationOptions<'static>> for LuaValidationOptions {
     }
 }
 
-impl From<LuaValidationOptions> for jsonschema::ValidationOptions<'static> {
-    fn from(value: LuaValidationOptions) -> Self {
-        value.0
-    }
-}
-
-impl AsRef<jsonschema::ValidationOptions<'static>> for LuaValidationOptions {
-    fn as_ref(&self) -> &jsonschema::ValidationOptions<'static> {
-        &self.0
-    }
-}
-
-impl Deref for LuaValidationOptions {
-    type Target = jsonschema::ValidationOptions<'static>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 #[mlua::userdata_impl]
 impl LuaValidationOptions {
     #[lua(name = "new", infallible)]

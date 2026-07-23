@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use mlua::LuaSerdeExt;
 use serde::Serialize;
 
@@ -74,26 +72,6 @@ pub(crate) struct LuaEvaluation(jsonschema::Evaluation);
 impl From<jsonschema::Evaluation> for LuaEvaluation {
     fn from(value: jsonschema::Evaluation) -> Self {
         Self(value)
-    }
-}
-
-impl From<LuaEvaluation> for jsonschema::Evaluation {
-    fn from(value: LuaEvaluation) -> Self {
-        value.0
-    }
-}
-
-impl AsRef<jsonschema::Evaluation> for LuaEvaluation {
-    fn as_ref(&self) -> &jsonschema::Evaluation {
-        &self.0
-    }
-}
-
-impl Deref for LuaEvaluation {
-    type Target = jsonschema::Evaluation;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
