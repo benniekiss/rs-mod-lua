@@ -3,6 +3,7 @@
 :end-line: 27
 ```
 
+[jsonschema-lua]: crates/jsonschema-lua/index.md
 [minijinja-lua]: crates/minijinja-lua/index.md
 [rsast-lua]: crates/rsast-lua/index.md
 [rsjson-lua]: crates/rsjson-lua/index.md
@@ -25,6 +26,7 @@ source/contributing
 :hidden:
 :includehidden:
 
+crates/jsonschema-lua/index
 crates/minijinja-lua/index
 crates/rsast-lua/index
 crates/rsjson-lua/index

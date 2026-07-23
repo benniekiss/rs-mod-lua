@@ -3,6 +3,12 @@ release = false
 publish = false
 
 [[package]]
+name = "jsonschema-lua"
+release = false
+publish = false
+publish_features = ["vendored"]
+
+[[package]]
 name = "minijinja-lua"
 release = true
 publish = true

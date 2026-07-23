@@ -6,6 +6,7 @@
 
 The following modules are contained in this repo:
 
+- [`jsonschema-lua`][jsonschema-lua]
 - [`minijinja-lua`][minijinja-lua]
 - [`rsast-lua`][rsast-lua]
 - [`rsjson-lua`][rsjson-lua]
@@ -24,6 +25,7 @@ The following modules are contained in this repo:
 - [`sphinx-lua-ls`](https://github.com/sphinx-contrib/lua-ls)
 - [`release-plz`](https://github.com/release-plz/release-plz)
 
+[jsonschema-lua]: crates/jsonschema-lua/README.md
 [minijinja-lua]: crates/minijinja-lua/README.md
 [rsast-lua]: crates/rsast-lua/README.md
 [rsjson-lua]: crates/rsjson-lua/README.md
