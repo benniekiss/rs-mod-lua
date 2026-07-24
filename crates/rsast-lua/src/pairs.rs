@@ -271,8 +271,7 @@ impl LuaPairs {
 
     #[lua(name = "find_tagged", infallible)]
     pub(crate) fn lua_find_tagged(&self, tag: &str) -> Vec<LuaPair> {
-        self.flatten_into()
-            .pairs
+        self.pairs
             .iter()
             .filter_map(move |pair| match pair.node_tag {
                 Some(ref t) if **t == tag => Some(pair.clone()),

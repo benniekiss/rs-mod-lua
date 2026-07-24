@@ -94,8 +94,10 @@ function rsast.Pairs:reviter() end
 ---
 function rsast.Pairs:flatten() end
 
---- Searches through the flattened list of nodes
---- for all nodes marked with `tag`
+--- Searches through the top level nodes for all nodes marked with `tag`
+---
+--- If you would like to search through all nodes, including inner nodes, call
+--- [`rsast.Pairs:flatten()`](lua-rsast.Pairs.flatten) first.
 ---
 ---@param tag string
 ---

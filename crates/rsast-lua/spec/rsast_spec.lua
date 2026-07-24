@@ -299,7 +299,7 @@ describe("rsast", function ()
 
         it("find_tagged#pairs", function ()
             local res = ast:parse("file", data, function (pairs)
-                local found = pairs:find_tagged("tag")
+                local found = pairs:flatten():find_tagged("tag")
                 local tagged = {}
                 for _, t in ipairs(found) do
                     table.insert(tagged, t:start())
