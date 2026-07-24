@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.2.0...rsast-lua-v0.3.0) - 2026-07-24
+
+### Added
+
+- *(rsast-lua)* [**breaking**] dont call `flatten` in `find_tagged`
+
 ## [0.2.0](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.1.3...rsast-lua-v0.2.0) - 2026-07-22
 
 ### Added

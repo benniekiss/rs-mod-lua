@@ -2,7 +2,7 @@ cargo-features = ["profile-rustflags", "panic-immediate-abort"]
 
 [package]
 name = "rsast-lua"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
