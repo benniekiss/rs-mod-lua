@@ -43,8 +43,8 @@ pub(crate) struct LuaCaptures {
     names: BTreeMap<String, usize>,
 }
 
-impl From<fancy_regex::Captures<'_>> for LuaCaptures {
-    fn from(captures: fancy_regex::Captures) -> Self {
+impl From<fancy_regex::Captures<'_, str>> for LuaCaptures {
+    fn from(captures: fancy_regex::Captures<str>) -> Self {
         Self {
             matches: captures
                 .iter()
