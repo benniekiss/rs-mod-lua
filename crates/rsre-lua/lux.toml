@@ -1,5 +1,5 @@
 package = "rsre-lua"
-version = "0.3.5"
+version = "0.3.6"
 lua = ">=5.1"
 
 [description]
