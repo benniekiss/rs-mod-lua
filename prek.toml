@@ -2,6 +2,8 @@
 # See https://prek.j178.dev for more information.
 #:schema https://www.schemastore.org/prek.json
 
+default_install_hook_types = ["pre-commit", "commit-msg"]
+
 [[repos]]
 repo = "builtin"
 
@@ -63,3 +65,12 @@ entry = "cargo fmt --"
 language = "system"
 pass_filenames = true
 files = { glob = ["*.rs"] }
+
+[[repos]]
+repo = "https://github.com/compilerla/conventional-pre-commit"
+rev = "v4.4.0"
+
+[[repos.hooks]]
+id = "conventional-pre-commit"
+stages = ["commit-msg"]
+args = []
