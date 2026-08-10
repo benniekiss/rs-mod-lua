@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.5](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.4...minijinja-lua-v0.4.5) - 2026-08-10
+
+### Fixed
+
+- *(deps)* update minijinja to 2.23.0 ([#98](https://github.com/benniekiss/rs-mod-lua/pull/98))
+- *(deps)* update rust crate jiff to 0.2.35 ([#90](https://github.com/benniekiss/rs-mod-lua/pull/90))
+
+### Other
+
+- *(deps)* update rust to nightly-2026-08-10 ([#94](https://github.com/benniekiss/rs-mod-lua/pull/94))
+- bump versions
+- *(deps)* update rust to nightly-2026-07-30 ([#79](https://github.com/benniekiss/rs-mod-lua/pull/79))
+
 ## [0.4.4](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.3...minijinja-lua-v0.4.4) - 2026-07-22
 
 ### Other
