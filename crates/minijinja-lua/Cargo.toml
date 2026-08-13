@@ -33,7 +33,7 @@ datetime = ["dep:jiff"]
 
 [dependencies]
 jiff = { version = "0.2.35", optional = true, features = ["serde"] }
-minijinja = { version = "2.23.0", features = [
+minijinja = { version = "2.24.0", features = [
     "unicode",
     "fuel",
     "custom_syntax",
@@ -44,7 +44,7 @@ minijinja = { version = "2.23.0", features = [
     "speedups",
     "stacker",
 ] }
-minijinja-contrib = { version = "2.23.0", features = [
+minijinja-contrib = { version = "2.24.0", features = [
     "pycompat",
     "datetime",
     "rand",
