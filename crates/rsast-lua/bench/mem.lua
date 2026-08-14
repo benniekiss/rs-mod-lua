@@ -66,12 +66,8 @@ local input = ([[
 ]]):rep(math.tointeger(arg[1]) or 100)
 
 local parsing = luamark.compare_memory({
-    rsast = function (ctx)
-        rsast_parser:parse("file", input, rsast_parse)
-    end,
-    lpeg = function (ctx)
-        lpeg_parser:match(input)
-    end,
+    rsast = function (ctx) rsast_parser:parse("file", input, rsast_parse) end,
+    lpeg = function (ctx) lpeg_parser:match(input) end,
 })
 
 local sep = 40

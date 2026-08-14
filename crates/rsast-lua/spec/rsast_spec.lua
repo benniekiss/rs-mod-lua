@@ -87,15 +87,18 @@ describe("rsast", function ()
             local ast = rsast.Ast.new(grammar)
             ---@cast ast - nil
 
-            assert.matches_error(function ()
-                ast:parse("file", "invalid data", function () end)
-            end, [[
+            assert.matches_error(
+                function () ast:parse("file", "invalid data", function () end) end,
+                [[
  --> 1:1
   |
 1 | invalid data
   | ^---
   |
-  = expected "file"]], nil, true)
+  = expected "file"]],
+                nil,
+                true
+            )
         end)
 
         it("set_call_limit#ast", function ()

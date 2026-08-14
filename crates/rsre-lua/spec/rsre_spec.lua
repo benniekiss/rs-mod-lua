@@ -2,11 +2,7 @@ local rsre = require("rsre")
 
 describe("api", function ()
     describe("regex#api", function ()
-        it("new#regex", function ()
-            assert.Not.Error(function ()
-                rsre.Regex.new("123")
-            end)
-        end)
+        it("new#regex", function () assert.Not.Error(function () rsre.Regex.new("123") end) end)
 
         it("match#regex", function ()
             local re = rsre.Regex.new([[\d{3}]])

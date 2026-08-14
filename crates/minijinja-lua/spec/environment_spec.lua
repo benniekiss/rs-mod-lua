@@ -305,15 +305,11 @@ describe("Environment tests", function ()
 
             env.fuel = fuel
             assert.Equal(fuel, env.fuel)
-            assert.Not.Error(function ()
-                env:render_str(source)
-            end)
+            assert.Not.Error(function () env:render_str(source) end)
 
             env.fuel = fuel / 2
             assert.Equal(fuel / 2, env.fuel)
-            assert.match_error(function ()
-                env:render_str(source)
-            end, "engine ran out of fuel")
+            assert.match_error(function () env:render_str(source) end, "engine ran out of fuel")
         end)
 
         describe("undefined_behavior#templates", function ()
@@ -350,9 +346,7 @@ describe("Environment tests", function ()
 
                 local source = "{% if not foo %}foo{% endif %}"
 
-                assert.Error(function ()
-                    env:render_str(source)
-                end)
+                assert.Error(function () env:render_str(source) end)
             end)
         end)
 
@@ -362,9 +356,10 @@ describe("Environment tests", function ()
 
             local source = "{% for i in range(10) %}{{ loop(i) }}{% endfor %}"
 
-            assert.match_error(function ()
-                env:render_str(source)
-            end, "invalid operation: cannot recurse outside of recursive loop")
+            assert.match_error(
+                function () env:render_str(source) end,
+                "invalid operation: cannot recurse outside of recursive loop"
+            )
         end)
 
         it("undeclared-variables#templates", function ()
@@ -482,12 +477,8 @@ describe("Environment tests", function ()
             local rv = env:render_template("base.txt", { woot = "woot" })
             assert.Equal("I am from foo! woot!", rv)
 
-            assert.Error(function ()
-                env:render_template("missing.txt")
-            end)
-            assert.Error(function ()
-                env:render_template("../environment_spec.lua")
-            end)
+            assert.Error(function () env:render_template("missing.txt") end)
+            assert.Error(function () env:render_template("../environment_spec.lua") end)
         end)
 
         it("fromjson#templates", function ()
@@ -620,9 +611,7 @@ describe("Environment tests", function ()
             assert.Equal(42, env:eval(source))
 
             env:set_pycompat(false)
-            assert.Error(function ()
-                env:eval(source)
-            end)
+            assert.Error(function () env:eval(source) end)
         end)
 
         it("autoescape#callbacks", function ()
