@@ -34,4 +34,5 @@ jobs:
           LOG_LEVEL: ${{ inputs.logLevel }}
           RENOVATE_REPOSITORIES: ${{ github.repository }}
         with:
+          renovate-version: 44.62.2
           token: ${{ steps.generate-token.outputs.token }}
