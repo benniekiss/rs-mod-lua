@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.6](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.5...minijinja-lua-v0.4.6) - 2026-09-05
+
+### Fixed
+
+- *(deps)* update minijinja to 2.24.0 ([#102](https://github.com/benniekiss/rs-mod-lua/pull/102))
+
+### Other
+
+- lua cleanup
+
 ## [0.4.5](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.4...minijinja-lua-v0.4.5) - 2026-08-10
 
 ### Fixed

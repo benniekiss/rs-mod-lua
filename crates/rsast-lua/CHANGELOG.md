@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.3.0...rsast-lua-v0.3.1) - 2026-09-05
+
+### Fixed
+
+- *(deps)* update pest to 2.9.0 ([#106](https://github.com/benniekiss/rs-mod-lua/pull/106))
+
+### Other
+
+- lua cleanup
+
 ## [0.3.0](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.2.0...rsast-lua-v0.3.0) - 2026-08-10
 
 ### Added
