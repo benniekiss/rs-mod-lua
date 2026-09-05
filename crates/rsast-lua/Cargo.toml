@@ -28,7 +28,7 @@ vendored = ["mlua/vendored"]
 module = ["mlua/module"]
 
 [dependencies]
-mlua = { version = "0.12.0", features = ["macros", "serde"] }
+mlua = { version = "0.12.1", features = ["macros", "serde"] }
 pest = { version = "2.9.0", features = ["miette-error", "pretty-print"] }
 pest_meta = { version = "2.9.0", features = ["grammar-extras"] }
 pest_vm = { version = "2.9.0", features = ["grammar-extras"] }
