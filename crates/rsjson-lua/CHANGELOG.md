@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.7](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.6...rsjson-lua-v0.6.7) - 2026-09-05
+
+### Other
+
+- lua cleanup
+
 ## [0.6.6](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.5...rsjson-lua-v0.6.6) - 2026-08-10
 
 ### Other
