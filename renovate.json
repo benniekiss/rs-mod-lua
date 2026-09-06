@@ -16,7 +16,8 @@
     "git-submodules",
     "cargo",
     "pip_requirements",
-    "rust-toolchain"
+    "rust-toolchain",
+    "custom.regex"
   ],
   "git-submodules": {
     "enabled": true
