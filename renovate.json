@@ -1,64 +1,65 @@
 {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        "config:recommended",
-        ":configMigration",
-        "helpers:pinGitHubActionDigests"
-    ],
-    "prHourlyLimit": 0,
-    "prConcurrentLimit": 0,
-    "prCreation": "not-pending",
-    "minimumReleaseAge": "3 days",
-    "minimumReleaseAgeBehaviour": "timestamp-optional",
-    "enabledManagers": [
-        "github-actions",
-        "git-submodules",
-        "cargo",
-        "pip_requirements",
-        "rust-toolchain"
-    ],
-    "git-submodules": {
-        "enabled": true
-    },
-    "pip_requirements": {
-        "rangeStrategy": "pin"
-    },
-    "lockFileMaintenance": {
-        "enabled": true,
-        "schedule": [
-            "before 12pm on monday"
-        ]
-    },
-    "constraints": {
-        "rust": "nightly"
-    },
-    "packageRules": [
-        {
-            "matchPackageNames": [
-                "/pest/i"
-            ],
-            "groupName": "pest"
-        },
-        {
-            "matchPackageNames": [
-                "/minijinja/i"
-            ],
-            "groupName": "minijinja"
-        },
-        {
-            "matchManagers": [
-                "rust-toolchain"
-            ],
-            "matchDepTypes": [
-                "toolchain"
-            ],
-            "rangeStrategy": "pin"
-        },
-        {
-            "matchManagers": [
-                "cargo"
-            ],
-            "rangeStrategy": "bump"
-        }
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":configMigration",
+    "helpers:pinGitHubActionDigests",
+    "customManagers:githubActionsVersions"
+  ],
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0,
+  "prCreation": "not-pending",
+  "minimumReleaseAge": "3 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "enabledManagers": [
+    "github-actions",
+    "git-submodules",
+    "cargo",
+    "pip_requirements",
+    "rust-toolchain"
+  ],
+  "git-submodules": {
+    "enabled": true
+  },
+  "pip_requirements": {
+    "rangeStrategy": "pin"
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 12pm on monday"
     ]
+  },
+  "constraints": {
+    "rust": "nightly"
+  },
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "/pest/i"
+      ],
+      "groupName": "pest"
+    },
+    {
+      "matchPackageNames": [
+        "/minijinja/i"
+      ],
+      "groupName": "minijinja"
+    },
+    {
+      "matchManagers": [
+        "rust-toolchain"
+      ],
+      "matchDepTypes": [
+        "toolchain"
+      ],
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchManagers": [
+        "cargo"
+      ],
+      "rangeStrategy": "bump"
+    }
+  ]
 }
