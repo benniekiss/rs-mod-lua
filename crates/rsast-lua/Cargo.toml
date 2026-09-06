@@ -5,7 +5,6 @@ name = "rsast-lua"
 version = "0.3.0"
 edition = "2024"
 description = "a PEG lua module using the pest rust crate"
-readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
 keywords = ["lua", "mlua", "module", "parsing", "pest"]

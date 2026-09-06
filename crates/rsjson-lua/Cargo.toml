@@ -5,7 +5,6 @@ name = "rsjson-lua"
 version = "0.6.6"
 edition = "2024"
 description = "a json lua module using the serde-json rust crate"
-readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
 keywords = ["json", "lua", "mlua", "module", "serde-json"]
