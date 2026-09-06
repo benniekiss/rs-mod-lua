@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       package:
-        description: 'Package to build and upload'
+        description: "Package to build and upload"
         required: false
         type: string
       skip_release_upload:
-        description: 'Skip release upload'
+        description: "Skip release upload"
         required: true
         default: true
         type: boolean
       skip_luarocks_upload:
-        description: 'Skip luarocks upload'
+        description: "Skip luarocks upload"
         required: true
         default: true
         type: boolean
@@ -21,6 +21,7 @@ on:
     types: [published]
 
 env:
+  LUX_PROFILE: release
   PACKAGE: |-
     ${{ case(
       startsWith(github.ref_name, 'minijinja-lua'), 'minijinja-lua',
@@ -69,7 +70,7 @@ jobs:
       - name: Upload rock
         env:
           LUX_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
-        run: lx --lua-version ${{ env.LUA_VERSION }} upload --package ${{ env.PACKAGE }}
+        run: lx --lua-version ${{ env.LUA_VERSION }} --profile ${{ env.LUX_PROFILE }} upload --package ${{ env.PACKAGE }}
 
   build-release:
     name: ${{ matrix.job.target }}-${{ matrix.lua_version }}
@@ -92,7 +93,6 @@ jobs:
       CARGO_NET_RETRY: 10
       CARGO_TERM_COLOR: always
       RUST_BACKTRACE: 1
-      RUSTFLAGS: -D warnings
       RUSTUP_MAX_RETRIES: 10
 
     steps:
@@ -117,12 +117,12 @@ jobs:
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          lx --lua-version ${{ env.LUA_VERSION }} pack ${{ env.PACKAGE }}
+          lx --lua-version ${{ env.LUA_VERSION }} --profile ${{ env.LUX_PROFILE }} pack ${{ env.PACKAGE }}
 
       - name: Build rock (unix)
         if: ${{ !endsWith(matrix.job.target, '-msvc') }}
         run: |
-          lx --lua-version ${{ env.LUA_VERSION }} pack ${{ env.PACKAGE }}
+          lx --lua-version ${{ env.LUA_VERSION }} --profile ${{ env.LUX_PROFILE }} pack ${{ env.PACKAGE }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

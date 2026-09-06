@@ -19,6 +19,7 @@ lto = true
 panic = "unwind"
 codegen-units = 1
 rustflags = [
+  "-Dwarnings",
   "-Zlocation-detail=none",
   "-Zfmt-debug=none",
 ]
