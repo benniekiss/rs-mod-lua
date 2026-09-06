@@ -8,7 +8,6 @@
   ],
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
-  "prCreation": "not-pending",
   "minimumReleaseAge": "3 days",
   "minimumReleaseAgeBehaviour": "timestamp-optional",
   "enabledManagers": [
