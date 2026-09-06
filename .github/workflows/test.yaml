@@ -138,6 +138,8 @@ jobs:
       fail-fast: false
       matrix:
         package: ${{ fromJSON(needs.filters.outputs.packages) }}
+        exclude:
+          - package: shared
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
