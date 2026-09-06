@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.6...rsjson-lua-v0.7.0) - 2026-09-06
+
+### Added
+
+- [**breaking**] bump lux package versions
+
+### Fixed
+
+- correct busted config
+- use correct library/ types paths
+- use correct root_dir path
+
+### Other
+
+- remove unneeded `readme` config
+- deduplicate workspace config
+- lua cleanup
+
 ## [0.6.6](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.6.5...rsjson-lua-v0.6.6) - 2026-08-10
 
 ### Other

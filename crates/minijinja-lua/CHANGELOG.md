@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.5...minijinja-lua-v0.5.0) - 2026-09-06
+
+### Added
+
+- [**breaking**] bump lux package versions
+
+### Fixed
+
+- correct busted config
+- use correct library/ types paths
+- use correct root_dir path
+- *(deps)* update minijinja to 2.24.0 ([#102](https://github.com/benniekiss/rs-mod-lua/pull/102))
+
+### Other
+
+- remove unneeded `readme` config
+- deduplicate workspace config
+- lua cleanup
+
 ## [0.4.5](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.4.4...minijinja-lua-v0.4.5) - 2026-08-10
 
 ### Fixed
