@@ -27,7 +27,7 @@ features = ["module", "contrib"]
 "minijinja" = "minijinja_lua"
 
 [build.include]
-"library/minijinja.d.lua" = "minijinja.d.lua"
+"crates/minijinja-lua/library/minijinja.d.lua" = "minijinja.d.lua"
 
 [test]
 type = "busted"

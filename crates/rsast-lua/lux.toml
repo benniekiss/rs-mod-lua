@@ -27,7 +27,7 @@ features = ["module"]
 "rsast" = "rsast_lua"
 
 [build.include]
-"library/rsast.d.lua" = "rsast.d.lua"
+"crates/rsast-lua/library/rsast.d.lua" = "rsast.d.lua"
 
 [test]
 type = "busted"

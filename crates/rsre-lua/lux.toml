@@ -27,7 +27,7 @@ features = ["module"]
 "rsre" = "rsre_lua"
 
 [build.include]
-"library/rsre.d.lua" = "rsre.d.lua"
+"crates/rsre-lua/library/rsre.d.lua" = "rsre.d.lua"
 
 [test]
 type = "busted"
