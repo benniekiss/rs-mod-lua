@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.4.0...rsast-lua-v0.4.1) - 2026-09-06
+
+### Fixed
+
+- remove cargo-features from child crates
+
+### Other
+
+- bump lux package versions
+
 ## [0.4.0](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.3.0...rsast-lua-v0.4.0) - 2026-09-06
 
 ### Added
