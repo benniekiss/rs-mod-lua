@@ -2,6 +2,9 @@ package = "rsjson-lua"
 version = "0.6.6"
 lua = ">=5.1"
 
+[project]
+root_dir = ".."
+
 [description]
 summary = "a json lua module using the serde-json rust crate"
 maintainer = "benniekiss"
@@ -16,7 +19,8 @@ dev = "git+https://github.com/benniekiss/rs-mod-lua"
 dir = "rs-mod-lua-$(PACKAGE)-v$(VERSION)/crates/$(PACKAGE)"
 
 [build]
-type = "rust-mlua"
+type = "rust-binary"
+cargo_extra_args = ["--package", "rsjson-lua", "--locked"]
 default_features = false
 features = ["module"]
 

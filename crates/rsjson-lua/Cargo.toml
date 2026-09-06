@@ -1,48 +1,40 @@
-cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 
 [package]
 name = "rsjson-lua"
 version = "0.6.6"
 edition = "2024"
+description = "a json lua module using the serde-json rust crate"
 readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
-description = "a json lua module using the serde-json rust crate"
-keywords = ["serde-json", "json", "module", "mlua", "lua"]
+keywords = ["json", "lua", "mlua", "module", "serde-json"]
 categories = ["encoding"]
 
 [lib]
-name = "rsjson_lua"
 crate-type = ["cdylib", "rlib"]
+name = "rsjson_lua"
+
+[dependencies]
+mlua = { workspace = true, features = ["macros", "serde"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = {
+  version = "1.0.151",
+  features = [
+    "float_roundtrip",
+    "preserve_order",
+  ]
+}
 
 [features]
 default = ["lua54", "vendored"]
-lua55 = ["mlua/lua55"]
-lua54 = ["mlua/lua54"]
-lua53 = ["mlua/lua53"]
-lua52 = ["mlua/lua52"]
+arbitrary_precision = ["serde_json/arbitrary_precision"]
 lua51 = ["mlua/lua51"]
+lua52 = ["mlua/lua52"]
+lua53 = ["mlua/lua53"]
+lua54 = ["mlua/lua54"]
+lua55 = ["mlua/lua55"]
 luajit = ["mlua/luajit"]
 luajit52 = ["mlua/luajit52"]
-vendored = ["mlua/vendored"]
 module = ["mlua/module"]
-arbitrary_precision = ["serde_json/arbitrary_precision"]
-
-[dependencies]
-mlua = { version = "0.12.0", features = ["serde", "macros"] }
-serde = { version = "1.0.229", features = ["derive"] }
-serde_json = { version = "1.0.151", features = [
-    "preserve_order",
-    "float_roundtrip",
-] }
-
-[profile.release]
-strip = true
-opt-level = 3
-lto = true
-panic = "unwind"
-codegen-units = 1
-rustflags = [
-    "-Zlocation-detail=none",
-    "-Zfmt-debug=none",
-]
+vendored = ["mlua/vendored"]

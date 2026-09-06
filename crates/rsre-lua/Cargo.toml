@@ -1,43 +1,32 @@
-cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 
 [package]
 name = "rsre-lua"
 version = "0.3.6"
 edition = "2024"
+description = "a regex lua module using the fancy-regex rust crate"
 readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
-description = "a regex lua module using the fancy-regex rust crate"
-keywords = ["fancy-regex", "regex", "module", "mlua", "lua"]
+keywords = ["fancy-regex", "lua", "mlua", "module", "regex"]
 categories = ["text-processing"]
 
 [lib]
-name = "rsre_lua"
 crate-type = ["cdylib", "rlib"]
-
-[features]
-default = ["lua54", "vendored"]
-lua55 = ["mlua/lua55"]
-lua54 = ["mlua/lua54"]
-lua53 = ["mlua/lua53"]
-lua52 = ["mlua/lua52"]
-lua51 = ["mlua/lua51"]
-luajit = ["mlua/luajit"]
-luajit52 = ["mlua/luajit52"]
-vendored = ["mlua/vendored"]
-module = ["mlua/module"]
+name = "rsre_lua"
 
 [dependencies]
 fancy-regex = "0.19.0"
-mlua = { version = "0.12.0", features = ["macros"] }
+mlua = { workspace = true, features = ["macros"] }
 
-[profile.release]
-strip = true
-opt-level = "z"
-lto = true
-panic = "unwind"
-codegen-units = 1
-rustflags = [
-    "-Zlocation-detail=none",
-    "-Zfmt-debug=none",
-]
+[features]
+default = ["lua54", "vendored"]
+lua51 = ["mlua/lua51"]
+lua52 = ["mlua/lua52"]
+lua53 = ["mlua/lua53"]
+lua54 = ["mlua/lua54"]
+lua55 = ["mlua/lua55"]
+luajit = ["mlua/luajit"]
+luajit52 = ["mlua/luajit52"]
+module = ["mlua/module"]
+vendored = ["mlua/vendored"]

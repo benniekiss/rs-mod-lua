@@ -2,6 +2,9 @@ package = "rsre-lua"
 version = "0.3.6"
 lua = ">=5.1"
 
+[project]
+root_dir = ".."
+
 [description]
 summary = "a regex lua module using the fancy-regex rust crate"
 maintainer = "benniekiss"
@@ -16,7 +19,8 @@ dev = "git+https://github.com/benniekiss/rs-mod-lua"
 dir = "rs-mod-lua-$(PACKAGE)-v$(VERSION)/crates/$(PACKAGE)"
 
 [build]
-type = "rust-mlua"
+type = "rust-binary"
+cargo_extra_args = ["--package", "rsast-lua", "--locked"]
 default_features = false
 features = ["module"]
 

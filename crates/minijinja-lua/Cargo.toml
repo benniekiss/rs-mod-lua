@@ -1,71 +1,71 @@
-cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 
 [package]
 name = "minijinja-lua"
 version = "0.4.5"
 edition = "2024"
+description = "a minijinja lua module using the minijinja rust crate"
 readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
-description = "a minijinja lua module using the minijinja rust crate"
-keywords = ["minijinja", "templating", "module", "mlua", "lua"]
+keywords = ["lua", "minijinja", "mlua", "module", "templating"]
 categories = ["template-engine"]
 
 [lib]
-name = "minijinja_lua"
 crate-type = ["cdylib", "rlib"]
-
-[features]
-default = ["lua54", "vendored", "contrib"]
-lua55 = ["mlua/lua55"]
-lua54 = ["mlua/lua54"]
-lua53 = ["mlua/lua53"]
-lua52 = ["mlua/lua52"]
-lua51 = ["mlua/lua51"]
-luajit = ["mlua/luajit"]
-luajit52 = ["mlua/luajit52"]
-vendored = ["mlua/vendored"]
-module = ["mlua/module"]
-contrib = ["minijinja-contrib", "json", "datetime"]
-minijinja-contrib = ["dep:minijinja-contrib"]
-json = ["dep:serde_json"]
-datetime = ["dep:jiff"]
+name = "minijinja_lua"
 
 [dependencies]
-jiff = { version = "0.2.35", optional = true, features = ["serde"] }
-minijinja = { version = "2.24.0", features = [
-    "unicode",
-    "fuel",
+jiff = { version = "0.2.35", features = ["serde"], optional = true }
+minijinja = {
+  version = "2.24.0",
+  features = [
     "custom_syntax",
-    "preserve_order",
+    "fuel",
     "json",
-    "urlencode",
     "loop_controls",
+    "preserve_order",
     "speedups",
     "stacker",
-] }
-minijinja-contrib = { version = "2.24.0", features = [
-    "pycompat",
+    "unicode",
+    "urlencode",
+  ]
+}
+minijinja-contrib = {
+  version = "2.24.0",
+  features = [
     "datetime",
-    "rand",
     "html_entities",
-    "wordcount",
+    "pycompat",
+    "rand",
     "unicode_wordwrap",
-], optional = true }
-mlua = { version = "0.12.0", features = ["serde", "macros"] }
+    "wordcount",
+  ],
+  optional = true
+}
+mlua = { workspace = true, features = ["macros", "serde"] }
 serde = { version = "1.0.229", features = ["derive"] }
-serde_json = { version = "1.0.151", features = [
-    "preserve_order",
+serde_json = {
+  version = "1.0.151",
+  features = [
     "float_roundtrip",
-], optional = true }
+    "preserve_order",
+  ],
+  optional = true
+}
 
-[profile.release]
-strip = true
-opt-level = "z"
-lto = true
-panic = "unwind"
-codegen-units = 1
-rustflags = [
-    "-Zlocation-detail=none",
-    "-Zfmt-debug=none",
-]
+[features]
+default = ["contrib", "lua54", "vendored"]
+contrib = ["datetime", "json", "minijinja-contrib"]
+datetime = ["dep:jiff"]
+json = ["dep:serde_json"]
+lua51 = ["mlua/lua51"]
+lua52 = ["mlua/lua52"]
+lua53 = ["mlua/lua53"]
+lua54 = ["mlua/lua54"]
+lua55 = ["mlua/lua55"]
+luajit = ["mlua/luajit"]
+luajit52 = ["mlua/luajit52"]
+minijinja-contrib = ["dep:minijinja-contrib"]
+module = ["mlua/module"]
+vendored = ["mlua/vendored"]

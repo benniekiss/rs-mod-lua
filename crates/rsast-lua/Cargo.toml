@@ -1,34 +1,22 @@
-cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 
 [package]
 name = "rsast-lua"
 version = "0.3.0"
 edition = "2024"
+description = "a PEG lua module using the pest rust crate"
 readme = "README.md"
 repository = "https://github.com/benniekiss/rs-mod-lua"
 license = "MIT"
-description = "a PEG lua module using the pest rust crate"
-keywords = ["pest", "parsing", "module", "mlua", "lua"]
+keywords = ["lua", "mlua", "module", "parsing", "pest"]
 categories = ["parsing"]
 
 [lib]
-name = "rsast_lua"
 crate-type = ["cdylib", "rlib"]
-
-[features]
-default = ["lua54", "vendored"]
-lua55 = ["mlua/lua55"]
-lua54 = ["mlua/lua54"]
-lua53 = ["mlua/lua53"]
-lua52 = ["mlua/lua52"]
-lua51 = ["mlua/lua51"]
-luajit = ["mlua/luajit"]
-luajit52 = ["mlua/luajit52"]
-vendored = ["mlua/vendored"]
-module = ["mlua/module"]
+name = "rsast_lua"
 
 [dependencies]
-mlua = { version = "0.12.0", features = ["macros", "serde"] }
+mlua = { workspace = true, features = ["macros", "serde"] }
 pest = { version = "2.9.0", features = ["miette-error", "pretty-print"] }
 pest_meta = { version = "2.9.0", features = ["grammar-extras"] }
 pest_vm = { version = "2.9.0", features = ["grammar-extras"] }
@@ -37,13 +25,14 @@ serde = { version = "1.0.229", features = ["derive", "rc"] }
 [dev-dependencies]
 pest_derive = "2.9.0"
 
-[profile.release]
-strip = true
-opt-level = 3
-lto = true
-panic = "unwind"
-codegen-units = 1
-rustflags = [
-    # "-Zlocation-detail=none",
-    # "-Zfmt-debug=none",
-]
+[features]
+default = ["lua54", "vendored"]
+lua51 = ["mlua/lua51"]
+lua52 = ["mlua/lua52"]
+lua53 = ["mlua/lua53"]
+lua54 = ["mlua/lua54"]
+lua55 = ["mlua/lua55"]
+luajit = ["mlua/luajit"]
+luajit52 = ["mlua/luajit52"]
+module = ["mlua/module"]
+vendored = ["mlua/vendored"]

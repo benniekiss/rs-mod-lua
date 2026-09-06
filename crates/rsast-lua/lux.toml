@@ -16,7 +16,8 @@ dev = "git+https://github.com/benniekiss/rs-mod-lua"
 dir = "rs-mod-lua-$(PACKAGE)-v$(VERSION)/crates/$(PACKAGE)"
 
 [build]
-type = "rust-mlua"
+type = "rust-binary"
+cargo_extra_args = ["--package", "rsast-lua", "--locked"]
 default_features = false
 features = ["module"]
 

@@ -1,24 +1,30 @@
-cargo-features = ["profile-rustflags", "panic-immediate-abort"]
+cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 
 [workspace]
 resolver = "3"
 members = [
-    "crates/minijinja-lua",
-    "crates/rsast-lua",
-    "crates/rsjson-lua",
-    "crates/rsre-lua",
+  "crates/minijinja-lua",
+  "crates/rsast-lua",
+  "crates/rsjson-lua",
+  "crates/rsre-lua",
 ]
 
+[workspace.dependencies]
+mlua = { version = "0.12.0" }
+
 [profile.release]
-strip = true
 opt-level = "z"
+strip = true
 lto = true
-panic = "immediate-abort"
+panic = "unwind"
 codegen-units = 1
 rustflags = [
-    "-Zlocation-detail=none",
-    "-Zfmt-debug=none",
+  "-Zlocation-detail=none",
+  "-Zfmt-debug=none",
 ]
 
 [profile.release.package.rsjson-lua]
+opt-level = 3
+
+[profile.release.package.rsre-lua]
 opt-level = 3
