@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       package:
-        description: 'Package to test'
+        description: "Package to test"
         required: false
         type: choice
         default: all
@@ -50,10 +50,22 @@ jobs:
         id: filter
         with:
           filters: |
-            minijinja-lua: 'crates/minijinja-lua/**'
-            rsast-lua: 'crates/rsast-lua/**'
-            rsjson-lua: 'crates/rsjson-lua/**'
-            rsre-lua: 'crates/rsre-lua/**'
+            shared: &shared
+              - Cargo.toml
+              - rust-toolchain.toml
+              - .cargo/config.toml
+            minijinja-lua:
+              - *shared
+              - 'crates/minijinja-lua/**'
+            rsast-lua:
+              - *shared
+              - 'crates/rsast-lua/**'
+            rsjson-lua:
+              - *shared
+              - 'crates/rsjson-lua/**'
+            rsre-lua:
+              - *shared
+              - 'crates/rsre-lua/**'
 
   lx-test:
     # Do not run if no packages were changed or on release-plz PRs
