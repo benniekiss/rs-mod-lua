@@ -2,7 +2,7 @@ cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 
 [package]
 name = "rsjson-lua"
-version = "0.6.6"
+version = "0.7.0"
 edition = "2024"
 description = "a json lua module using the serde-json rust crate"
 repository = "https://github.com/benniekiss/rs-mod-lua"

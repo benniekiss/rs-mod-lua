@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.3.0...rsast-lua-v0.4.0) - 2026-09-06
+
+### Added
+
+- [**breaking**] bump lux package versions
+
+### Fixed
+
+- *(deps)* update pest to 2.9.1 ([#135](https://github.com/benniekiss/rs-mod-lua/pull/135))
+- correct busted config
+- use correct library/ types paths
+- use correct root_dir path
+- *(deps)* update pest to 2.9.0 ([#106](https://github.com/benniekiss/rs-mod-lua/pull/106))
+
+### Other
+
+- remove unneeded `readme` config
+- deduplicate workspace config
+- lua cleanup
+
 ## [0.3.0](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.2.0...rsast-lua-v0.3.0) - 2026-08-10
 
 ### Added
