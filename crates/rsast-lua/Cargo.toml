@@ -16,13 +16,13 @@ name = "rsast_lua"
 
 [dependencies]
 mlua = { workspace = true, features = ["macros", "serde"] }
-pest = { version = "2.9.0", features = ["miette-error", "pretty-print"] }
-pest_meta = { version = "2.9.0", features = ["grammar-extras"] }
-pest_vm = { version = "2.9.0", features = ["grammar-extras"] }
+pest = { version = "2.9.1", features = ["miette-error", "pretty-print"] }
+pest_meta = { version = "2.9.1", features = ["grammar-extras"] }
+pest_vm = { version = "2.9.1", features = ["grammar-extras"] }
 serde = { version = "1.0.229", features = ["derive", "rc"] }
 
 [dev-dependencies]
-pest_derive = "2.9.0"
+pest_derive = "2.9.1"
 
 [features]
 default = ["lua54", "vendored"]
