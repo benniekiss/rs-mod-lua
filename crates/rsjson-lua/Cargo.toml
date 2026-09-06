@@ -1,5 +1,3 @@
-cargo-features = ["panic-immediate-abort", "profile-rustflags"]
-
 [package]
 name = "rsjson-lua"
 version = "0.7.0"
