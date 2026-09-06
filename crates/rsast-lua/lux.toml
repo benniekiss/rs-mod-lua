@@ -31,6 +31,7 @@ features = ["module"]
 
 [test]
 type = "busted"
+flags = ["-C", "crates/rsast-lua"]
 
 # [test_dependencies]
 # luamark = "1.1.2-1"

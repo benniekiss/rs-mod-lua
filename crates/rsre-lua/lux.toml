@@ -19,7 +19,7 @@ dev = "git+https://github.com/benniekiss/rs-mod-lua"
 
 [build]
 type = "rust-mlua"
-cargo_extra_args = ["--package", "rsast-lua", "--locked"]
+cargo_extra_args = ["--package", "rsre-lua", "--locked"]
 default_features = false
 features = ["module"]
 
@@ -31,3 +31,4 @@ features = ["module"]
 
 [test]
 type = "busted"
+flags = ["-C", "crates/rsre-lua"]

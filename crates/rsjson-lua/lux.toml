@@ -31,6 +31,7 @@ features = ["module"]
 
 [test]
 type = "busted"
+flags = ["-C", "crates/rsjson-lua"]
 
 # [test_dependencies]
 # rapidjson = "0.7.2-1"

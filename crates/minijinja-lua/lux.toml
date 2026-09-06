@@ -31,3 +31,4 @@ features = ["module", "contrib"]
 
 [test]
 type = "busted"
+flags = ["-C", "crates/minijinja-lua"]
