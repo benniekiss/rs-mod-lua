@@ -1,6 +1,9 @@
 [unstable]
-build-std = ["std", "panic_abort"]
-build-std-features = ["optimize_for_size"]
+build-std = ["std"]
+build-std-features = [
+  "optimize_for_size",
+  "panic-unwind",
+]
 
 [target.aarch64-apple-darwin]
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
