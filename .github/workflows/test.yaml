@@ -91,6 +91,8 @@ jobs:
           # - "jit"
           # - "jit52"
         package: ${{ fromJSON(needs.filters.outputs.packages) }}
+        exclude:
+          - package: shared
 
     steps:
       - name: install readline headers
