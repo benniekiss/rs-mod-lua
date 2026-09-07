@@ -3,6 +3,12 @@ release = false
 publish = false
 
 [[package]]
+name = "rs-mod-lua-core"
+release = true
+publish = true
+git_release_enable = false
+
+[[package]]
 name = "minijinja-lua"
 release = true
 publish = true
