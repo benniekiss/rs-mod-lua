@@ -1,5 +1,5 @@
 package = "rsjson-lua"
-version = "0.7.1"
+version = "0.7.2"
 lua = ">=5.1"
 
 [project]
