@@ -96,9 +96,8 @@ jobs:
           # - "jit52"
         package: ${{ fromJSON(needs.filters.outputs.packages) }}
         exclude:
-          - package:
-              - shared
-              - rs-mod-lua-core
+          - package: shared
+          - package: rs-mod-lua-core
 
     steps:
       - name: install readline headers
