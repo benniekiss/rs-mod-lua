@@ -5,7 +5,7 @@ use rsjson_lua::config::{DecodeConfig, EncodeConfig};
 
 use crate::{
     draft::LuaDraft,
-    lua::{bind_lua, lua_to_json, with_lua},
+    lua::lua_to_json,
     retriever::LuaRetriever,
     validator::{LuaValidator, LuaValidatorMap},
 };

@@ -1,9 +1,6 @@
 use core::fmt;
 
-use crate::{
-    lua::{lua_to_json, with_lua},
-    uri::LuaUri,
-};
+use crate::{lua::lua_to_json, uri::LuaUri};
 
 #[derive(Debug)]
 pub(crate) struct LuaRetrieveError(String);

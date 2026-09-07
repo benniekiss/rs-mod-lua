@@ -1,10 +1,6 @@
 use rsjson_lua::config::EncodeConfig;
 
-use crate::{
-    draft::LuaDraft,
-    evaluation::LuaEvaluation,
-    lua::{bind_lua, lua_to_json},
-};
+use crate::{draft::LuaDraft, evaluation::LuaEvaluation, lua::lua_to_json};
 
 #[derive(mlua::UserData)]
 pub(crate) struct LuaValidator(jsonschema::Validator);

@@ -21,6 +21,7 @@ jsonschema = {
   ]
 }
 mlua = { workspace = true, features = ["macros", "serde"] }
+rs-mod-lua-core = { workspace = true }
 rsjson-lua = { version = "0.6.5", default-features = false }
 serde = "1.0.229"
 serde_json = {
