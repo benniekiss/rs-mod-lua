@@ -431,6 +431,7 @@ dependencies = [
  "minijinja",
  "minijinja-contrib",
  "mlua",
+ "rs-mod-lua-core",
  "serde",
  "serde_json",
 ]

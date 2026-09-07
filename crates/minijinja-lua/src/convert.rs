@@ -28,12 +28,10 @@ use minijinja::{
     },
 };
 use mlua::{LuaSerdeExt, ObjectLike};
+use rs_mod_lua_core::guard::with_lua;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-use crate::{
-    lua::with_lua,
-    state::{LuaState, LuaStateMut, LuaStateRef},
-};
+use crate::state::{LuaState, LuaStateMut, LuaStateRef};
 
 #[derive(Debug, Clone)]
 pub(crate) struct LuaJinjaObjectWrapper<V> {

@@ -11,18 +11,16 @@ use minijinja::{
     value::{Rest as JinjaRest, Value as JinjaValue},
 };
 use mlua::LuaSerdeExt;
+use rs_mod_lua_core::guard::bind_lua;
 
-use crate::{
-    convert::{
-        LuaAutoEscape,
-        LuaFunctionObject,
-        LuaSyntaxConfig,
-        LuaTableObject,
-        LuaUndefinedBehavior,
-        lua_to_minijinja,
-        minijinja_to_lua,
-    },
-    lua::bind_lua,
+use crate::convert::{
+    LuaAutoEscape,
+    LuaFunctionObject,
+    LuaSyntaxConfig,
+    LuaTableObject,
+    LuaUndefinedBehavior,
+    lua_to_minijinja,
+    minijinja_to_lua,
 };
 
 /// A wrapper around a [`minijinja::Environment`]. This wrapper can be serialized into
