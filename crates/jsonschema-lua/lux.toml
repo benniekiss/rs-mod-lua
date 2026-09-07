@@ -2,6 +2,9 @@ package = "jsonschema-lua"
 version = "0.1.0"
 lua = ">=5.1"
 
+[project]
+root_dir = "../.."
+
 [description]
 summary = "a json schema validation lua module using the jsonschema rust crate"
 maintainer = "benniekiss"
@@ -13,10 +16,10 @@ license = "MIT"
 [source]
 url = "https://github.com/benniekiss/rs-mod-lua/archive/refs/tags/$(PACKAGE)-v$(VERSION).zip"
 dev = "git+https://github.com/benniekiss/rs-mod-lua"
-dir = "rs-mod-lua-$(PACKAGE)-v$(VERSION)/crates/$(PACKAGE)"
 
 [build]
 type = "rust-mlua"
+cargo_extra_args = ["--package", "jsonschema-lua", "--locked"]
 default_features = false
 features = ["module"]
 
