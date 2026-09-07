@@ -10,6 +10,7 @@ on:
         default: all
         options:
           - all
+          - rs-mod-lua-core
           - minijinja-lua
           - rsast-lua
           - rsjson-lua
@@ -23,6 +24,7 @@ on:
 env:
   ALL_PACKAGES: |-
     [
+      "rs-mod-lua-core",
       "minijinja-lua",
       "rsast-lua",
       "rsjson-lua",
@@ -53,6 +55,9 @@ jobs:
             shared: &shared
               - rust-toolchain.toml
               - .cargo/config.toml
+            rs-mod-lua-core:
+              - *shared
+              - crates/rs-mod-lua-core/**
             minijinja-lua:
               - *shared
               - 'crates/minijinja-lua/**'
@@ -92,6 +97,7 @@ jobs:
         package: ${{ fromJSON(needs.filters.outputs.packages) }}
         exclude:
           - package: shared
+          - package: rs-mod-lua-core
 
     steps:
       - name: install readline headers

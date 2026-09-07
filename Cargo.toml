@@ -4,6 +4,7 @@ cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 resolver = "3"
 members = [
   "crates/minijinja-lua",
+  "crates/rs-mod-lua-core",
   "crates/rsast-lua",
   "crates/rsjson-lua",
   "crates/rsre-lua",
@@ -11,6 +12,7 @@ members = [
 
 [workspace.dependencies]
 mlua = { version = "0.12.1" }
+rs-mod-lua-core = { path = "crates/rs-mod-lua-core" }
 
 [profile.release]
 opt-level = "z"

@@ -1,0 +1,27 @@
+[package]
+name = "rs-mod-lua-core"
+version = "0.1.0"
+edition = "2024"
+description = "core crate for rs-mod-lua modules"
+repository = "https://github.com/benniekiss/rs-mod-lua"
+license = "MIT"
+keywords = ["lua", "mlua", "module"]
+
+[lib]
+crate-type = ["lib"]
+name = "rs_mod_lua_core"
+
+[dependencies]
+mlua = { workspace = true }
+
+[features]
+default = ["lua54", "vendored"]
+lua51 = ["mlua/lua51"]
+lua52 = ["mlua/lua52"]
+lua53 = ["mlua/lua53"]
+lua54 = ["mlua/lua54"]
+lua55 = ["mlua/lua55"]
+luajit = ["mlua/luajit"]
+luajit52 = ["mlua/luajit52"]
+module = ["mlua/module"]
+vendored = ["mlua/vendored"]
