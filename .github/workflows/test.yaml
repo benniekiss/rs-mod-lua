@@ -51,7 +51,6 @@ jobs:
         with:
           filters: |
             shared: &shared
-              - Cargo.toml
               - rust-toolchain.toml
               - .cargo/config.toml
             minijinja-lua:
