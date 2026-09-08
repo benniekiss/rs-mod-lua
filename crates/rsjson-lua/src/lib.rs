@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pub mod config;
 mod decode;
 mod encode;
 
-use config::{DecodeConfig, EncodeConfig};
 use mlua::LuaSerdeExt;
+use rs_mod_lua_core::config::{DecodeConfig, EncodeConfig};
 
 #[cfg_attr(feature = "module", mlua::lua_module(name = "rsjson"))]
 pub fn rsjson_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
