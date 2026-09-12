@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.7.1...rsjson-lua-v0.7.2) - 2026-09-12
+
+### Added
+
+- move encode/decode config to core crate
+- add core crate to share code across lua modules ([#139](https://github.com/benniekiss/rs-mod-lua/pull/139))
+
+### Fixed
+
+- cleanup project features
+- mark encode/decode userdata methods as "must_use"
+
+### Other
+
+- bump lux package versions
+
 ## [0.7.1](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.7.0...rsjson-lua-v0.7.1) - 2026-09-06
 
 ### Fixed

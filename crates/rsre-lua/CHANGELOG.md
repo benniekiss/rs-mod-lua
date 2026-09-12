@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.4.1...rsre-lua-v0.4.2) - 2026-09-12
+
+### Added
+
+- add core crate to share code across lua modules ([#139](https://github.com/benniekiss/rs-mod-lua/pull/139))
+
+### Other
+
+- bump lux package versions
+
 ## [0.4.1](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.4.0...rsre-lua-v0.4.1) - 2026-09-06
 
 ### Fixed
