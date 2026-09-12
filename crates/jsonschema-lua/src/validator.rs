@@ -1,4 +1,4 @@
-use rsjson_lua::config::EncodeConfig;
+use rs_mod_lua_core::config::EncodeConfig;
 
 use crate::{draft::LuaDraft, evaluation::LuaEvaluation, lua::lua_to_json};
 

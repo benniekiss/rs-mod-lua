@@ -1,7 +1,7 @@
 use core::fmt;
 
 use mlua::LuaSerdeExt;
-use rsjson_lua::config::EncodeConfig;
+use rs_mod_lua_core::config::EncodeConfig;
 use serde::{Deserialize, Serialize};
 
 use crate::lua::lua_to_json;

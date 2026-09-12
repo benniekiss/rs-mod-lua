@@ -1,5 +1,5 @@
 use mlua::LuaSerdeExt;
-use rsjson_lua::config::{DecodeConfig, EncodeConfig};
+use rs_mod_lua_core::config::{DecodeConfig, EncodeConfig};
 
 use crate::{
     draft::draft_lua,
