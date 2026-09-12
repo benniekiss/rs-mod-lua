@@ -1,7 +1,10 @@
 use std::ops::Deref;
 
 use mlua::LuaSerdeExt;
-use rs_mod_lua_core::config::{DecodeConfig, EncodeConfig};
+use rs_mod_lua_core::{
+    config::{DecodeConfig, EncodeConfig},
+    guard::{bind_lua, with_lua},
+};
 
 use crate::{
     draft::LuaDraft,

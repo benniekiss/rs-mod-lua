@@ -1,5 +1,10 @@
 use core::fmt;
 
+use rs_mod_lua_core::{
+    config::{DecodeConfig, EncodeConfig},
+    guard::with_lua,
+};
+
 use crate::{lua::lua_to_json, uri::LuaUri};
 
 #[derive(Debug)]
@@ -21,14 +26,11 @@ impl From<mlua::Error> for LuaRetrieveError {
 
 pub(crate) struct LuaRetriever {
     key: mlua::RegistryKey,
-    options: Option<rsjson_lua::config::EncodeConfig>,
+    options: Option<EncodeConfig>,
 }
 
 impl LuaRetriever {
-    pub(crate) fn new(
-        key: mlua::RegistryKey,
-        options: Option<rsjson_lua::config::EncodeConfig>,
-    ) -> Self {
+    pub(crate) fn new(key: mlua::RegistryKey, options: Option<EncodeConfig>) -> Self {
         Self { key, options }
     }
 }
