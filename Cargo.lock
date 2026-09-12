@@ -727,6 +727,7 @@ name = "rsjson-lua"
 version = "0.7.1"
 dependencies = [
  "mlua",
+ "rs-mod-lua-core",
  "serde",
  "serde_json",
 ]

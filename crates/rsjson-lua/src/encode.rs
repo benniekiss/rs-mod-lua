@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
+use rs_mod_lua_core::config::EncodeConfig;
 use serde::Serialize;
 use serde_json::ser::{PrettyFormatter, Serializer};
-
-use crate::config::EncodeConfig;
 
 /// Serialize an `mlua::Value` to a JSON string.
 pub(crate) fn encode(
@@ -17,7 +16,6 @@ pub(crate) fn encode(
         Some(config) => {
             let obj = value
                 .to_serializable()
-                .sort_keys(config.sort_keys)
                 .encode_empty_tables_as_array(config.encode_empty_tables_as_array)
                 .detect_mixed_tables(config.detect_mixed_tables)
                 .deny_unsupported_types(config.deny_unsupported_types)

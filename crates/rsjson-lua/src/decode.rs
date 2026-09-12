@@ -3,9 +3,8 @@
 use std::fmt;
 
 use mlua::LuaSerdeExt;
+use rs_mod_lua_core::config::DecodeConfig;
 use serde::de::{self, DeserializeSeed, MapAccess, SeqAccess, Visitor};
-
-use crate::config::DecodeConfig;
 
 pub(crate) struct LuaJsonDeserializer<'lua> {
     lua: &'lua mlua::Lua,
