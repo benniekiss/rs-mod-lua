@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.5.1...minijinja-lua-v0.5.2) - 2026-09-12
+
+### Added
+
+- use core module in minijinja-lua ([#141](https://github.com/benniekiss/rs-mod-lua/pull/141))
+- add core crate to share code across lua modules ([#139](https://github.com/benniekiss/rs-mod-lua/pull/139))
+
+### Other
+
+- bump lux package versions
+
 ## [0.5.1](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.5.0...minijinja-lua-v0.5.1) - 2026-09-06
 
 ### Fixed
