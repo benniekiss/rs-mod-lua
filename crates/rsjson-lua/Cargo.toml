@@ -14,7 +14,7 @@ name = "rsjson_lua"
 
 [dependencies]
 mlua = { workspace = true, features = ["macros", "serde"] }
-rs-mod-lua-core = { workspace = true }
+rs-mod-lua-core = { workspace = true, default-features = false, features = ["serde"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = {
   version = "1.0.151",
