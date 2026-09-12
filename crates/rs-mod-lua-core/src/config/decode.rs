@@ -59,6 +59,7 @@ impl DecodeConfig {
         self.options.serialize_unit_to_null && self.options.serialize_none_to_null
     }
 
+    #[must_use]
     #[lua(name = "set_null", infallible)]
     pub fn lua_set_null(&mut self, enable: bool) -> Self {
         self.options = self
@@ -73,6 +74,7 @@ impl DecodeConfig {
         self.cast_u64_to_f64
     }
 
+    #[must_use]
     #[lua(name = "set_cast_u64_to_f64", infallible)]
     pub fn lua_set_cast_u64_to_f64(&mut self, enable: bool) -> Self {
         self.cast_u64_to_f64 = enable;
@@ -84,6 +86,7 @@ impl DecodeConfig {
         self.options.set_array_metatable
     }
 
+    #[must_use]
     #[lua(name = "set_array_metatable", infallible)]
     pub fn lua_set_array_metatable(&mut self, enable: bool) -> Self {
         self.options = self.options.set_array_metatable(enable);

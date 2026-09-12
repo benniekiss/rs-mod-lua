@@ -60,6 +60,7 @@ impl EncodeConfig {
         self.indent
     }
 
+    #[must_use]
     #[lua(name = "set_indent", infallible)]
     pub fn lua_set_indent(&mut self, indent: Option<usize>) -> Self {
         self.indent = indent;
@@ -71,6 +72,7 @@ impl EncodeConfig {
         self.prefix.clone()
     }
 
+    #[must_use]
     #[lua(name = "set_prefix", infallible)]
     pub fn lua_set_prefix(&mut self, prefix: &str) -> Self {
         self.prefix = prefix.to_string();
@@ -82,6 +84,7 @@ impl EncodeConfig {
         self.options.deny_unsupported_types
     }
 
+    #[must_use]
     #[lua(name = "set_deny_unsupported_types", infallible)]
     pub fn lua_set_deny_unsupported_types(&mut self, enable: bool) -> Self {
         self.options = self.options.deny_unsupported_types(enable);
@@ -93,6 +96,7 @@ impl EncodeConfig {
         self.options.deny_recursive_tables
     }
 
+    #[must_use]
     #[lua(name = "set_deny_recursive_tables", infallible)]
     pub fn lua_set_deny_recursive_tables(&mut self, enable: bool) -> Self {
         self.options = self.options.deny_recursive_tables(enable);
@@ -104,6 +108,7 @@ impl EncodeConfig {
         self.options.sort_keys
     }
 
+    #[must_use]
     #[lua(name = "set_sort_keys", infallible)]
     pub fn lua_set_sort_keys(&mut self, enable: bool) -> Self {
         self.options = self.options.sort_keys(enable);
@@ -115,6 +120,7 @@ impl EncodeConfig {
         self.options.encode_empty_tables_as_array
     }
 
+    #[must_use]
     #[lua(name = "set_encode_empty_tables_as_array", infallible)]
     pub fn lua_set_encode_empty_tables_as_array(&mut self, enable: bool) -> Self {
         self.options = self.options.encode_empty_tables_as_array(enable);
@@ -126,6 +132,7 @@ impl EncodeConfig {
         self.options.detect_mixed_tables
     }
 
+    #[must_use]
     #[lua(name = "set_detect_mixed_tables", infallible)]
     pub fn lua_set_detect_mixed_tables(&mut self, enable: bool) -> Self {
         self.options = self.options.detect_mixed_tables(enable);

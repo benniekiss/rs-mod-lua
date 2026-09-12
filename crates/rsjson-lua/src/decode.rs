@@ -297,8 +297,7 @@ mod test {
     fn it_json_to_nil() {
         let lua = mlua::Lua::new();
 
-        let mut config = DecodeConfig::default();
-        config.lua_set_null(false);
+        let config = DecodeConfig::default().lua_set_null(false);
 
         let res = decode(&lua, b"null", Some(config)).unwrap();
 
@@ -321,8 +320,7 @@ mod test {
     #[test]
     fn it_json_array_mt() {
         let lua = mlua::Lua::new();
-        let mut config = DecodeConfig::default();
-        config.lua_set_array_metatable(true);
+        let config = DecodeConfig::default().lua_set_array_metatable(true);
 
         let res = decode(&lua, b"[1,2,3]", Some(config))
             .unwrap()
@@ -336,8 +334,7 @@ mod test {
     #[test]
     fn it_json_no_array_mt() {
         let lua = mlua::Lua::new();
-        let mut config = DecodeConfig::default();
-        config.lua_set_array_metatable(false);
+        let config = DecodeConfig::default().lua_set_array_metatable(false);
 
         let res = decode(&lua, b"[1,2,3]", Some(config))
             .unwrap()

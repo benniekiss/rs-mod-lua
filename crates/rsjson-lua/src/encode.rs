@@ -18,6 +18,7 @@ pub(crate) fn encode(
                 .to_serializable()
                 .encode_empty_tables_as_array(config.encode_empty_tables_as_array)
                 .detect_mixed_tables(config.detect_mixed_tables)
+                .sort_keys(config.sort_keys)
                 .deny_unsupported_types(config.deny_unsupported_types)
                 .deny_recursive_tables(config.deny_recursive_tables);
 
@@ -111,8 +112,7 @@ mod test {
     fn it_table_to_json() {
         let lua = mlua::Lua::new();
 
-        let mut config = EncodeConfig::default();
-        config.lua_set_sort_keys(true);
+        let config = EncodeConfig::default().lua_set_sort_keys(true);
 
         let te = lua.create_table().unwrap();
         te.set("a", 1).unwrap();
