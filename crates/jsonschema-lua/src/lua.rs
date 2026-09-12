@@ -1,7 +1,5 @@
-use std::cell::RefCell;
-
 use mlua::{IntoLua, LuaSerdeExt};
-use rs_mod__mod__mod__mod__mod__mod__mod__mod__mod_lua_core::config::{DecodeConfig, EncodeConfig};
+use rs_mod_lua_core::config::{DecodeConfig, EncodeConfig};
 
 pub(crate) fn lua_to_json(
     lua: &mlua::Lua,
