@@ -13,7 +13,7 @@ crate-type = ["cdylib", "rlib"]
 name = "rsre_lua"
 
 [dependencies]
-fancy-regex = "0.19.1"
+fancy-regex = "0.19.2"
 mlua = { workspace = true, features = ["macros"] }
 
 [features]
