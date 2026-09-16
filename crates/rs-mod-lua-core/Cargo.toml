@@ -12,7 +12,7 @@ crate-type = ["lib"]
 name = "rs_mod_lua_core"
 
 [dependencies]
-mlua = { workspace = true, default-features = false, features = ["macros"] }
+mlua = { workspace = true, features = ["macros"] }
 
 [features]
 default = ["lua54", "serde", "vendored"]

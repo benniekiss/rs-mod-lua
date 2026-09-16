@@ -12,6 +12,7 @@ pub struct EncodeConfig {
     pub prefix: String,
 }
 
+
 impl From<mlua::serde::DeserializeOptions> for EncodeConfig {
     fn from(value: mlua::serde::DeserializeOptions) -> Self {
         EncodeConfig {
