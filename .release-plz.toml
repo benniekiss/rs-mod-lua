@@ -8,6 +8,7 @@ release = true
 publish = true
 publish_features = ["vendored", "serde"]
 git_release_enable = false
+semver_check = false
 
 [[package]]
 name = "minijinja-lua"
