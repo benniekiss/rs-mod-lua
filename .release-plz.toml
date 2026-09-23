@@ -6,6 +6,7 @@ publish = false
 name = "rs-mod-lua-core"
 release = true
 publish = true
+publish_features = ["vendored", "serde"]
 git_release_enable = false
 
 [[package]]
