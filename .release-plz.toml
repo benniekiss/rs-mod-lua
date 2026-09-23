@@ -1,6 +1,7 @@
 [workspace]
 release = false
 publish = false
+semver_check = false
 
 [[package]]
 name = "rs-mod-lua-core"
@@ -8,7 +9,6 @@ release = true
 publish = true
 publish_features = ["vendored", "serde"]
 git_release_enable = false
-semver_check = false
 
 [[package]]
 name = "minijinja-lua"
