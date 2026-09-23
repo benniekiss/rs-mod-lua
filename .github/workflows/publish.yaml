@@ -48,7 +48,7 @@ jobs:
   upload-luarocks:
     if: ${{ !inputs.skip_luarocks_upload }}
     needs: [lua-version]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     env:
       LUA_VERSION: ${{needs.lua-version.outputs.version}}
@@ -135,7 +135,7 @@ jobs:
   upload-release:
     if: ${{ !inputs.skip_release_upload }}
     needs: build-release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     permissions:
       contents: write

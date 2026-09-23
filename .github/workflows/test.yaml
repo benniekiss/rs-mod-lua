@@ -34,7 +34,7 @@ env:
 jobs:
   filters:
     if: github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     outputs:
       packages: |-
@@ -136,7 +136,7 @@ jobs:
     # Do not run if no packages were changed or on release-plz PRs
     if: needs.filters.outputs.packages != '[]' && (github.head_ref == '' || !startsWith(github.head_ref, 'release-plz-'))
     name: cargo tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: filters
 
     strategy:
