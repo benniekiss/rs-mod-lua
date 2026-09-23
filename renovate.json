@@ -48,15 +48,6 @@
     },
     {
       "matchManagers": [
-        "rust-toolchain"
-      ],
-      "matchDepTypes": [
-        "toolchain"
-      ],
-      "rangeStrategy": "pin"
-    },
-    {
-      "matchManagers": [
         "cargo"
       ],
       "rangeStrategy": "bump"
