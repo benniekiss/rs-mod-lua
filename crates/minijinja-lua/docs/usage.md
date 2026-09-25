@@ -5,19 +5,30 @@ mj = require("minijinja")
 
 env = mj.Environment:new()
 
-env:add_template("my_temp", "Test: {{ foo | lua_filter }}")
+--- A sample filter
+---
+---@param state     minijinja.State
+---@param val       string
+---@param args      { case: "upper" | "lower" }
+---
+---@return string
+local function lua_filter(state, val, args)
+    if args.case == "upper" then
+        return val:upper()
+    end
 
-local function lua_filter(state, val)
-    return val:upper()
+    if args.case == "lower" then
+        return val:lower()
+    end
 end
 
 env:add_filter("lua_filter", lua_filter)
 
-local ctx = {
-    foo = "foo"
-}
+env:add_template("my_temp", "Test: {{ foo | lua_filter(case='upper') }}")
 
-env:render_template("my_temp", ctx)
+env:render_template("my_temp", {
+    foo = "foo"
+})
 -- output: "Test: FOO"
 ```
 

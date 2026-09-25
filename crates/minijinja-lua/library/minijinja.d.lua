@@ -65,7 +65,7 @@ minijinja.AutoEscape = {
 ---
 --- It takes a [`State`](lua-minijinja.State) as the first paramter followed by any number of args.
 ---
---- If the last argument is a table, it will be interpreted as keyword arguments passed to the callback.
+--- If the last argument is a table, it will be interpreted as keyword arguments passed to the callback from minijinja.
 ---
 ---@alias minijinja.Callback fun(state: minijinja.State, ..., kwargs?: table): any
 
@@ -73,7 +73,7 @@ minijinja.AutoEscape = {
 ---
 --- Similar to a [`Callback`](lua-minijinja.Callback), but it is not passed a [`State`](lua-minijinja.State).
 ---
---- If the last argument is a table, it will be interpreted as keyword arguments passed to the callback.
+--- If the last argument is a table, it will be interpreted as keyword arguments passed to the callback from minijinja.
 ---
 ---@alias minijinja.CallbackStateless fun(..., kwargs?: table): any
 
@@ -269,8 +269,8 @@ function minijinja.Environment:render_template(name, ctx) end
 --- Render a template with a callback with access to the internal State.
 ---
 ---@generic R: any
----@param name     string The name of the template to render.
----@param ctx?     table  The template context.
+---@param name     string                         The name of the template to render.
+---@param ctx?     table                          The template context.
 ---@param callback fun(state: minijinja.State): R
 ---
 ---@return string # The rendered template.
