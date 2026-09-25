@@ -19,9 +19,7 @@ AI is not allowed for communication, such as PR or issue report body content. If
 you use AI in communication, you may be blocked or banned from contributing to
 the project.
 
-Commits should not include `Co-authored-by:` attributions to AI coding tools. If
-there is an urge to credit the machine, use the `Assisted-by:` attribution
-outlined in the Linux Kernel guidelines.
+Commits must not include `Co-authored-by:` or `Assisted-by:` attributions to AI coding tools.
 
 ## Getting Started
 
@@ -54,6 +52,7 @@ lx sync
 
 # If you need to install prek
 cargo install prek
+prek install
 prek install-hooks
 ```
 
