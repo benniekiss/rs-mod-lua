@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.7.2...rsjson-lua-v0.7.3) - 2026-09-26
+
+### Fixed
+
+- restore `source.dir` for luarocks compat
+
+### Other
+
+- bump lux package versions
+
 ## [0.7.2](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.7.1...rsjson-lua-v0.7.2) - 2026-09-23
 
 ### Added
