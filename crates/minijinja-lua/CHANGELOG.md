@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.5.2...minijinja-lua-v0.5.3) - 2026-09-26
+
+### Fixed
+
+- restore `source.dir` for luarocks compat
+
+### Other
+
+- bump lux package versions
+- add more documentation/examples about named callback args
+
 ## [0.5.2](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.5.1...minijinja-lua-v0.5.2) - 2026-09-23
 
 ### Added
