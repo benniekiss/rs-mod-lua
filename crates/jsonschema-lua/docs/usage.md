@@ -61,4 +61,5 @@ assert(validator:is_valid([["lua-module"]]))
 assert(not validator:is_valid([["other-module"]]))
 ```
 
-The API is documented in the [`library/jsonschema.d.lua`](../library/jsonschema.d.lua) file.
+The API is documented in the [`library/jsonschema.d.lua`](../library/jsonschema.d.lua) file,
+which should work with LuaLS or EmmyluaLS.
