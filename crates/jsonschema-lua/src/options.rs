@@ -225,7 +225,7 @@ impl LuaValidationOptions {
         options: Option<EncodeConfig>,
     ) -> mlua::Result<LuaValidator> {
         lua_to_json(lua, schema, options)
-            .and_then(|s| self.0.build(&s).map_err(mlua::Error::external))
+            .and_then(|s| bind_lua(lua, || self.0.build(&s).map_err(mlua::Error::external)))
             .map(|v| v.into())
     }
 
@@ -237,7 +237,7 @@ impl LuaValidationOptions {
         options: Option<EncodeConfig>,
     ) -> mlua::Result<LuaValidatorMap> {
         lua_to_json(lua, schema, options)
-            .and_then(|s| self.0.build_map(&s).map_err(mlua::Error::external))
+            .and_then(|s| bind_lua(lua, || self.0.build_map(&s).map_err(mlua::Error::external)))
             .map(|v| v.into())
     }
 
