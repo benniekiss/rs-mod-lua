@@ -43,7 +43,7 @@ impl LuaUri {
             .map_err(mlua::Error::external)
     }
 
-    #[lua(name = "schema", getter, infallible)]
+    #[lua(name = "scheme", getter, infallible)]
     pub(crate) fn lua_scheme(&self) -> String {
         self.0.scheme().to_string()
     }
