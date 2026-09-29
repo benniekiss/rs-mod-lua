@@ -140,7 +140,7 @@ fn jsonschema_async_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set("None", lua.null())?;
+    table.set("null", lua.null())?;
     table.set("EncodeConfig", lua.create_proxy::<EncodeConfig>()?)?;
     table.set("DecodeConfig", lua.create_proxy::<DecodeConfig>()?)?;
     table.set("Uri", lua.create_proxy::<LuaUri>()?)?;

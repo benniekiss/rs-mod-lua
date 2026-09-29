@@ -6,8 +6,8 @@ local jsonschema = {}
 
 --- Represents JSON `null`.
 ---
----@class jsonschema.None: lightuserdata
-jsonschema.None = nil
+---@class jsonschema.null: lightuserdata
+jsonschema.null = nil
 
 ---@class (exact) jsonschema.EncodeConfig: userdata
 ---@field indent?                      integer
@@ -84,7 +84,7 @@ jsonschema.DecodeConfig = {}
 ---@return jsonschema.DecodeConfig
 function jsonschema.DecodeConfig.new() end
 
---- Whether to decode JSON null as `jsonschema.None`.
+--- Whether to decode JSON null as `jsonschema.null`.
 ---
 ---@param enable boolean
 ---
