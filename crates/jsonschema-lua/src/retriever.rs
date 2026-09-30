@@ -1,9 +1,6 @@
 use core::fmt;
 
-use rs_mod_lua_core::{
-    config::{DecodeConfig, EncodeConfig},
-    guard::with_lua,
-};
+use rs_mod_lua_core::{config::EncodeConfig, guard::with_lua};
 
 use crate::{lua::lua_to_json, uri::LuaUri};
 
