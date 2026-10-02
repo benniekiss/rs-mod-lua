@@ -3,6 +3,7 @@ cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 [workspace]
 resolver = "3"
 members = [
+  "crates/jsonschema-lua",
   "crates/minijinja-lua",
   "crates/rs-mod-lua-core",
   "crates/rsast-lua",
@@ -25,6 +26,9 @@ rustflags = [
   "-Zlocation-detail=none",
   "-Zfmt-debug=none",
 ]
+
+[profile.release.package.jsonschema-lua]
+opt-level = 3
 
 [profile.release.package.rsjson-lua]
 opt-level = 3
