@@ -824,6 +824,7 @@ name = "rs-mod-lua-core"
 version = "0.1.1"
 dependencies = [
  "mlua",
+ "serde",
 ]
 
 [[package]]
