@@ -92,4 +92,16 @@ impl DecodeConfig {
         self.options = self.options.set_array_metatable(enable);
         self.clone()
     }
+
+    #[lua(name = "recursion_limit", getter, infallible)]
+    pub fn lua_recursion_limit(&self) -> usize {
+        self.options.recursion_limit
+    }
+
+    #[must_use]
+    #[lua(name = "set_recursion_limit", infallible)]
+    pub fn lua_set_recursion_limit(&mut self, limit: usize) -> Self {
+        self.options = self.options.recursion_limit(limit);
+        self.clone()
+    }
 }

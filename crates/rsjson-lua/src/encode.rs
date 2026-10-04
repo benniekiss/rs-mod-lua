@@ -20,7 +20,8 @@ pub(crate) fn encode(
                 .detect_mixed_tables(config.detect_mixed_tables)
                 .sort_keys(config.sort_keys)
                 .deny_unsupported_types(config.deny_unsupported_types)
-                .deny_recursive_tables(config.deny_recursive_tables);
+                .deny_recursive_tables(config.deny_recursive_tables)
+                .recursion_limit(config.recursion_limit);
 
             match config.indent {
                 Some(n) => {
