@@ -124,21 +124,23 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
         A: SeqAccess<'de>,
     {
         let hint = seq.size_hint().unwrap_or(0);
+        let mut values = Vec::with_capacity(hint);
+
+        while let Some(value) =
+            seq.next_element_seed(LuaJsonDeserializer::new(self.lua, self.config))?
+        {
+            values.push(value);
+        }
+
         let table = self
             .lua
-            .create_table_with_capacity(hint, 0)
+            .create_sequence_from(values)
             .map_err(de::Error::custom)?;
 
         if self.config.set_array_metatable {
             table
                 .set_metatable(Some(self.lua.array_metatable()))
                 .map_err(de::Error::custom)?;
-        }
-
-        while let Some(v) =
-            seq.next_element_seed(LuaJsonDeserializer::new(self.lua, self.config))?
-        {
-            table.raw_push(v).map_err(de::Error::custom)?;
         }
 
         Ok(mlua::Value::Table(table))
@@ -171,21 +173,20 @@ impl<'de, 'lua> Visitor<'de> for LuaJsonVisitor<'lua> {
 
             Some((k, v)) => {
                 let hint = map.size_hint().unwrap_or(0);
-                let table = self
-                    .lua
-                    .create_table_with_capacity(0, hint)
-                    .map_err(de::Error::custom)?;
-
-                table.raw_set(k, v).map_err(de::Error::custom)?;
+                let mut entries = Vec::with_capacity(hint.saturating_add(1));
+                entries.push((k, v));
 
                 while let Some((k, v)) = map.next_entry_seed(
                     LuaJsonDeserializer::new(self.lua, self.config),
                     LuaJsonDeserializer::new(self.lua, self.config),
                 )? {
-                    table.raw_set(k, v).map_err(de::Error::custom)?;
+                    entries.push((k, v));
                 }
 
-                Ok(mlua::Value::Table(table))
+                self.lua
+                    .create_table_from(entries)
+                    .map(mlua::Value::Table)
+                    .map_err(de::Error::custom)
             },
 
             None => Ok(mlua::Value::Table(
