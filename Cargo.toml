@@ -11,7 +11,7 @@ members = [
 ]
 
 [workspace.dependencies]
-mlua = { version = "0.12.1", default-features = false }
+mlua = { version = "0.12.2", default-features = false }
 rs-mod-lua-core = { path = "crates/rs-mod-lua-core", version = "0.1.0", default-features = false }
 
 [profile.release]
