@@ -319,6 +319,23 @@ mod test {
     }
 
     #[test]
+    fn it_json_array_decoding_null_as_nil_indices() {
+        let lua = mlua::Lua::new();
+        let config = DecodeConfig::default().lua_set_null(false);
+
+        let res = decode(&lua, b"[null,1,null,2]", Some(config))
+            .unwrap()
+            .as_table()
+            .unwrap()
+            .to_owned();
+
+        assert!(res.raw_get::<mlua::Value>(1).unwrap().is_nil());
+        assert_eq!(res.raw_get::<i64>(2).unwrap(), 1);
+        assert!(res.raw_get::<mlua::Value>(3).unwrap().is_nil());
+        assert_eq!(res.raw_get::<i64>(4).unwrap(), 2);
+    }
+
+    #[test]
     fn it_json_array_mt() {
         let lua = mlua::Lua::new();
         let config = DecodeConfig::default().lua_set_array_metatable(true);
