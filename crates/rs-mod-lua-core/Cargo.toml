@@ -13,6 +13,7 @@ name = "rs_mod_lua_core"
 
 [dependencies]
 mlua = { workspace = true, features = ["macros"] }
+serde = { version = "1.0.229", optional = true }
 
 [features]
 default = ["lua54", "serde", "vendored"]
@@ -24,5 +25,5 @@ lua55 = ["mlua/lua55"]
 luajit = ["mlua/luajit"]
 luajit52 = ["mlua/luajit52"]
 module = ["mlua/module"]
-serde = ["mlua/serde"]
+serde = ["dep:serde", "mlua/serde"]
 vendored = ["mlua/vendored"]
