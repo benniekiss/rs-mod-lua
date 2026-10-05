@@ -62,6 +62,13 @@ describe("config", function ()
             conf:set_deny_recursive_tables(false)
             assert.False(conf.deny_recursive_tables)
         end)
+
+        it("EncodeConfig.recursion_limit#config", function ()
+            assert.Equal(conf.recursion_limit, 128)
+
+            conf:set_recursion_limit(10)
+            assert.Equal(conf.recursion_limit, 10)
+        end)
     end)
 
     describe("DecodeConfig#config", function ()
@@ -93,6 +100,13 @@ describe("config", function ()
 
             conf:set_array_metatable(false)
             assert.False(conf.array_metatable)
+        end)
+
+        it("EncodeConfig.recursion_limit#config", function ()
+            assert.Equal(conf.recursion_limit, 128)
+
+            conf:set_recursion_limit(10)
+            assert.Equal(conf.recursion_limit, 10)
         end)
     end)
 end)
@@ -169,6 +183,24 @@ describe("encode", function ()
 
         assert.Equal(ex, json.encode(te))
     end)
+
+    it("recursion#encode", function ()
+        local config = json.EncodeConfig.new()
+            :set_deny_recursive_tables(false)
+
+        local te = {}
+        te.t = te
+
+        assert.Not.Error(function () json.encode(te, config) end)
+
+        config:set_recursion_limit(0)
+        assert.error_matches(
+            function () json.encode(te, config) end,
+            "recursion limit exceeded",
+            nil,
+            true
+        )
+    end)
 end)
 
 describe("decode", function ()
@@ -241,5 +273,22 @@ describe("decode", function ()
         local ex = json.null
 
         assert.Equal(ex, json.decode(te))
+    end)
+
+    -- TODO: figure out how to test decode recursion from lua
+    pending("recursion#decode", function ()
+        local dc = json.DecodeConfig.new()
+        local ec = json.EncodeConfig.new()
+            :set_deny_recursive_tables(false)
+
+        local t = {}
+        t.t = t
+
+        local te = json.encode(t, ec)
+
+        assert.Not.Error(function () json.decode(te, dc) end)
+
+        dc:set_recursion_limit(0)
+        assert.error_matches(function () json.decode(te, dc) end, "recursive table detected")
     end)
 end)
