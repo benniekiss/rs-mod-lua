@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use mlua::IntoLua;
+use pest_meta::parser::Rule;
 
 use crate::pairs::LuaPairs;
 
@@ -29,7 +30,11 @@ impl LuaPestVm {
             Ok((_, rules)) => (Some(pest_vm::Vm::new(rules).into()), None),
             Err(err) => (
                 None,
-                Some(err.iter().map(|e| e.to_string()).collect::<Vec<_>>()),
+                Some(
+                    err.into_iter()
+                        .map(|e| e.renamed_rules(grammar_rule_name).to_string())
+                        .collect::<Vec<_>>(),
+                ),
             ),
         }
     }
@@ -56,7 +61,7 @@ impl LuaPestVm {
             }
         }
 
-        err.to_string()
+        err.renamed_rules(|rule| (*rule).to_owned()).to_string()
     }
 
     #[lua(name = "validate")]
@@ -97,4 +102,76 @@ impl LuaPestVm {
 
         callback.call(pairs)
     }
+}
+
+fn grammar_rule_name(rule: &pest_meta::parser::Rule) -> String {
+    match *rule {
+        Rule::EOI => "EOI",
+        Rule::grammar_rules => "grammar_rules",
+        Rule::grammar_rule => "grammar_rule",
+        Rule::assignment_operator => "assignment_operator",
+        Rule::opening_brace => "opening_brace",
+        Rule::closing_brace => "closing_brace",
+        Rule::opening_paren => "opening_paren",
+        Rule::closing_paren => "closing_paren",
+        Rule::opening_brack => "opening_brack",
+        Rule::closing_brack => "closing_brack",
+        Rule::modifier => "modifier",
+        Rule::silent_modifier => "silent_modifier",
+        Rule::atomic_modifier => "atomic_modifier",
+        Rule::compound_atomic_modifier => "compound_atomic_modifier",
+        Rule::non_atomic_modifier => "non_atomic_modifier",
+        Rule::tag_id => "tag_id",
+        Rule::node_tag => "node_tag",
+        Rule::expression => "expression",
+        Rule::term => "term",
+        Rule::node => "node",
+        Rule::terminal => "terminal",
+        Rule::prefix_operator => "prefix_operator",
+        Rule::infix_operator => "infix_operator",
+        Rule::postfix_operator => "postfix_operator",
+        Rule::positive_predicate_operator => "positive_predicate_operator",
+        Rule::negative_predicate_operator => "negative_predicate_operator",
+        Rule::sequence_operator => "sequence_operator",
+        Rule::choice_operator => "choice_operator",
+        Rule::optional_operator => "optional_operator",
+        Rule::repeat_operator => "repeat_operator",
+        Rule::repeat_once_operator => "repeat_once_operator",
+        Rule::repeat_exact => "repeat_exact",
+        Rule::repeat_min => "repeat_min",
+        Rule::repeat_max => "repeat_max",
+        Rule::repeat_min_max => "repeat_min_max",
+        Rule::number => "number",
+        Rule::integer => "integer",
+        Rule::comma => "comma",
+        Rule::_push => "_push",
+        Rule::_push_literal => "_push_literal",
+        Rule::peek_slice => "peek_slice",
+        Rule::identifier => "identifier",
+        Rule::alpha => "alpha",
+        Rule::alpha_num => "alpha_num",
+        Rule::string => "string",
+        Rule::insensitive_string => "insensitive_string",
+        Rule::range => "range",
+        Rule::character => "character",
+        Rule::inner_str => "inner_str",
+        Rule::inner_chr => "inner_chr",
+        Rule::escape => "escape",
+        Rule::code => "code",
+        Rule::unicode => "unicode",
+        Rule::hex_digit => "hex_digit",
+        Rule::quote => "quote",
+        Rule::single_quote => "single_quote",
+        Rule::range_operator => "range_operator",
+        Rule::newline => "newline",
+        Rule::WHITESPACE => "WHITESPACE",
+        Rule::line_comment => "line_comment",
+        Rule::block_comment => "block_comment",
+        Rule::COMMENT => "COMMENT",
+        Rule::space => "space",
+        Rule::grammar_doc => "grammar_doc",
+        Rule::line_doc => "line_doc",
+        Rule::inner_doc => "inner_doc",
+    }
+    .to_string()
 }

@@ -64,7 +64,7 @@ describe("rsast", function ()
 1 | 123foobar
   | ^---
   |
-  = expected "EOI"]]
+  = expected EOI]]
             assert.False(res)
             assert.Equal(ex_error, err)
         end)
@@ -95,7 +95,7 @@ describe("rsast", function ()
 1 | invalid data
   | ^---
   |
-  = expected "file"]],
+  = expected file]],
                 nil,
                 true
             )
