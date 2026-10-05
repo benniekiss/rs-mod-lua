@@ -102,7 +102,7 @@ describe("config", function ()
             assert.False(conf.array_metatable)
         end)
 
-        it("EncodeConfig.recursion_limit#config", function ()
+        it("DecodeConfig.recursion_limit#config", function ()
             assert.Equal(conf.recursion_limit, 128)
 
             conf:set_recursion_limit(10)
