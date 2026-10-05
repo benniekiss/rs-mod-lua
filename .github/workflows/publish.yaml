@@ -24,7 +24,7 @@ env:
   LUX_PROFILE: release
   PACKAGE: |-
     ${{ case(
-      startsWith(github.ref_name, 'jsonschema-lua', 'jsonschema-lua'),
+      startsWith(github.ref_name, 'jsonschema-lua'), 'jsonschema-lua',
       startsWith(github.ref_name, 'minijinja-lua'), 'minijinja-lua',
       startsWith(github.ref_name, 'rsast-lua'), 'rsast-lua',
       startsWith(github.ref_name, 'rsjson-lua'), 'rsjson-lua',
