@@ -106,7 +106,7 @@ function jsonschema.DecodeConfig:set_cast_u64_to_f64(enable) end
 function jsonschema.DecodeConfig:set_array_metatable(enable) end
 
 ---@class (exact) jsonschema.Uri: userdata
----@field schema     string The URI scheme.
+---@field scheme     string The URI scheme.
 ---@field authority? string
 ---@field path       string
 ---@field query?     string
