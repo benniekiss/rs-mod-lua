@@ -10,100 +10,134 @@ local jsonschema = {}
 jsonschema.null = nil
 
 ---@class (exact) jsonschema.EncodeConfig: userdata
----@field indent?                      integer
----@field prefix                       string
----@field sort_keys                    boolean
----@field encode_empty_tables_as_array boolean
----@field detect_mixed_tables          boolean
----@field deny_unsupported_types       boolean
----@field deny_recursive_tables        boolean
+---
+---@field indent                       number  The number of `prefix` to indent lines
+---@field prefix                       string  The string to use for indentation
+---@field sort_keys                    boolean Sort JSON keys
+---@field encode_empty_tables_as_array boolean Convert empty tables to empty arrays
+---@field detect_mixed_tables          boolean Detect mixed sequence and key tables
+---@field deny_unsupported_types       boolean Error on unsupported types (functions, threads, etc)
+---@field deny_recursive_tables        boolean Error on recursive tables.
+---@field recursion_limit              integer Maximum recursion dept for tables
 jsonschema.EncodeConfig = {}
 
---- Create encoding options.
+--- Create a new `jsonschema.EncodeConfig`
 ---
 ---@return jsonschema.EncodeConfig
 function jsonschema.EncodeConfig.new() end
 
---- Set the indent level.
+--- Set the indent level
 ---
 ---@param indent? integer
 ---
 ---@return jsonschema.EncodeConfig
 function jsonschema.EncodeConfig:set_indent(indent) end
 
---- Set the indent prefix.
+--- Set the indent prefix string
 ---
----@param prefix string
+---@param prefix? string
 ---
 ---@return jsonschema.EncodeConfig
 function jsonschema.EncodeConfig:set_prefix(prefix) end
 
---- Whether to sort table keys.
+--- Set whether to deny serializing unsupported Lua types.
 ---
----@param enable boolean
+--- This includes functions, threads, lightuserdata, and errors
 ---
----@return jsonschema.EncodeConfig
-function jsonschema.EncodeConfig:set_sort_keys(enable) end
-
---- Whether to encode empty tables as arrays.
----
----@param enable boolean
----
----@return jsonschema.EncodeConfig
-function jsonschema.EncodeConfig:set_encode_empty_tables_as_array(enable) end
-
---- Whether to detect mixed sequence and key tables.
----
----@param enable boolean
----
----@return jsonschema.EncodeConfig
-function jsonschema.EncodeConfig:set_detect_mixed_tables(enable) end
-
---- Whether to reject unsupported Lua types.
----
----@param deny boolean
+---@param deny? boolean
 ---
 ---@return jsonschema.EncodeConfig
 function jsonschema.EncodeConfig:set_deny_unsupported_types(deny) end
 
---- Whether to reject recursive tables.
+--- Set whether to deny serializing recursive tables.
 ---
----@param deny boolean
+--- If true, an attempt to serialize a recursive table will cause an error.
+--- Otherwise subsequent attempts to serialize the same table will be ignored.
+---
+---@param deny? boolean
 ---
 ---@return jsonschema.EncodeConfig
 function jsonschema.EncodeConfig:set_deny_recursive_tables(deny) end
 
+--- Set whether to sort keys in order.
+---
+---@param enable? boolean
+---
+---@return jsonschema.EncodeConfig
+function jsonschema.EncodeConfig:set_sort_keys(enable) end
+
+--- Set whether to encode empty tables as arrays.
+---
+--- If false, empty tables will be serialized as maps.
+---
+---@param enable? boolean
+---
+---@return jsonschema.EncodeConfig
+function jsonschema.EncodeConfig:set_encode_empty_tables_as_array(enable) end
+
+--- Set whether to detext mixed tables.
+---
+--- When false, a table with a non-zero length (with one or more borders) will
+--- be always encoded as an array.
+---
+---@param enable? boolean
+---
+---@return jsonschema.EncodeConfig
+function jsonschema.EncodeConfig:set_detect_mixed_tables(enable) end
+
+--- Set the maximum nesting depth for tables.
+---
+--- Increasing this limit may require a larger thread stack.
+--- Zero rejects all tables.
+---
+---@param limit integer
+---
+---@return jsonschema.EncodeConfig
+function jsonschema.EncodeConfig:set_recursion_limit(limit) end
+
 ---@class (exact) jsonschema.DecodeConfig: userdata
----@field null            boolean
----@field cast_u64_to_f64 boolean
----@field array_metatable boolean
+---
+---@field null            boolean Convert `nil` to `jsonschema.null`
+---@field cast_u64_to_f64 boolean Convert u64 numbers to f64 if they overflow i64
+---@field array_metatable boolean Set the metatable of JSON array tables to `mlua::Lua::array_metatable`
+---@field recursion_limit integer Maximum nesting depth for rust containers and newtype wrappers.
 jsonschema.DecodeConfig = {}
 
---- Create decoding options.
+--- Create a new `jsonschema.DecodeConfig`
 ---
 ---@return jsonschema.DecodeConfig
 function jsonschema.DecodeConfig.new() end
 
---- Whether to decode JSON null as `jsonschema.null`.
+--- Set whether to decode JSON `null` to `jsonschema.null` or `nil`
 ---
 ---@param enable boolean
 ---
 ---@return jsonschema.DecodeConfig
 function jsonschema.DecodeConfig:set_null(enable) end
 
---- Whether to cast overflowing unsigned integers to floats.
+--- Set whether to cast u64 JSON numbers to floats.
 ---
 ---@param enable boolean
 ---
 ---@return jsonschema.DecodeConfig
 function jsonschema.DecodeConfig:set_cast_u64_to_f64(enable) end
 
---- Whether to attach the Lua array metatable.
+--- Set whether to set the metatable of JSON arrays to `jsonschema.array_mt`.s
 ---
 ---@param enable boolean
 ---
 ---@return jsonschema.DecodeConfig
 function jsonschema.DecodeConfig:set_array_metatable(enable) end
+
+--- Set the maximum nesting depth for containers and newtype wrappers.
+---
+--- Increasing this limit may require a larger thread stack.
+--- Zero rejects all nesting.
+---
+---@param limit integer
+---
+---@return jsonschema.DecodeConfig
+function jsonschema.DecodeConfig:set_recursion_limit(limit) end
 
 ---@class (exact) jsonschema.Uri: userdata
 ---@field scheme     string The URI scheme.
