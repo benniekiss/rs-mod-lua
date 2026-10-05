@@ -15,19 +15,13 @@ mlua = { version = "0.12.2", default-features = false }
 rs-mod-lua-core = { path = "crates/rs-mod-lua-core", version = "0.1.0", default-features = false }
 
 [profile.release]
-opt-level = "z"
+opt-level = 3
 strip = true
 lto = true
-panic = "unwind"
+panic = "immediate-abort"
 codegen-units = 1
 rustflags = [
   "-Dwarnings",
   "-Zlocation-detail=none",
   "-Zfmt-debug=none",
 ]
-
-[profile.release.package.rsjson-lua]
-opt-level = 3
-
-[profile.release.package.rsre-lua]
-opt-level = 3
