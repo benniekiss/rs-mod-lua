@@ -11,6 +11,7 @@ on:
         options:
           - all
           - rs-mod-lua-core
+          - jsonschema-lua
           - minijinja-lua
           - rsast-lua
           - rsjson-lua
@@ -25,6 +26,7 @@ env:
   ALL_PACKAGES: |-
     [
       "rs-mod-lua-core",
+      "jsonschema-lua",
       "minijinja-lua",
       "rsast-lua",
       "rsjson-lua",
@@ -58,6 +60,9 @@ jobs:
             rs-mod-lua-core:
               - *shared
               - crates/rs-mod-lua-core/**
+            jsonschema-lua:
+              - *shared
+              - 'crates/jsonschema-lua/**'
             minijinja-lua:
               - *shared
               - 'crates/minijinja-lua/**'
