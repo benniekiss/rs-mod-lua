@@ -140,11 +140,12 @@ function jsonschema.DecodeConfig:set_array_metatable(enable) end
 function jsonschema.DecodeConfig:set_recursion_limit(limit) end
 
 ---@class (exact) jsonschema.Uri: userdata
+---
 ---@field scheme     string The URI scheme.
----@field authority? string
----@field path       string
----@field query?     string
----@field fragment?  string
+---@field authority? string The optional URI authority component
+---@field path       string The URI path component
+---@field query?     string The optional URI query component
+---@field fragment?  string The optional URI fragment component
 jsonschema.Uri = {}
 
 --- Parse a URI.
@@ -154,17 +155,12 @@ jsonschema.Uri = {}
 ---@return jsonschema.Uri
 function jsonschema.Uri.parse(uri) end
 
---- Get the URI string.
----
----@return string
-function jsonschema.Uri:__tostring() end
-
 --- Normalize the URI.
 ---
 ---@return jsonschema.Uri
 function jsonschema.Uri:normalize() end
 
---- Return a URI without its fragment.
+--- Return a URI without the fragment component.
 ---
 ---@return jsonschema.Uri
 function jsonschema.Uri:strip_fragment() end
@@ -192,18 +188,6 @@ function jsonschema.Uri:set_fragment(fragment) end
 ---@class (exact) jsonschema.DraftVariant: userdata
 jsonschema.DraftVariant = {}
 
---- Get the draft name.
----
----@return string
-function jsonschema.DraftVariant:__tostring() end
-
---- Compare drafts.
----
----@param other jsonschema.DraftVariant
----
----@return boolean
-function jsonschema.DraftVariant:__eq(other) end
-
 --- Detect the schema draft, falling back to this draft.
 ---
 ---@param schema   any
@@ -220,6 +204,7 @@ function jsonschema.DraftVariant:detect(schema, options) end
 function jsonschema.DraftVariant:is_known_keyword(keyword) end
 
 ---@class (exact) jsonschema.Draft: table
+---
 ---@field DRAFT202012 jsonschema.DraftVariant
 ---@field DRAFT201909 jsonschema.DraftVariant
 ---@field DRAFT7      jsonschema.DraftVariant
@@ -236,6 +221,7 @@ jsonschema.Draft = {}
 function jsonschema.Draft.from_schema_uri(uri) end
 
 ---@class (exact) jsonschema.EvaluationNode: table
+---
 ---@field valid               boolean
 ---@field evaluationPath      string
 ---@field schemaLocation      string
@@ -245,13 +231,16 @@ function jsonschema.Draft.from_schema_uri(uri) end
 ---@field errors?             table<string, string>
 
 ---@class (exact) jsonschema.FlagOutput: table
+---
 ---@field valid boolean
 
 ---@class (exact) jsonschema.ListOutput: table
+---
 ---@field valid   boolean
 ---@field details jsonschema.EvaluationNode[]
 
 ---@class (exact) jsonschema.HierarchicalOutput: table
+---
 ---@field valid               boolean
 ---@field evaluationPath      string
 ---@field schemaLocation      string
@@ -262,19 +251,22 @@ function jsonschema.Draft.from_schema_uri(uri) end
 ---@field details?            jsonschema.HierarchicalOutput[]
 
 ---@class (exact) jsonschema.AnnotationEntry: table
+---
 ---@field schema_location            string
 ---@field absolute_keyword_location? string
 ---@field instance_location          string
 ---@field annotations                any
 
----@class jsonschema.ErrorEntry : table
+---@class jsonschema.ErrorEntry: table
+---
 ---@field schema_location            string
 ---@field absolute_keyword_location? string
 ---@field instance_location          string
 ---@field error                      { keyword: string, message: string }
+
 --- The result of evaluating an instance.
 ---
----@class jsonschema.Evaluation : userdata
+---@class jsonschema.Evaluation: userdata
 jsonschema.Evaluation = {}
 
 --- Get the validity flag.
@@ -447,11 +439,17 @@ function jsonschema.PatternOptions:size_limit(limit) end
 function jsonschema.PatternOptions:dfa_size_limit(limit) end
 
 ---@alias jsonschema.Format fun(value: string): boolean
+
 ---@alias jsonschema.Retriever fun(uri: jsonschema.Uri): any
+
 ---@alias jsonschema.KeywordCheck fun(instance: any): boolean
+
 --- Raise a Lua error for an invalid instance.
+---
 ---@alias jsonschema.KeywordValidate fun(instance: any)
+
 ---@alias jsonschema.KeywordFactory fun(parent: table<string, any>, value: any, location: string): jsonschema.KeywordCheck, jsonschema.KeywordValidate
+
 --- Validation options. Setters consume the options and return new userdata.
 ---
 ---@class (exact) jsonschema.ValidationOptions: userdata
