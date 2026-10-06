@@ -31,3 +31,10 @@ rustflags = [
   "-Zlocation-detail=none",
   "-Zfmt-debug=none",
 ]
+
+[profile.release.package.jsonschema-lua]
+rustflags = [
+  "-Dwarnings",
+  "-Zlocation-detail=none",
+  # "-Zfmt-debug=none",
+]
