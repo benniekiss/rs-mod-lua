@@ -23,7 +23,7 @@ rs-mod-lua-core = { path = "crates/rs-mod-lua-core", version = "0.1.0", default-
 opt-level = 3
 strip = true
 lto = true
-panic = "immediate-abort"
+panic = "unwind"
 codegen-units = 1
 rustflags = [
   "-Dwarnings",
