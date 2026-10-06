@@ -4,6 +4,15 @@
 
 local rsjson = {}
 
+---@alias rsjson.EncodeConfig rs_mod_lua_core.EncodeConfig
+---@alias rsjson.DecodeConfig rs_mod_lua_core.DecodeConfig
+
+---@type rsjson.EncodeConfig
+rsjson.EncodeConfig = nil
+
+---@type rsjson.DecodeConfig
+rsjson.DecodeConfig = nil
+
 --- Represents the JSON `null` value.
 --- This can be used in the place of
 --- `nil` to represent empty values.
@@ -18,136 +27,6 @@ rsjson.null = nil
 ---
 ---@class rsjson.array_metatable: table
 rsjson.array_metatable = nil
-
----@class (exact) rsjson.EncodeConfig: userdata
----
----@field indent                       number  The number of `prefix` to indent lines
----@field prefix                       string  The string to use for indentation
----@field sort_keys                    boolean Sort JSON keys
----@field encode_empty_tables_as_array boolean Convert empty tables to empty arrays
----@field detect_mixed_tables          boolean Detect mixed sequence and key tables
----@field deny_unsupported_types       boolean Error on unsupported types (functions, threads, etc)
----@field deny_recursive_tables        boolean Error on recursive tables.
----@field recursion_limit              integer Set the maximum recursion dept for tables
-rsjson.EncodeConfig = {}
-
---- Create a new `rsjson.EncodeConfig`
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig.new() end
-
---- Set the indent level
----
----@param indent? integer
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:set_indent(indent) end
-
---- Set the indent prefix string
----
----@param prefix? string
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:set_prefix(prefix) end
-
---- Set whether to deny serializing unsupported Lua types.
----
---- This includes functions, threads, lightuserdata, and errors
----
----@param deny? boolean
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:set_deny_unsupported_types(deny) end
-
---- Set whether to deny serializing recursive tables.
----
---- If true, an attempt to serialize a recursive table will cause an error.
---- Otherwise subsequent attempts to serialize the same table will be ignored.
----
----@param deny? boolean
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:set_deny_recursive_tables(deny) end
-
---- Set whether to sort keys in order.
----
----@param enable? boolean
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:set_sort_keys(enable) end
-
---- Set whether to encode empty tables as arrays.
----
---- If false, empty tables will be serialized as maps.
----
----@param enable? boolean
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:set_encode_empty_tables_as_array(enable) end
-
---- Set whether to detext mixed tables.
----
---- When false, a table with a non-zero length (with one or more borders) will
---- be always encoded as an array.
----
----@param enable? boolean
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:set_detect_mixed_tables(enable) end
-
---- Set the maximum nesting depth for tables.
----
---- Increasing this limit may require a larger thread stack.
---- Zero rejects all tables.
----
----@param limit integer
----
----@return rsjson.EncodeConfig
-function rsjson.EncodeConfig:set_recursion_limit(limit) end
-
----@class (exact) rsjson.DecodeConfig: userdata
----
----@field null            boolean Convert `nil` to `rsjson.null`
----@field cast_u64_to_f64 boolean Convert u64 numbers to f64 if they overflow i64
----@field array_metatable boolean Set the metatable of JSON array tables to `mlua::Lua::array_metatable`
----@field recursion_limit integer Maximum nesting depth for rust containers and newtype wrappers.
-rsjson.DecodeConfig = {}
-
---- Create a new `rsjson.DecodeConfig`
----
----@return rsjson.DecodeConfig
-function rsjson.DecodeConfig.new() end
-
---- Set whether to decode JSON `null` to `rsjson.null` or `nil`
----
----@param enable boolean
----
----@return rsjson.DecodeConfig
-function rsjson.DecodeConfig:set_null(enable) end
-
---- Set whether to cast u64 JSON numbers to floats.
----
----@param enable boolean
----
----@return rsjson.DecodeConfig
-function rsjson.DecodeConfig:set_cast_u64_to_f64(enable) end
-
---- Set whether to set the metatable of JSON arrays to `rsjson.array_mt`.s
----
----@param enable boolean
----
----@return rsjson.DecodeConfig
-function rsjson.DecodeConfig:set_array_metatable(enable) end
-
---- Set the maximum nesting depth for containers and newtype wrappers.
----
---- Increasing this limit may require a larger thread stack.
---- Zero rejects all nesting.
----
----@param limit integer
----
----@return rsjson.DecodeConfig
-function rsjson.DecodeConfig:set_recursion_limit(limit) end
 
 --- Serialize a Lua object into a JSON string
 ---
