@@ -29,6 +29,7 @@ features = ["module"]
 
 [build.include]
 "crates/jsonschema-lua/library/jsonschema.d.lua" = "jsonschema.d.lua"
+"crates/rs-mod-lua-core/library/rs_mod_lua_core.d.lua" = "rs_mod_lua_core.d.lua"
 
 [test]
 type = "busted"
