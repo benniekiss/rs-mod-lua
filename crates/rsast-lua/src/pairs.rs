@@ -37,7 +37,8 @@ impl LuaPair {
         let inner = pair.into_inner();
         let mut pairs = None;
         if !inner.is_empty() {
-            pairs = Some(inner.into())
+            // Avoid calling `inner.into()` as the input string cannot be reused
+            pairs = Some(LuaPairs::from_pest(input, inner))
         }
 
         Self {
@@ -124,12 +125,16 @@ pub(crate) struct LuaPairs {
 impl From<pest::iterators::Pairs<'_, &str>> for LuaPairs {
     fn from(value: pest::iterators::Pairs<'_, &str>) -> Self {
         let input = Arc::new(value.get_input().to_string());
-        let pairs = value.map(|p| LuaPair::new(&input, p)).collect::<Vec<_>>();
-        Self::new(&input, pairs)
+        Self::from_pest(&input, value)
     }
 }
 
 impl LuaPairs {
+    fn from_pest(input: &Arc<String>, value: pest::iterators::Pairs<'_, &str>) -> Self {
+        let pairs = value.map(|p| LuaPair::new(input, p)).collect::<Vec<_>>();
+        Self::new(input, pairs)
+    }
+
     fn peek(&self) -> Option<LuaPair> {
         if self.idx >= self.rdx {
             return None;
