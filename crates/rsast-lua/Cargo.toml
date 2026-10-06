@@ -1,10 +1,10 @@
 [package]
 name = "rsast-lua"
 version = "0.4.3"
-edition = "2024"
+edition.workspace = true
 description = "a PEG lua module using the pest rust crate"
-repository = "https://github.com/benniekiss/rs-mod-lua"
-license = "MIT"
+repository.workspace = true
+license.workspace = true
 keywords = ["lua", "mlua", "module", "parsing", "pest"]
 categories = ["parsing"]
 

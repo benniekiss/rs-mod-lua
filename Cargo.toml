@@ -10,6 +10,11 @@ members = [
   "crates/rsre-lua",
 ]
 
+[workspace.package]
+edition = "2024"
+repository = "https://github.com/benniekiss/rs-mod-lua"
+license = "MIT"
+
 [workspace.dependencies]
 mlua = { version = "0.12.2", default-features = false }
 rs-mod-lua-core = { path = "crates/rs-mod-lua-core", version = "0.1.0", default-features = false }
