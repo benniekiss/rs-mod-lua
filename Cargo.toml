@@ -32,7 +32,8 @@ rustflags = [
   "-Zfmt-debug=none",
 ]
 
-[profile.release.package.jsonschema-lua]
+## `unicode-general-category` requires debug formatting for its symbols
+[profile.release.package.unicode-general-category]
 rustflags = [
   "-Dwarnings",
   "-Zlocation-detail=none",
