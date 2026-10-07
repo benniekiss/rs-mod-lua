@@ -1,6 +1,6 @@
 [package]
 name = "rs-mod-lua-core"
-version = "0.1.1"
+version = "0.1.2"
 edition.workspace = true
 description = "core crate for rs-mod-lua modules"
 repository.workspace = true

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.4](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.4.3...rsast-lua-v0.4.4) - 2026-10-07
+
+### Added
+
+- do not rely on pest's debug printing for errors
+
+### Fixed
+
+- *(perf)* reuse input string in LuaPair
+
+### Other
+
+- share workspace package config
+- bump lux package versions
+
 ## [0.4.3](https://github.com/benniekiss/rs-mod-lua/compare/rsast-lua-v0.4.2...rsast-lua-v0.4.3) - 2026-09-26
 
 ### Fixed

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.7.3...rsjson-lua-v0.8.0) - 2026-10-07
+
+### Added
+
+- move EncodeConfig/DecodeConfig types
+- move deserializer to core module
+- [**breaking**] batch table deserialization
+- expose `recursion_limit`
+
+### Fixed
+
+- typo
+
+### Other
+
+- share workspace package config
+- bump lux package versions
+- update type defs for rsjson
+- test null-as-nil table deserialization
+
 ## [0.7.3](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.7.2...rsjson-lua-v0.7.3) - 2026-09-26
 
 ### Fixed

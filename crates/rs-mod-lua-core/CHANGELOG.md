@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/benniekiss/rs-mod-lua/compare/rs-mod-lua-core-v0.1.1...rs-mod-lua-core-v0.1.2) - 2026-10-07
+
+### Added
+
+- move EncodeConfig/DecodeConfig types
+- move deserializer to core module
+- expose `recursion_limit`
+
+### Other
+
+- share workspace package config
+
 ## [0.1.1](https://github.com/benniekiss/rs-mod-lua/compare/rs-mod-lua-core-v0.1.0...rs-mod-lua-core-v0.1.1) - 2026-09-23
 
 ### Added
