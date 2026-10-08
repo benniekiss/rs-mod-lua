@@ -1,6 +1,6 @@
 [package]
 name = "minijinja-lua"
-version = "0.5.4"
+version = "0.5.5"
 edition.workspace = true
 description = "a minijinja lua module using the minijinja rust crate"
 repository.workspace = true
