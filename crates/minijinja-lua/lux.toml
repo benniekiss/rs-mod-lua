@@ -22,7 +22,7 @@ dir = "rs-mod-lua-$(PACKAGE)-v$(VERSION)"
 type = "rust-mlua"
 cargo_extra_args = ["--package", "minijinja-lua", "--locked"]
 default_features = false
-features = ["module", "contrib"]
+features = ["module", "contrib", "stacker"]
 
 [build.modules]
 "minijinja" = "minijinja_lua"

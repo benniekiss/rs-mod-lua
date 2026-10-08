@@ -14,7 +14,7 @@ git_release_enable = false
 name = "minijinja-lua"
 release = true
 publish = true
-publish_features = ["vendored", "contrib"]
+publish_features = ["vendored", "contrib", "stacker"]
 
 [[package]]
 name = "rsast-lua"

@@ -23,7 +23,6 @@ minijinja = {
     "loop_controls",
     "preserve_order",
     "speedups",
-    "stacker",
     "unicode",
     "urlencode",
   ]
@@ -66,4 +65,5 @@ luajit = ["mlua/luajit"]
 luajit52 = ["mlua/luajit52"]
 minijinja-contrib = ["dep:minijinja-contrib"]
 module = ["mlua/module"]
+stacker = ["minijinja/stacker"]
 vendored = ["mlua/vendored"]
