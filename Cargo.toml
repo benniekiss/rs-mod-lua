@@ -3,6 +3,7 @@ cargo-features = ["panic-immediate-abort", "profile-rustflags"]
 [workspace]
 resolver = "3"
 members = [
+  "crates/jsonschema-lua",
   "crates/minijinja-lua",
   "crates/rs-mod-lua-core",
   "crates/rsast-lua",
@@ -29,4 +30,12 @@ rustflags = [
   "-Dwarnings",
   "-Zlocation-detail=none",
   "-Zfmt-debug=none",
+]
+
+## `unicode-general-category` requires debug formatting for its symbols
+[profile.release.package.unicode-general-category]
+rustflags = [
+  "-Dwarnings",
+  "-Zlocation-detail=none",
+  # "-Zfmt-debug=none",
 ]
