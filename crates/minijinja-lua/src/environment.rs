@@ -8,7 +8,7 @@ use minijinja::{
     ErrorKind as JinjaErrorKind,
     State,
     args,
-    value::{Rest as JinjaRest, Value as JinjaValue},
+    value::{Rest as JinjaRest, Value as JinjaValue, ValueOrKwargs as JinjaValueOrKwargs},
 };
 use mlua::LuaSerdeExt;
 use rs_mod_lua_core::guard::bind_lua;
@@ -77,36 +77,6 @@ impl LuaEnvironment {
     #[lua(name = "empty", infallible)]
     pub(crate) fn lua_empty() -> Self {
         Environment::empty().into()
-    }
-
-    #[lua(name = "keep_trailing_newline", getter, infallible)]
-    pub(crate) fn lua_keep_trailing_newline(&self) -> bool {
-        self.0.keep_trailing_newline()
-    }
-
-    #[lua(name = "keep_trailing_newline", setter, infallible)]
-    pub(crate) fn lua_set_keep_trailing_newline(&mut self, val: bool) {
-        self.0.set_keep_trailing_newline(val)
-    }
-
-    #[lua(name = "trim_blocks", getter, infallible)]
-    pub(crate) fn lua_trim_blocks(&self) -> bool {
-        self.0.trim_blocks()
-    }
-
-    #[lua(name = "trim_blocks", setter, infallible)]
-    pub(crate) fn lua_set_trim_blocks(&mut self, val: bool) {
-        self.0.set_trim_blocks(val)
-    }
-
-    #[lua(name = "lstrip_blocks", getter, infallible)]
-    pub(crate) fn lua_lstrip_blocks(&self) -> bool {
-        self.0.lstrip_blocks()
-    }
-
-    #[lua(name = "lstrip_blocks", setter, infallible)]
-    pub(crate) fn lua_set_lstrip_blocks(&mut self, val: bool) {
-        self.0.set_lstrip_blocks(val)
     }
 
     #[lua(name = "debug", getter, infallible)]
@@ -239,7 +209,7 @@ impl LuaEnvironment {
 
         self.0
             .set_unknown_method_callback(move |state, value, method, args| {
-                func.with_func::<mlua::MultiValue>(args!(value, method, ..args), Some(state))
+                func.with_func::<mlua::MultiValue>(args!(value, method, args), Some(state))
                     .map(|v| v.unwrap_or_default())
             });
 
@@ -379,7 +349,7 @@ impl LuaEnvironment {
                 .map_err(mlua::Error::external)?;
 
             let mut mv = captured
-                .with_state_mut(|state| func.with_func_mut::<mlua::MultiValue>(&[], Some(state)))
+                .with_state_mut(|state| func.with_func::<mlua::MultiValue>(&[], Some(state)))
                 .map_err(mlua::Error::external)?
                 .and_then(|v| minijinja_to_lua(lua, &v))
                 .unwrap_or_default();
@@ -428,10 +398,12 @@ impl LuaEnvironment {
         let mut func = LuaFunctionObject::from_value(lua, &filter)?;
         func.set_pass_state(pass_state.unwrap_or(true));
 
-        self.0
-            .add_filter(name, move |state: &State, args: JinjaRest<JinjaValue>| {
-                func.with_func::<mlua::MultiValue>(&args, Some(state))
-            });
+        self.0.add_filter(
+            name,
+            move |state: &mut State, args: JinjaRest<JinjaValueOrKwargs>| {
+                func.with_func::<mlua::MultiValue>(&args.into_values(), Some(state))
+            },
+        );
 
         Ok(())
     }
@@ -452,10 +424,12 @@ impl LuaEnvironment {
         let mut func = LuaFunctionObject::from_value(lua, &test)?;
         func.set_pass_state(pass_state.unwrap_or(true));
 
-        self.0
-            .add_test(name, move |state: &State, args: JinjaRest<JinjaValue>| {
-                func.with_func::<bool>(&args, Some(state))
-            });
+        self.0.add_test(
+            name,
+            move |state: &mut State, args: JinjaRest<JinjaValueOrKwargs>| {
+                func.with_func::<bool>(&args.into_values(), Some(state))
+            },
+        );
 
         Ok(())
     }
@@ -478,10 +452,12 @@ impl LuaEnvironment {
                 let mut func = LuaFunctionObject::from_value(lua, &f)?;
                 func.set_pass_state(pass_state.unwrap_or(true));
 
-                self.0
-                    .add_function(name, move |state: &State, args: JinjaRest<JinjaValue>| {
-                        func.with_func::<mlua::MultiValue>(&args, Some(state))
-                    })
+                self.0.add_function(
+                    name,
+                    move |state: &mut State, args: JinjaRest<JinjaValueOrKwargs>| {
+                        func.with_func::<mlua::MultiValue>(&args.into_values(), Some(state))
+                    },
+                )
             },
             _ => self.0.add_global(name, lua_to_minijinja(lua, &val)),
         };

@@ -151,16 +151,26 @@ minijinja.None = nil
 ---@field comment_delimiters     [string, string] Start and end delimiters
 ---@field line_statement_prefix? string
 ---@field line_comment_prefix?   string
+---@field keep_trailing_newline  boolean          Preserve trailing newlines at the end of templates.
+---@field trim_blocks            boolean          Remove the first newline after a block.
+---@field lstrip_blocks          boolean          Remove leading spaces and tabs from the start of a line to a block.
 minijinja.SyntaxConfig = {}
 
 --- Get a configuration builder
 ---
----@return minijinja.SyntaxConfigBuilder : userdata
+---@return minijinja.SyntaxConfigBuilder
 function minijinja.SyntaxConfig.builder() end
+
+--- Convert this configuration to a builder.
+---
+--- This allows updating settings of an existing configuration.
+---
+---@return minijinja.SyntaxConfigBuilder
+function minijinja.SyntaxConfig:to_builder() end
 
 --- Configure the syntax for the environment.
 ---
----@class (exact) minijinja.SyntaxConfigBuilder
+---@class minijinja.SyntaxConfigBuilder
 ---
 ---@field build                 fun(self): minijinja.SyntaxConfig           Build the configuration
 ---@field block_delimiters      fun(self, start: string, end: string): self Set the start and end delimiters
@@ -168,18 +178,18 @@ function minijinja.SyntaxConfig.builder() end
 ---@field comment_delimiters    fun(self, start: string, end: string): self Set the start and end delimiters
 ---@field line_statement_prefix fun(self, prefix: string): self             Set the line statement prefix
 ---@field line_comment_prefix   fun(self, prefix: string): self             Set the line comment prefix
+---@field keep_trailing_newline fun(self, keep: boolean): self              Preserve trailing newlines at the end of templates.
+---@field trim_blocks           fun(self, trim: boolean): self              Remove the first newline after a block.
+---@field lstrip_blocks         fun(self, strip: boolean): self             Remove leading spaces and tabs from the start of a line to a block.
 
 --- A minijinja environment.
 ---
----@class (exact) minijinja.Environment: userdata
+---@class minijinja.Environment: userdata
 ---
----@field keep_trailing_newline boolean                     Preserve trailing newlines at the end of templates.
----@field trim_blocks           boolean                     Remove the first newline after a block.
----@field lstrip_blocks         boolean                     Remove leading spaces and tabs from the start of a line to a block.
----@field debug                 boolean                     Enable debug behavior.
----@field fuel                  number | nil                Sets the fuel of the engine. If `nil`, fuel usage is disabled.
----@field recursion_limit       number                      Reconfigures the runtime recursion limit. Default is 500.
----@field undefined_behavior    minijinja.UndefinedBehavior Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
+---@field debug              boolean                     Enable debug behavior.
+---@field fuel               number | nil                Sets the fuel of the engine. If `nil`, fuel usage is disabled.
+---@field recursion_limit    number                      Reconfigures the runtime recursion limit. Default is 500.
+---@field undefined_behavior minijinja.UndefinedBehavior Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
 ---
 minijinja.Environment = {}
 
@@ -363,9 +373,6 @@ function minijinja.State:undefined_behavior() end
 function minijinja.State:current_block() end
 
 --- Render a block.
----
---- This method is only available within the callback passed to
---- [`Environment:render_captured()`](lua-minijinja.Environment.render_captured)
 ---
 ---@param block string The name of the block to render
 ---

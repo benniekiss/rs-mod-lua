@@ -254,7 +254,12 @@ describe("Environment tests", function ()
 
             assert.Equal("foo", env:render_str(source))
 
-            env.keep_trailing_newline = true
+            local config = minijinja.SyntaxConfig.builder()
+                :keep_trailing_newline(true)
+                :build()
+
+            env:set_syntax(config)
+
             assert.Equal("foo\n", env:render_str(source))
         end)
 
@@ -263,8 +268,12 @@ describe("Environment tests", function ()
             local source = "{% if true %}\nfoo{% endif %}"
 
             assert.Equal("\nfoo", env:render_str(source))
+            local config = minijinja.SyntaxConfig.builder()
+                :trim_blocks(true)
+                :build()
 
-            env.trim_blocks = true
+            env:set_syntax(config)
+
             assert.Equal("foo", env:render_str(source))
         end)
 
@@ -274,7 +283,12 @@ describe("Environment tests", function ()
 
             assert.Equal("  \nfoo", env:render_str(source))
 
-            env.lstrip_blocks = true
+            local config = minijinja.SyntaxConfig.builder()
+                :lstrip_blocks(true)
+                :build()
+
+            env:set_syntax(config)
+
             assert.Equal("\nfoo", env:render_str(source))
         end)
 
@@ -283,9 +297,13 @@ describe("Environment tests", function ()
             local source = "  {% if true %}\nfoo{% endif %}"
 
             assert.Equal("  \nfoo", env:render_str(source))
+            local config = minijinja.SyntaxConfig.builder()
+                :trim_blocks(true)
+                :lstrip_blocks(true)
+                :build()
 
-            env.trim_blocks = true
-            env.lstrip_blocks = true
+            env:set_syntax(config)
+
             assert.Equal("foo", env:render_str(source))
         end)
 
@@ -358,7 +376,7 @@ describe("Environment tests", function ()
 
             assert.match_error(
                 function () env:render_str(source) end,
-                "invalid operation: cannot recurse outside of recursive loop"
+                "invalid operation: recursion limit exceeded"
             )
         end)
 
@@ -490,7 +508,7 @@ describe("Environment tests", function ()
             local expr = "{% for k, v in te | fromjson | items %}{{ k }}: {{ v }} {% endfor %}"
             local rv = env:render_str(expr, { te = te })
 
-            assert.Equal([[3: 1 2: {"b": 1, "c": 2, "a": 3} 1: 3 ]], rv)
+            assert.Equal([[3: 1 2: {'b': 1, 'c': 2, 'a': 3} 1: 3 ]], rv)
         end)
 
         it("captured#templates", function ()
@@ -508,7 +526,7 @@ describe("Environment tests", function ()
         it("print_multivalue#templates", function ()
             local env = Environment.new()
 
-            local ex = [=[[1, 2, {"foo": "bar"}]]=]
+            local ex = [=[[1, 2, {'foo': 'bar'}]]=]
 
             local test = function (_, val)
                 return 1, 2, { foo = "bar" }
@@ -524,7 +542,7 @@ describe("Environment tests", function ()
         it("iterate_multivalue#templates", function ()
             local env = Environment.new()
 
-            local ex = [=[1 2 {"foo": "bar"} ]=]
+            local ex = [=[1 2 {'foo': 'bar'} ]=]
 
             local test = function (_, val)
                 return 1, 2, { foo = "bar" }
@@ -591,7 +609,7 @@ describe("Environment tests", function ()
                 assert.Equal("state", minijinja.type(state))
                 assert.Same({}, value)
                 assert.Equal("bar", method)
-                assert.Same({ ["end"] = { 1, 2, 3 } }, args)
+                assert.Same({ 1, 2, 3 }, args)
 
                 return state:apply_filter("bar", value)
             end

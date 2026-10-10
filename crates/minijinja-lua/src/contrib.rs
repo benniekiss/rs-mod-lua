@@ -190,7 +190,7 @@ mod test {
     use serde_json::json;
 
     use super::*;
-    use crate::state::{LuaStateMut, LuaStateRef};
+    use crate::state::LuaState;
 
     #[test]
     fn test_minijinja_types_environment() {
@@ -207,10 +207,10 @@ mod test {
     fn test_minijinja_types_state() {
         let lua = mlua::Lua::new();
         let env = minijinja::Environment::new();
-        let state = &env.empty_state();
+        let state = &mut env.empty_state();
 
         lua.scope(|scope| {
-            let ud = scope.create_userdata::<LuaStateRef>(state.into()).unwrap();
+            let ud = scope.create_userdata::<LuaState>(state.into()).unwrap();
             assert_eq!(minijinja_types(mlua::Value::UserData(ud)).unwrap(), "state");
             Ok(())
         })
@@ -224,7 +224,7 @@ mod test {
         let state = &mut env.empty_state();
 
         lua.scope(|scope| {
-            let ud = scope.create_userdata::<LuaStateMut>(state.into()).unwrap();
+            let ud = scope.create_userdata::<LuaState>(state.into()).unwrap();
             assert_eq!(minijinja_types(mlua::Value::UserData(ud)).unwrap(), "state");
             Ok(())
         })
@@ -289,7 +289,7 @@ mod test {
 
         let res = expr.eval(context! { te => ex.to_string() }).unwrap();
 
-        assert_eq!(res, minijinja::Value::from_serialize(ex));
+        assert_eq!(res, minijinja::Value::from(minijinja::value::Serde(ex)));
     }
 
     #[test]
