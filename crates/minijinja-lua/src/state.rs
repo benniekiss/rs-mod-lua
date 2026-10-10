@@ -251,34 +251,5 @@ impl<'scope, 'template, 'env> mlua::UserData for LuaState<'scope, 'template, 'en
                 }
             },
         );
-
-        // Get a temp value or call `func` to add the value
-        methods.add_method_mut(
-            "get_or_set_temp",
-            |lua,
-             this,
-             (name, func): (mlua::BorrowedStr, mlua::Function)|
-             -> mlua::Result<mlua::MultiValue> {
-                let val = match this.state().get_temp(&name) {
-                    Some(v) => v,
-                    None => {
-                        let val = func.call::<mlua::Value>(mlua::Value::Nil)?;
-
-                        if let Some(val) = lua_to_minijinja(lua, &val) {
-                            this.state_mut().set_temp(&name, val.clone());
-                            val
-                        } else {
-                            return Err(mlua::Error::FromLuaConversionError {
-                                from: val.type_name(),
-                                to: "minijinja::Value".to_string(),
-                                message: None,
-                            });
-                        }
-                    },
-                };
-
-                Ok(minijinja_to_lua(lua, &val).unwrap_or_default())
-            },
-        );
     }
 }

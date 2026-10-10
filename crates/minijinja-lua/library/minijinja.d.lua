@@ -447,14 +447,6 @@ function minijinja.State:get_temp(name) end
 ---@return any # The old temp variable value.
 function minijinja.State:set_temp(name, temp) end
 
---- Get a temp variable or add the variable returned by `func`.
----
----@param name string     The name of the variable.
----@param func fun(): any The function to call if the temp is not set.
----
----@return any # The variable associated with `name`, or the variable returnd by `func`.
-function minijinja.State:get_or_set_temp(name, func) end
-
 --- Get the type of `value`
 ---
 --- This function returns the strings
