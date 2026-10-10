@@ -170,7 +170,7 @@ function minijinja.SyntaxConfig:to_builder() end
 
 --- Configure the syntax for the environment.
 ---
----@class minijinja.SyntaxConfigBuilder
+---@class (exact) minijinja.SyntaxConfigBuilder: userdata
 ---
 ---@field build                 fun(self): minijinja.SyntaxConfig           Build the configuration
 ---@field block_delimiters      fun(self, start: string, end: string): self Set the start and end delimiters
@@ -184,7 +184,7 @@ function minijinja.SyntaxConfig:to_builder() end
 
 --- A minijinja environment.
 ---
----@class minijinja.Environment: userdata
+---@class (exact) minijinja.Environment: userdata
 ---
 ---@field debug              boolean                     Enable debug behavior.
 ---@field fuel               number | nil                Sets the fuel of the engine. If `nil`, fuel usage is disabled.
