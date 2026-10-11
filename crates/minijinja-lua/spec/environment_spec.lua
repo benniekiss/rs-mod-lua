@@ -220,11 +220,13 @@ describe("Environment tests", function ()
     describe("templates#Environment", function ()
         it("custom-syntax#templates", function ()
             local env = Environment.new()
-            local config = minijinja.SyntaxConfig.builder()
-                :block_delimiters("<%", "%>")
-                :variable_delimiters("${", "}")
+            local builder = minijinja.SyntaxConfig.builder()
+
+            builder:variable_delimiters("${", "}")
                 :comment_delimiters("<!--", "-->")
-                :build()
+                :block_delimiters("<%", "%>")
+
+            local config = builder:build()
 
             env:set_syntax(config)
 
@@ -235,7 +237,7 @@ describe("Environment tests", function ()
             assert.Equal("42", rv)
         end)
 
-        it("line-statements#templates", function ()
+        it("line_statements#templates", function ()
             local env = Environment.new()
             local config = minijinja.SyntaxConfig.builder()
                 :line_statement_prefix("#")
@@ -248,33 +250,47 @@ describe("Environment tests", function ()
             assert.Equal("0\n1\n2\n", rv)
         end)
 
-        it("keep-trailing-newlines#templates", function ()
+        it("keep_trailing_newlines#templates", function ()
             local env = Environment.new()
             local source = "foo\n"
 
             assert.Equal("foo", env:render_str(source))
 
-            env.keep_trailing_newline = true
+            local config = minijinja.SyntaxConfig.builder()
+                :keep_trailing_newline(true)
+                :build()
+
+            env:set_syntax(config)
+
             assert.Equal("foo\n", env:render_str(source))
         end)
 
-        it("trim-blocks#templates", function ()
+        it("trim_blocks#templates", function ()
             local env = Environment.new()
             local source = "{% if true %}\nfoo{% endif %}"
 
             assert.Equal("\nfoo", env:render_str(source))
+            local config = minijinja.SyntaxConfig.builder()
+                :trim_blocks(true)
+                :build()
 
-            env.trim_blocks = true
+            env:set_syntax(config)
+
             assert.Equal("foo", env:render_str(source))
         end)
 
-        it("lstrip-blocks#templates", function ()
+        it("lstrip_blocks#templates", function ()
             local env = Environment.new()
             local source = "  {% if true %}\nfoo{% endif %}"
 
             assert.Equal("  \nfoo", env:render_str(source))
 
-            env.lstrip_blocks = true
+            local config = minijinja.SyntaxConfig.builder()
+                :lstrip_blocks(true)
+                :build()
+
+            env:set_syntax(config)
+
             assert.Equal("\nfoo", env:render_str(source))
         end)
 
@@ -283,9 +299,13 @@ describe("Environment tests", function ()
             local source = "  {% if true %}\nfoo{% endif %}"
 
             assert.Equal("  \nfoo", env:render_str(source))
+            local config = minijinja.SyntaxConfig.builder()
+                :trim_blocks(true)
+                :lstrip_blocks(true)
+                :build()
 
-            env.trim_blocks = true
-            env.lstrip_blocks = true
+            env:set_syntax(config)
+
             assert.Equal("foo", env:render_str(source))
         end)
 
@@ -315,7 +335,7 @@ describe("Environment tests", function ()
         describe("undefined_behavior#templates", function ()
             it("chainable#undefined_behavior", function ()
                 local env = Environment.new()
-                env.undefined_behavior = minijinja.UndefinedBehavior.CHAINABLE
+                env.undefined_behavior = minijinja.UndefinedBehavior.CHAINABLE()
 
                 local source = "{{ foo.bar.baz }}"
 
@@ -324,7 +344,7 @@ describe("Environment tests", function ()
 
             it("lenient#undefined_behavior", function ()
                 local env = Environment.new()
-                env.undefined_behavior = minijinja.UndefinedBehavior.LENIENT
+                env.undefined_behavior = minijinja.UndefinedBehavior.LENIENT()
 
                 local source = "{{ foo }}"
 
@@ -333,7 +353,7 @@ describe("Environment tests", function ()
 
             it("semi_strict#undefined_behavior", function ()
                 local env = Environment.new()
-                env.undefined_behavior = minijinja.UndefinedBehavior.SEMISTRICT
+                env.undefined_behavior = minijinja.UndefinedBehavior.SEMISTRICT()
 
                 local source = "{% if not foo %}foo{% endif %}"
 
@@ -342,7 +362,7 @@ describe("Environment tests", function ()
 
             it("strict#undefined_behavior", function ()
                 local env = Environment.new()
-                env.undefined_behavior = minijinja.UndefinedBehavior.STRICT
+                env.undefined_behavior = minijinja.UndefinedBehavior.STRICT()
 
                 local source = "{% if not foo %}foo{% endif %}"
 
@@ -358,11 +378,11 @@ describe("Environment tests", function ()
 
             assert.match_error(
                 function () env:render_str(source) end,
-                "invalid operation: cannot recurse outside of recursive loop"
+                "invalid operation: recursion limit exceeded"
             )
         end)
 
-        it("undeclared-variables#templates", function ()
+        it("undeclared_variables#templates", function ()
             local env = Environment.new()
 
             env:add_template("foo.txt", "{{ x }} {{ bar.x }}")
@@ -382,20 +402,20 @@ describe("Environment tests", function ()
             assert.Same({ "x" }, env:undeclared_variables("bar.txt"))
         end)
 
-        it("loop-controls#templates", function ()
+        it("loop_controls#templates", function ()
             local env = Environment.new()
 
             local rv = env:render_str(
                 [[
-				{% for x in [1, 2, 3, 4, 5] %}
-				{% if x == 1 %}
-					{% continue %}
-				{% elif x == 3 %}
-					{% break %}
-				{% endif %}
-				{{ x }}
-				{% endfor %}
-			]]
+        {% for x in [1, 2, 3, 4, 5] %}
+        {% if x == 1 %}
+          {% continue %}
+        {% elif x == 3 %}
+          {% break %}
+        {% endif %}
+        {{ x }}
+        {% endfor %}
+      ]]
             )
 
             assert.Equal("2", rv:match("^%s*(2)%s*$"))
@@ -481,6 +501,55 @@ describe("Environment tests", function ()
             assert.Error(function () env:render_template("../environment_spec.lua") end)
         end)
 
+        it("path_loader_update_check#templates", function ()
+            local env = Environment.new()
+            env.auto_reload = true
+
+            local version = 1
+            local factory_calls = 0
+
+            local loader = minijinja.path_loader("spec/templates", function (path)
+                local sep = package.config:sub(1, 1)
+                assert.Equal("spec/templates" .. sep .. "includes" .. sep .. "foo.txt", path)
+                factory_calls = factory_calls + 1
+                local loaded_version = version
+
+                return function () return loaded_version == version end
+            end)
+
+            env:set_loader(loader)
+
+            assert.Equal(
+                "I am from foo! first!",
+                env:render_template("includes/foo.txt", {
+                    woot = "first",
+                })
+            )
+            assert.Equal(
+                "I am from foo! second!",
+                env:render_template("includes/foo.txt", {
+                    woot = "second",
+                })
+            )
+            assert.Equal(1, factory_calls)
+
+            version = 2
+
+            assert.Equal(
+                "I am from foo! third!",
+                env:render_template("includes/foo.txt", {
+                    woot = "third",
+                })
+            )
+            assert.Equal(
+                "I am from foo! fourth!",
+                env:render_template("includes/foo.txt", {
+                    woot = "fourth",
+                })
+            )
+            assert.Equal(2, factory_calls)
+        end)
+
         it("fromjson#templates", function ()
             local env = Environment.new()
 
@@ -490,7 +559,7 @@ describe("Environment tests", function ()
             local expr = "{% for k, v in te | fromjson | items %}{{ k }}: {{ v }} {% endfor %}"
             local rv = env:render_str(expr, { te = te })
 
-            assert.Equal([[3: 1 2: {"b": 1, "c": 2, "a": 3} 1: 3 ]], rv)
+            assert.Equal([[3: 1 2: {'b': 1, 'c': 2, 'a': 3} 1: 3 ]], rv)
         end)
 
         it("captured#templates", function ()
@@ -505,10 +574,23 @@ describe("Environment tests", function ()
             assert.Equal("baz", cb)
         end)
 
+        it("captured_error#templates", function ()
+            local env = Environment.new()
+            env:add_template("foo.txt", "I am {% block baz %}baz{% endblock baz %}!")
+
+            assert.error_match(function ()
+                env:render_captured("foo.txt", {}, function (state)
+                    error("captured error!")
+
+                    return state:render_block("baz")
+                end)
+            end, "captured error!")
+        end)
+
         it("print_multivalue#templates", function ()
             local env = Environment.new()
 
-            local ex = [=[[1, 2, {"foo": "bar"}]]=]
+            local ex = [=[[1, 2, {'foo': 'bar'}]]=]
 
             local test = function (_, val)
                 return 1, 2, { foo = "bar" }
@@ -524,7 +606,7 @@ describe("Environment tests", function ()
         it("iterate_multivalue#templates", function ()
             local env = Environment.new()
 
-            local ex = [=[1 2 {"foo": "bar"} ]=]
+            local ex = [=[1 2 {'foo': 'bar'} ]=]
 
             local test = function (_, val)
                 return 1, 2, { foo = "bar" }
@@ -563,7 +645,30 @@ describe("Environment tests", function ()
             assert.Same({ "index.html", "other.html", "index.html" }, called)
         end)
 
-        it("path-join#callbacks", function ()
+        it("loader_auto_reload#callbacks", function ()
+            local env = Environment.new()
+            local source = "first"
+            local load_count = 0
+
+            env:set_loader(function ()
+                load_count = load_count + 1
+                local loaded_source = source
+
+                return loaded_source, function () return loaded_source == source end
+            end)
+
+            assert.Equal("first", env:render_template("index.html"))
+            assert.Equal("first", env:render_template("index.html"))
+            assert.Equal(1, load_count)
+
+            source = "second"
+
+            assert.Equal("second", env:render_template("index.html"))
+            assert.Equal("second", env:render_template("index.html"))
+            assert.Equal(2, load_count)
+        end)
+
+        it("path_join#callbacks", function ()
             local env = Environment.new()
 
             local function path_join(name, parent)
@@ -580,7 +685,7 @@ describe("Environment tests", function ()
             assert.Equal("I am baz!", rv)
         end)
 
-        it("unknown-method#callbacks", function ()
+        it("unknown_method#callbacks", function ()
             local env = Environment.new()
 
             local function bar()
@@ -591,7 +696,7 @@ describe("Environment tests", function ()
                 assert.Equal("state", minijinja.type(state))
                 assert.Same({}, value)
                 assert.Equal("bar", method)
-                assert.Same({ ["end"] = { 1, 2, 3 } }, args)
+                assert.Same({ 1, 2, 3 }, args)
 
                 return state:apply_filter("bar", value)
             end
@@ -614,7 +719,7 @@ describe("Environment tests", function ()
             assert.Error(function () env:eval(source) end)
         end)
 
-        it("autoescape#callbacks", function ()
+        it("auto_escape#callbacks", function ()
             local env = Environment.new()
             local rv
 
@@ -634,6 +739,54 @@ describe("Environment tests", function ()
 
             rv = env:render_template("invalid.html", { foo = "<x>" })
             assert.Equal("Hello <x>", rv)
+        end)
+
+        it("auto_escape_equality#callbacks", function ()
+            local A = minijinja.AutoEscape
+
+            assert.Equal(A.HTML(), A.HTML())
+            assert.True(A.HTML():eq("Html"))
+
+            assert.Equal(A.JSON(), A.JSON())
+            assert.True(A.JSON():eq("Json"))
+
+            assert.Equal(A.NONE(), A.NONE())
+            assert.True(A.NONE():eq("None"))
+
+            assert.Equal(A.CUSTOM("custom"), A.CUSTOM("custom"))
+            assert.True(A.CUSTOM("custom"):eq("custom"))
+        end)
+
+        it("undefined_behavior_equality#callbacks", function ()
+            local UB = minijinja.UndefinedBehavior
+
+            assert.Equal(UB.CHAINABLE(), UB.CHAINABLE())
+            assert.True(UB.CHAINABLE():eq("Chainable"))
+
+            assert.Equal(UB.LENIENT(), UB.LENIENT())
+            assert.True(UB.LENIENT():eq("Lenient"))
+
+            assert.Equal(UB.SEMISTRICT(), UB.SEMISTRICT())
+            assert.True(UB.SEMISTRICT():eq("SemiStrict"))
+
+            assert.Equal(UB.STRICT(), UB.STRICT())
+            assert.True(UB.STRICT():eq("Strict"))
+        end)
+
+        it("auto_escape_custom#callbacks", function ()
+            local env = Environment.new()
+
+            env:set_auto_escape_callback(function () return minijinja.AutoEscape.CUSTOM("html") end)
+            env:set_formatter(function (state, value)
+                assert.Equal("html", tostring(state:auto_escape()))
+                assert.Equal(minijinja.AutoEscape.CUSTOM("html"), state:auto_escape())
+                assert.Not.Equal(minijinja.AutoEscape.CUSTOM("foobar"), state:auto_escape())
+                assert.Not.Equal(minijinja.AutoEscape.HTML, state:auto_escape())
+
+                return tostring(value)
+            end)
+
+            assert.Equal("Hello <x>", env:render_str("Hello {{ foo }}", { foo = "<x>" }))
         end)
 
         it("formatter#callbacks", function ()

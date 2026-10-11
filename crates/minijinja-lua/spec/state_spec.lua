@@ -4,8 +4,8 @@ local Environment = minijinja.Environment
 describe("State tests", function ()
     local function state_func(state, _)
         assert.Equal("my_template", state:name())
-        assert.Equal(minijinja.AutoEscape.NONE, state:auto_escape())
-        assert.Equal(minijinja.UndefinedBehavior.LENIENT, state:undefined_behavior())
+        assert.Equal(minijinja.AutoEscape.NONE(), state:auto_escape())
+        assert.Equal(minijinja.UndefinedBehavior.LENIENT(), state:undefined_behavior())
         assert.Equal("test_block", state:current_block())
         assert.Equal(true, state:lookup("bar").baz)
         assert.Equal(42, state:lookup("func")())
@@ -85,7 +85,9 @@ describe("State tests", function ()
                 first = false
             end
 
-            local new = state:get_or_set_temp("counter", function () return 0 end) + 1
+            local temp = state:get_temp("counter") or 0
+            local new = temp + 1
+
             state:set_temp("counter", new)
             return new
         end
