@@ -9,8 +9,8 @@ local minijinja = {}
 ---@alias minijinja.Types
 --- | "environment"
 --- | "state"
---- | "autoescape"
---- | "undefinedbehavior"
+--- | "auto_escape"
+--- | "undefined_behavior"
 --- | "none"
 
 ---@class (exact) minijinja.UndefinedBehaviorVariant: userdata
@@ -481,8 +481,8 @@ function minijinja.State:set_temp(name, temp) end
 ---
 --- - `'environment'` for [`Environment`](lua-minijinja.Environment)
 --- - `'state'` for [`State`](lua-minijinja.State)
---- - `'autoescape'` for [`AutoEscape`](lua-minijinja.AutoEscape)
---- - `'undefinedbehavior'` for [`UndefinedBehavior`](lua-minijinja.UndefinedBehavior)
+--- - `'auto_escape'` for [`AutoEscape`](lua-minijinja.AutoEscape)
+--- - `'undefined_behavior'` for [`UndefinedBehavior`](lua-minijinja.UndefinedBehavior)
 --- - `'none'` for [`None`](lua-minijinja.None)
 --- - or the values returned by the builtin `type()` function.
 ---

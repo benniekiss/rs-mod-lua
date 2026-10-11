@@ -11,8 +11,8 @@ use crate::{
 pub(crate) fn minijinja_types(val: mlua::Value) -> mlua::Result<String> {
     let name = match val {
         mlua::Value::UserData(ud) if ud.is::<LuaEnvironment>() => "environment",
-        mlua::Value::UserData(ud) if ud.is::<LuaAutoEscape>() => "autoescape",
-        mlua::Value::UserData(ud) if ud.is::<LuaUndefinedBehavior>() => "undefinedbehavior",
+        mlua::Value::UserData(ud) if ud.is::<LuaAutoEscape>() => "auto_escape",
+        mlua::Value::UserData(ud) if ud.is::<LuaUndefinedBehavior>() => "undefined_behavior",
         mlua::Value::UserData(ud) if ud.type_name().is_ok_and(|s| s == "state") => "state",
         val if val.is_null() => "none",
         _ => val.type_name(),
@@ -253,7 +253,7 @@ mod test {
         ] {
             assert_eq!(
                 minijinja_types(v.into_lua(&lua).unwrap()).unwrap(),
-                "autoescape"
+                "auto_escape"
             )
         }
     }
@@ -264,7 +264,7 @@ mod test {
 
         assert_eq!(
             minijinja_types(LuaUndefinedBehavior::Strict.into_lua(&lua).unwrap()).unwrap(),
-            "undefinedbehavior"
+            "undefined_behavior"
         )
     }
 
