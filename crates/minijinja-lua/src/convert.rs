@@ -8,6 +8,7 @@ use std::{
     ops::{Deref, DerefMut},
     sync::{
         Arc,
+        Mutex,
         atomic::{AtomicBool, Ordering},
     },
 };
@@ -28,7 +29,7 @@ use minijinja::{
         ValueKind as JinjaValueKind,
     },
 };
-use mlua::{LuaSerdeExt, ObjectLike};
+use mlua::{FromLua, LuaSerdeExt, ObjectLike};
 use rs_mod_lua_core::guard::with_lua;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
@@ -226,6 +227,38 @@ impl fmt::Display for LuaFunctionObject {
 impl LuaFunctionObject {
     /// Call a Lua function with the provided [`minijinja::Value`] arguments converted to
     /// [`mlua::Value`] arguments and an optional [`minijinja::State`] parameter.
+    pub(crate) fn with_func_lua<R>(
+        &self,
+        args: &[JinjaValue],
+        state: Option<&mut minijinja::State>,
+    ) -> Result<R, JinjaError>
+    where
+        R: mlua::FromLuaMulti,
+    {
+        self.with(|lua, func| self.with_scope::<R>(lua, args, state, |mv| func.call(mv)))
+    }
+
+    /// Call a Lua function with the provided [`minijinja::Value`] arguments converted to
+    /// [`mlua::Value`] arguments and an optional [`minijinja::State`] parameter.
+    ///
+    /// The output of the function is passed to [`lua_multi_to_minijinja`] where it is converted to
+    /// a [`minijinja::Value`]
+    pub(crate) fn with_func_jinja<R>(
+        &self,
+        args: &[JinjaValue],
+        state: Option<&mut minijinja::State>,
+    ) -> Result<Option<JinjaValue>, JinjaError>
+    where
+        R: mlua::FromLuaMulti + mlua::IntoLuaMulti,
+    {
+        self.with(|lua, func| {
+            self.with_scope::<R>(lua, args, state, |mv| func.call(mv))
+                .map(|v| lua_multi_to_minijinja(lua, v))
+        })
+    }
+
+    /// Call a Lua function with the provided [`minijinja::Value`] arguments converted to
+    /// [`mlua::Value`] arguments and an optional [`minijinja::State`] parameter.
     ///
     /// The output of the function is passed to [`mlua::Lua::to_value`] where it is converted to
     /// Rust via `serde` to `R`
@@ -240,25 +273,6 @@ impl LuaFunctionObject {
         self.with(|lua, func| {
             self.with_scope::<mlua::Value>(lua, args, state, |mv| func.call(mv))
                 .and_then(|v| lua.from_value::<R>(v))
-        })
-    }
-
-    /// Call a Lua function with the provided [`minijinja::Value`] arguments converted to
-    /// [`mlua::Value`] arguments and an optional [`minijinja::State`] parameter.
-    ///
-    /// The output of the function is passed to [`lua_multi_to_minijinja`] where it is converted to
-    /// a [`minijinja::Value`]
-    pub(crate) fn with_func<R>(
-        &self,
-        args: &[JinjaValue],
-        state: Option<&mut minijinja::State>,
-    ) -> Result<Option<JinjaValue>, JinjaError>
-    where
-        R: mlua::FromLuaMulti + mlua::IntoLuaMulti,
-    {
-        self.with(|lua, func| {
-            self.with_scope::<R>(lua, args, state, |mv| func.call(mv))
-                .map(|v| lua_multi_to_minijinja(lua, v))
         })
     }
 }
@@ -280,7 +294,7 @@ impl JinjaObject for LuaFunctionObject {
         state: &mut minijinja::State<'_, '_>,
         args: &[JinjaValue],
     ) -> Result<JinjaValue, minijinja::Error> {
-        self.with_func::<mlua::MultiValue>(args, Some(state))?
+        self.with_func_jinja::<mlua::MultiValue>(args, Some(state))?
             .ok_or_else(|| JinjaError::new(JinjaErrorKind::InvalidOperation, "no value returned"))
     }
 }
@@ -575,6 +589,7 @@ pub(crate) enum LuaAutoEscape {
     #[default]
     #[serde(alias = "NONE", alias = "none")]
     None,
+    #[serde(untagged)]
     Custom(String),
 }
 
@@ -644,17 +659,38 @@ impl LuaAutoEscape {
     }
 
     #[lua(meta, name = "__eq", infallible)]
-    pub(crate) fn lua_eq(this: &LuaAutoEscape, other: &LuaAutoEscape) -> bool {
-        this == other
+    pub(crate) fn lua_meta_eq(&self, lua: &mlua::Lua, other: mlua::Value) -> bool {
+        self.lua_eq(lua, other)
+    }
+
+    #[lua(name = "eq", infallible)]
+    pub(crate) fn lua_eq(&self, lua: &mlua::Lua, other: mlua::Value) -> bool {
+        match LuaAutoEscape::from_lua(other, lua) {
+            Ok(o) => self == &o,
+            _ => false,
+        }
     }
 }
 
 pub(crate) fn autoescape_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set("HTML", lua.create_userdata(LuaAutoEscape::Html)?)?;
-    table.set("JSON", lua.create_userdata(LuaAutoEscape::Json)?)?;
-    table.set("NONE", lua.create_userdata(LuaAutoEscape::None)?)?;
+    table.set(
+        "HTML",
+        lua.create_function(|_, ()| Ok(LuaAutoEscape::Html))?,
+    )?;
+    table.set(
+        "JSON",
+        lua.create_function(|_, ()| Ok(LuaAutoEscape::Json))?,
+    )?;
+    table.set(
+        "NONE",
+        lua.create_function(|_, ()| Ok(LuaAutoEscape::None))?,
+    )?;
+    table.set(
+        "CUSTOM",
+        lua.create_function(|_, s: String| Ok(LuaAutoEscape::Custom(s)))?,
+    )?;
 
     Ok(table)
 }
@@ -726,8 +762,16 @@ impl LuaUndefinedBehavior {
     }
 
     #[lua(meta, name = "__eq", infallible)]
-    pub(crate) fn lua_eq(this: &LuaUndefinedBehavior, other: &LuaUndefinedBehavior) -> bool {
-        this == other
+    pub(crate) fn lua_meta_eq(&self, lua: &mlua::Lua, other: mlua::Value) -> bool {
+        self.lua_eq(lua, other)
+    }
+
+    #[lua(name = "eq", infallible)]
+    pub(crate) fn lua_eq(&self, lua: &mlua::Lua, other: mlua::Value) -> bool {
+        match LuaUndefinedBehavior::from_lua(other, lua) {
+            Ok(o) => self == &o,
+            _ => false,
+        }
     }
 }
 
@@ -736,18 +780,20 @@ pub(crate) fn undefined_behavior_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Tabl
 
     table.set(
         "CHAINABLE",
-        lua.create_userdata(LuaUndefinedBehavior::Chainable)?,
+        lua.create_function(|_, ()| Ok(LuaUndefinedBehavior::Chainable))?,
     )?;
     table.set(
         "LENIENT",
-        lua.create_userdata(LuaUndefinedBehavior::Lenient)?,
+        lua.create_function(|_, ()| Ok(LuaUndefinedBehavior::Lenient))?,
     )?;
     table.set(
         "SEMISTRICT",
-        lua.create_userdata(LuaUndefinedBehavior::SemiStrict)?,
+        lua.create_function(|_, ()| Ok(LuaUndefinedBehavior::SemiStrict))?,
     )?;
-    table.set("STRICT", lua.create_userdata(LuaUndefinedBehavior::Strict)?)?;
-
+    table.set(
+        "STRICT",
+        lua.create_function(|_, ()| Ok(LuaUndefinedBehavior::Strict))?,
+    )?;
     Ok(table)
 }
 
@@ -831,11 +877,11 @@ impl LuaSyntaxConfig {
 }
 
 #[derive(mlua::UserData, mlua::FromLua, Clone)]
-pub(crate) struct LuaSyntaxConfigBuilder(SyntaxConfigBuilder);
+pub(crate) struct LuaSyntaxConfigBuilder(Arc<Mutex<SyntaxConfigBuilder>>);
 
 impl From<SyntaxConfigBuilder> for LuaSyntaxConfigBuilder {
     fn from(value: SyntaxConfigBuilder) -> Self {
-        Self(value)
+        Self(Arc::new(Mutex::new(value)))
     }
 }
 
@@ -844,65 +890,91 @@ impl LuaSyntaxConfigBuilder {
     #[lua(name = "build")]
     pub(crate) fn lua_build(&self) -> mlua::Result<LuaSyntaxConfig> {
         self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
             .build()
             .map(|c| c.into())
             .map_err(mlua::Error::external)
     }
 
-    #[lua(name = "block_delimiters", infallible)]
-    pub(crate) fn lua_block_delimiters(&mut self, start: String, end: String) -> Self {
-        self.0.block_delimiters(start, end);
+    #[lua(name = "block_delimiters")]
+    pub(crate) fn lua_block_delimiters(&self, start: String, end: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .block_delimiters(start, end);
 
-        self.clone()
+        Ok(self.clone())
     }
 
-    #[lua(name = "variable_delimiters", infallible)]
-    pub(crate) fn lua_variable_delimiters(&mut self, start: String, end: String) -> Self {
-        self.0.variable_delimiters(start, end);
+    #[lua(name = "variable_delimiters")]
+    pub(crate) fn lua_variable_delimiters(&self, start: String, end: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .variable_delimiters(start, end);
 
-        self.clone()
+        Ok(self.clone())
     }
 
-    #[lua(name = "comment_delimiters", infallible)]
-    pub(crate) fn lua_comment_delimiters(&mut self, start: String, end: String) -> Self {
-        self.0.comment_delimiters(start, end);
+    #[lua(name = "comment_delimiters")]
+    pub(crate) fn lua_comment_delimiters(&self, start: String, end: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .comment_delimiters(start, end);
 
-        self.clone()
+        Ok(self.clone())
     }
 
-    #[lua(name = "line_statement_prefix", infallible)]
-    pub(crate) fn lua_line_statement_prefix(&mut self, prefix: String) -> Self {
-        self.0.line_statement_prefix(prefix);
+    #[lua(name = "line_statement_prefix")]
+    pub(crate) fn lua_line_statement_prefix(&self, prefix: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .line_statement_prefix(prefix);
 
-        self.clone()
+        Ok(self.clone())
     }
 
-    #[lua(name = "line_comment_prefix", infallible)]
-    pub(crate) fn lua_line_comment_prefix(&mut self, prefix: String) -> Self {
-        self.0.line_comment_prefix(prefix);
+    #[lua(name = "line_comment_prefix")]
+    pub(crate) fn lua_line_comment_prefix(&self, prefix: String) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .line_comment_prefix(prefix);
 
-        self.clone()
+        Ok(self.clone())
     }
 
-    #[lua(name = "lstrip_blocks", infallible)]
-    pub(crate) fn lua_lstrip_blocks(&mut self, strip: bool) -> Self {
-        self.0.lstrip_blocks(strip);
+    #[lua(name = "lstrip_blocks")]
+    pub(crate) fn lua_lstrip_blocks(&self, strip: bool) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .lstrip_blocks(strip);
 
-        self.clone()
+        Ok(self.clone())
     }
 
-    #[lua(name = "trim_blocks", infallible)]
-    pub(crate) fn lua_trim_blocks(&mut self, trim: bool) -> Self {
-        self.0.trim_blocks(trim);
+    #[lua(name = "trim_blocks")]
+    pub(crate) fn lua_trim_blocks(&self, trim: bool) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .trim_blocks(trim);
 
-        self.clone()
+        Ok(self.clone())
     }
 
-    #[lua(name = "keep_trailing_newline", infallible)]
-    pub(crate) fn lua_keep_trailing_newline(&mut self, keep: bool) -> Self {
-        self.0.keep_trailing_newline(keep);
+    #[lua(name = "keep_trailing_newline")]
+    pub(crate) fn lua_keep_trailing_newline(&self, keep: bool) -> mlua::Result<Self> {
+        self.0
+            .lock()
+            .map_err(mlua::Error::runtime)?
+            .keep_trailing_newline(keep);
 
-        self.clone()
+        Ok(self.clone())
     }
 }
 
@@ -1386,21 +1458,18 @@ mod tests {
     }
 
     #[test]
-    fn test_autoescape_custom() {
+    fn test_autoescape_roundtrip_custom() {
         let lua = setup();
 
-        let lua_ae: LuaAutoEscape = AutoEscape::Custom(Cow::Borrowed("test custom")).into();
-        let lua_ae_str = lua_ae.into_lua(&lua).unwrap().to_string().unwrap();
-        assert_eq!(lua_ae_str, "test custom");
+        let lua_ae: LuaAutoEscape = AutoEscape::Custom(Cow::Borrowed("foo")).into();
+        let lua_ae_str = lua.to_value(&lua_ae).unwrap().to_string().unwrap();
+        assert_eq!(lua_ae_str, "foo");
 
-        assert!(LuaAutoEscape::from_lua(lua_ae_str.into_lua(&lua).unwrap(), &lua).is_err());
-    }
+        let lua_ae: LuaAutoEscape = lua
+            .from_value(lua_ae_str.clone().into_lua(&lua).unwrap())
+            .unwrap();
 
-    #[test]
-    fn test_autoescape_roundtrip_invalid() {
-        let lua = setup();
-
-        assert!(LuaAutoEscape::from_lua("xml".into_lua(&lua).unwrap(), &lua).is_err());
+        assert_eq!(lua_ae, LuaAutoEscape::Custom("foo".to_string()));
     }
 
     // UNDEFINED BEHAVIOR CONVERSION TESTS //
@@ -1500,13 +1569,21 @@ mod tests {
 
     #[test]
     fn test_syntax_config() {
-        let mut builder = LuaSyntaxConfig::lua_builder();
-        builder.lua_block_delimiters("BLOCK_S".to_string(), "BLOCK_E".to_string());
-        builder.lua_variable_delimiters("VAR_S".to_string(), "VAR_E".to_string());
-
-        builder.lua_comment_delimiters("COM_S".to_string(), "COM_E".to_string());
-        builder.lua_line_statement_prefix("LS".to_string());
-        builder.lua_line_comment_prefix("LC".to_string());
+        let builder = LuaSyntaxConfig::lua_builder();
+        builder
+            .lua_block_delimiters("BLOCK_S".to_string(), "BLOCK_E".to_string())
+            .unwrap();
+        builder
+            .lua_variable_delimiters("VAR_S".to_string(), "VAR_E".to_string())
+            .unwrap();
+        builder
+            .lua_comment_delimiters("COM_S".to_string(), "COM_E".to_string())
+            .unwrap();
+        builder.lua_line_statement_prefix("LS".to_string()).unwrap();
+        builder.lua_line_comment_prefix("LC".to_string()).unwrap();
+        builder.lua_keep_trailing_newline(true).unwrap();
+        builder.lua_lstrip_blocks(true).unwrap();
+        builder.lua_lstrip_blocks(true).unwrap();
 
         let config = builder.lua_build().unwrap();
 
@@ -1515,6 +1592,9 @@ mod tests {
         assert_eq!(config.comment_delimiters(), ("COM_S", "COM_E"));
         assert_eq!(config.line_statement_prefix(), Some("LS"));
         assert_eq!(config.line_comment_prefix(), Some("LC"));
+        assert_eq!(config.keep_trailing_newline(), true);
+        assert_eq!(config.lstrip_blocks(), true);
+        assert_eq!(config.lstrip_blocks(), true);
     }
 
     // ARRAY-LIKE TABLE TESTS //

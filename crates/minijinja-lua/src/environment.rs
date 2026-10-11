@@ -7,6 +7,7 @@ use minijinja::{
     Error as JinjaError,
     ErrorKind as JinjaErrorKind,
     State,
+    TemplateSource,
     args,
     value::{Rest as JinjaRest, Value as JinjaValue, ValueOrKwargs as JinjaValueOrKwargs},
 };
@@ -119,6 +120,16 @@ impl LuaEnvironment {
         self.0.set_undefined_behavior(val.into());
     }
 
+    #[lua(name = "auto_reload", getter, infallible)]
+    pub(crate) fn lua_auto_reload(&self) -> bool {
+        self.0.auto_reload()
+    }
+
+    #[lua(name = "auto_reload", setter, infallible)]
+    pub(crate) fn lua_set_auto_reload(&mut self, reload: bool) {
+        self.0.set_auto_reload(reload);
+    }
+
     #[lua(name = "add_template", infallible)]
     pub(crate) fn lua_add_template(
         &mut self,
@@ -172,8 +183,18 @@ impl LuaEnvironment {
         let func = LuaFunctionObject::from_value(lua, &callback)?;
 
         self.0.set_loader(move |name| {
-            func.with_func::<Option<mlua::LuaString>>(args!(name), None)
-                .map(|v| v.and_then(|v| v.as_str().map(|s| s.to_string())))
+            func.with_func_lua::<(Option<String>, Option<LuaFunctionObject>)>(args!(name), None)
+                .map(|(s, f)| {
+                    s.map(|source| {
+                        let source = TemplateSource::new(source);
+                        match f {
+                            Some(uptodate) => source.with_uptodate_check(move || {
+                                uptodate.with_func_ser::<bool>(&[], None).unwrap_or(false)
+                            }),
+                            None => source,
+                        }
+                    })
+                })
         });
 
         Ok(())
@@ -188,11 +209,8 @@ impl LuaEnvironment {
         let func = LuaFunctionObject::from_value(lua, &callback)?;
 
         self.0.set_path_join_callback(move |name, parent| {
-            func.with_func::<String>(args!(name, parent), None)
-                .ok()
-                .flatten()
-                .and_then(|v| v.as_str().map(|s| Cow::Owned(s.to_string())))
-                .unwrap_or(Cow::Borrowed(name))
+            func.with_func_lua::<String>(args!(name, parent), None)
+                .map_or_else(|_| Cow::Borrowed(name), Cow::Owned)
         });
 
         Ok(())
@@ -209,7 +227,7 @@ impl LuaEnvironment {
 
         self.0
             .set_unknown_method_callback(move |state, value, method, args| {
-                func.with_func::<mlua::MultiValue>(args!(value, method, args), Some(state))
+                func.with_func_jinja::<mlua::MultiValue>(args!(value, method, args), Some(state))
                     .map(|v| v.unwrap_or_default())
             });
 
@@ -239,7 +257,7 @@ impl LuaEnvironment {
 
         self.0
             .set_auto_escape_callback(move |name| -> minijinja::AutoEscape {
-                func.with_func_ser::<LuaAutoEscape>(args!(name), None)
+                func.with_func_lua::<LuaAutoEscape>(args!(name), None)
                     .unwrap_or_default()
                     .into()
             });
@@ -257,17 +275,11 @@ impl LuaEnvironment {
         func.set_pass_state(true);
 
         self.0.set_formatter(move |out, state, value| {
-            func.with_func::<Option<String>>(args!(value), Some(state))
+            func.with_func_lua::<Option<String>>(args!(value), Some(state))
                 .ok()
                 .flatten()
-                .map(|val| {
-                    let s = val.as_str().ok_or_else(|| {
-                        JinjaError::new(
-                            JinjaErrorKind::WriteFailure,
-                            "formatter must return a string",
-                        )
-                    })?;
-                    out.write_str(s).map_err(|err| {
+                .map(|s| {
+                    out.write_str(&s).map_err(|err| {
                         JinjaError::new(JinjaErrorKind::WriteFailure, err.to_string())
                     })
                 })
@@ -275,6 +287,11 @@ impl LuaEnvironment {
         });
 
         Ok(())
+    }
+
+    #[lua(name = "syntax", infallible)]
+    pub(crate) fn lua_syntax(&self) -> LuaSyntaxConfig {
+        self.0.syntax().clone().into()
     }
 
     #[lua(name = "set_syntax")]
@@ -349,10 +366,8 @@ impl LuaEnvironment {
                 .map_err(mlua::Error::external)?;
 
             let mut mv = captured
-                .with_state_mut(|state| func.with_func::<mlua::MultiValue>(&[], Some(state)))
-                .map_err(mlua::Error::external)?
-                .and_then(|v| minijinja_to_lua(lua, &v))
-                .unwrap_or_default();
+                .with_state_mut(|state| func.with_func_lua::<mlua::MultiValue>(&[], Some(state)))
+                .map_err(mlua::Error::external)?;
 
             let rendered = captured.into_output();
 
@@ -401,7 +416,7 @@ impl LuaEnvironment {
         self.0.add_filter(
             name,
             move |state: &mut State, args: JinjaRest<JinjaValueOrKwargs>| {
-                func.with_func::<mlua::MultiValue>(&args.into_values(), Some(state))
+                func.with_func_jinja::<mlua::MultiValue>(&args.into_values(), Some(state))
             },
         );
 
@@ -427,7 +442,7 @@ impl LuaEnvironment {
         self.0.add_test(
             name,
             move |state: &mut State, args: JinjaRest<JinjaValueOrKwargs>| {
-                func.with_func::<bool>(&args.into_values(), Some(state))
+                func.with_func_jinja::<bool>(&args.into_values(), Some(state))
             },
         );
 
@@ -455,7 +470,7 @@ impl LuaEnvironment {
                 self.0.add_function(
                     name,
                     move |state: &mut State, args: JinjaRest<JinjaValueOrKwargs>| {
-                        func.with_func::<mlua::MultiValue>(&args.into_values(), Some(state))
+                        func.with_func_jinja::<mlua::MultiValue>(&args.into_values(), Some(state))
                     },
                 )
             },
