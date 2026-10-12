@@ -22,16 +22,19 @@ local minijinja = {}
 ---     - iteration: empty array
 ---     - attributes: fails
 ---     - test: falsey
+---
 --- - **chainable**:
 ---     - printing: empty string
 ---     - iteration: empty array
 ---     - attributes: undefined
 ---     - test: falsey
+---
 --- - **semi-strict**:
 ---     - printing: fails
 ---     - iteration: fails
 ---     - attributes: fails
 ---     - test: falsey
+---
 --- - **strict**:
 ---     - printing: fails
 ---     - iteration: fails
@@ -40,10 +43,10 @@ local minijinja = {}
 ---
 ---@enum minijinja.UndefinedBehavior
 minijinja.UndefinedBehavior = {
-    CHAINABLE = "Chainable",
-    LENIENT = "Lenient",
-    SEMISTRICT = "SemiStrict",
-    STRICT = "Strict",
+    CHAINABLE = "chainable",
+    LENIENT = "lenient",
+    SEMISTRICT = "semistrict",
+    STRICT = "strict",
 }
 
 --- Determines how autoescaping is applied.
@@ -56,9 +59,9 @@ minijinja.UndefinedBehavior = {
 ---
 ---@enum minijinja.AutoEscape
 minijinja.AutoEscape = {
-    HTML = "Html",
-    JSON = "Json",
-    NONE = "None",
+    HTML = "html",
+    JSON = "json",
+    NONE = "none",
 }
 
 --- A minijinja callback.
@@ -95,37 +98,53 @@ minijinja.AutoEscape = {
 ---
 ---@alias minijinja.Test minijinja.Callback | minijinja.CallbackStateless
 
+--- A function to determine if a template is up to date.
+---
+--- If it returns `false`, the template will be reloaded only if
+--- [`Environment.auto_reload`](lua-minijinja.Environment.auto_reload)
+--- is enabled on the environment.
+---
+---@alias minijinja.UptodateCheck fun(): boolean
+
 --- A template loader callback.
 ---
 --- It takes the name of a template and returns the source or `nil` if no template could be found.
+--- Additionally, it can return a callback to determine if the template is up to date.
 ---
---- This type of function can be provided to [`Environment:set_loader()`](lua-minijinja.Environment.set_loader) to load templates from a filesystem.
+--- This type of function can be provided to [`Environment:set_loader()`](lua-minijinja.Environment.set_loader)
+--- to load templates from a filesystem.
 ---
----@alias minijinja.LoaderCallback fun(name: string): string | nil
+---@alias minijinja.LoaderCallback fun(name: string): string?, minijinja.UptodateCheck?
 
 --- A path join callback
 ---
 --- It takes the name of a template and the parent path and returns a new derived path.
 ---
---- This type of function can be provided to [`Environment:set_path_join_callback()`](lua-minijinja.Environment.set_path_join_callback) to implement relative path resolution between templates.
+--- This type of function can be provided to
+--- [`Environment:set_path_join_callback()`](lua-minijinja.Environment.set_path_join_callback)
+--- to implement relative path resolution between templates.
 ---
 ---@alias minijinja.PathJoinCallback fun(name: string, parent: string): string
 
 --- A callback invoked for unknown methods on objects.
 ---
---- It takes a [`State`](lua-minijinja.State), the object which the method was called on, the name of the method, and any arguments passed and returns any value.
+--- It takes a [`State`](lua-minijinja.State), the object which the method was called on,
+--- the name of the method, and any arguments passed and returns any value.
 ---
---- This type of function can be provided to [`Environment:set_unknown_method_callback()`](lua-minijinja.Environment.set_unknown_method_callback) to implement compatibility with python methods.
+--- This type of function can be provided to
+--- [`Environment:set_unknown_method_callback()`](lua-minijinja.Environment.set_unknown_method_callback)
+--- to implement compatibility with python methods.
 ---
 ---@alias minijinja.UnknownMethodCallback fun(state: minijinja.State, value: any, method: string, args: any[]): any
 
 --- A callback to select the default auto escaping.
 ---
---- It takes the name of a template and returns an [`AutoEscape`](lua-minijinja.AutoEscape) variant.
+--- It takes the name of a template and returns an [`AutoEscape`](lua-minijinja.AutoEscape) variant
+--- or a string representing a custom variant.
 ---
 --- This type of function can be provided to [`Environment:set_auto_escape_callback()`](lua-minijinja.Environment.set_auto_escape_callback).
 ---
----@alias minijinja.AutoEscapeCallback fun(name: string): minijinja.AutoEscape
+---@alias minijinja.AutoEscapeCallback fun(name: string): minijinja.AutoEscape | string
 
 --- A callback to control how values are formatted.
 ---
@@ -146,21 +165,31 @@ minijinja.None = nil
 ---
 ---@class (exact) minijinja.SyntaxConfig: userdata
 ---
----@field block_delimiters       [string, string] Start and end delimiters
----@field variable_delimiters    [string, string] Start and end delimiters
----@field comment_delimiters     [string, string] Start and end delimiters
----@field line_statement_prefix? string
----@field line_comment_prefix?   string
+---@field block_delimiters      fun(self):[string, string] Start and end delimiters
+---@field variable_delimiters   fun(self):[string, string] Start and end delimiters
+---@field comment_delimiters    fun(self):[string, string] Start and end delimiters
+---@field line_statement_prefix fun(self): string?         Line statement prefix
+---@field line_comment_prefix   fun(self): string?         Line comment prefix
+---@field keep_trailing_newline fun(self): boolean         Preserve trailing newlines at the end of templates.
+---@field trim_blocks           fun(self): boolean         Remove the first newline after a block.
+---@field lstrip_blocks         fun(self): boolean         Remove leading spaces and tabs from the start of a line to a block.
 minijinja.SyntaxConfig = {}
 
 --- Get a configuration builder
 ---
----@return minijinja.SyntaxConfigBuilder : userdata
+---@return minijinja.SyntaxConfigBuilder
 function minijinja.SyntaxConfig.builder() end
+
+--- Convert this configuration to a builder.
+---
+--- This allows updating settings of an existing configuration.
+---
+---@return minijinja.SyntaxConfigBuilder
+function minijinja.SyntaxConfig:to_builder() end
 
 --- Configure the syntax for the environment.
 ---
----@class (exact) minijinja.SyntaxConfigBuilder
+---@class (exact) minijinja.SyntaxConfigBuilder: userdata
 ---
 ---@field build                 fun(self): minijinja.SyntaxConfig           Build the configuration
 ---@field block_delimiters      fun(self, start: string, end: string): self Set the start and end delimiters
@@ -168,19 +197,19 @@ function minijinja.SyntaxConfig.builder() end
 ---@field comment_delimiters    fun(self, start: string, end: string): self Set the start and end delimiters
 ---@field line_statement_prefix fun(self, prefix: string): self             Set the line statement prefix
 ---@field line_comment_prefix   fun(self, prefix: string): self             Set the line comment prefix
+---@field keep_trailing_newline fun(self, keep: boolean): self              Preserve trailing newlines at the end of templates.
+---@field trim_blocks           fun(self, trim: boolean): self              Remove the first newline after a block.
+---@field lstrip_blocks         fun(self, strip: boolean): self             Remove leading spaces and tabs from the start of a line to a block.
 
 --- A minijinja environment.
 ---
 ---@class (exact) minijinja.Environment: userdata
 ---
----@field keep_trailing_newline boolean                     Preserve trailing newlines at the end of templates.
----@field trim_blocks           boolean                     Remove the first newline after a block.
----@field lstrip_blocks         boolean                     Remove leading spaces and tabs from the start of a line to a block.
----@field debug                 boolean                     Enable debug behavior.
----@field fuel                  number | nil                Sets the fuel of the engine. If `nil`, fuel usage is disabled.
----@field recursion_limit       number                      Reconfigures the runtime recursion limit. Default is 500.
----@field undefined_behavior    minijinja.UndefinedBehavior Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
----
+---@field debug              boolean                     Enable debug behavior.
+---@field fuel               number | nil                Sets the fuel of the engine. If `nil`, fuel usage is disabled.
+---@field recursion_limit    number                      Reconfigures the runtime recursion limit. Default is 500.
+---@field undefined_behavior minijinja.UndefinedBehavior Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
+---@field auto_reload        boolean                     Enable automatic template reloading.
 minijinja.Environment = {}
 
 --- Create a new environment.
@@ -252,6 +281,11 @@ function minijinja.Environment:set_auto_escape_callback(callback) end
 ---
 ---@param callback minijinja.FormatterCallback
 function minijinja.Environment:set_formatter(callback) end
+
+--- Get the current syntax for the environment.
+---
+---@return minijinja.SyntaxConfig
+function minijinja.Environment:syntax() end
 
 --- Sets the syntax for the environment.
 ---
@@ -364,9 +398,6 @@ function minijinja.State:current_block() end
 
 --- Render a block.
 ---
---- This method is only available within the callback passed to
---- [`Environment:render_captured()`](lua-minijinja.Environment.render_captured)
----
 ---@param block string The name of the block to render
 ---
 ---@return string # The rendered block
@@ -440,17 +471,10 @@ function minijinja.State:get_temp(name) end
 ---@return any # The old temp variable value.
 function minijinja.State:set_temp(name, temp) end
 
---- Get a temp variable or add the variable returned by `func`.
----
----@param name string     The name of the variable.
----@param func fun(): any The function to call if the temp is not set.
----
----@return any # The variable associated with `name`, or the variable returnd by `func`.
-function minijinja.State:get_or_set_temp(name, func) end
-
 --- Get the type of `value`
 ---
 --- This function returns the strings
+---
 --- - `'environment'` for [`Environment`](lua-minijinja.Environment)
 --- - `'state'` for [`State`](lua-minijinja.State)
 --- - `'none'` for [`None`](lua-minijinja.None)
@@ -463,11 +487,16 @@ function minijinja.type(value) end
 
 --- Get a callback to load templates from the provided directory paths.
 ---
---- The function returned by this one can be passed to [`Environment:set_loader()`](lua-minijinja.Environment.set_loader) to load templates from the filesystem.
+--- The function returned by this one can be passed to [`Environment:set_loader()`](lua-minijinja.Environment.set_loader)
+--- to load templates from the filesystem.
 ---
----@param paths string | string[]
+--- `factory` is an optional parameter to generate a [`UptodateCheck`](lua-minijinja.UptodateCheck) callback.
+--- It accepts the template path as the first argument.
+---
+---@param paths    string | string[]
+---@param factory? fun(path: string): minijinja.UptodateCheck?
 ---
 ---@return minijinja.LoaderCallback
-function minijinja.path_loader(paths) end
+function minijinja.path_loader(paths, factory) end
 
 return minijinja

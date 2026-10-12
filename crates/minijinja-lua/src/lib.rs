@@ -8,10 +8,7 @@ mod state;
 use mlua::LuaSerdeExt;
 
 use crate::convert::{LuaSyntaxConfig, autoescape_lua, undefined_behavior_lua};
-pub use crate::{
-    environment::LuaEnvironment,
-    state::{LuaStateMut, LuaStateRef},
-};
+pub use crate::{environment::LuaEnvironment, state::LuaState};
 
 /// Builds and returns the `minijinja` lua table.
 ///

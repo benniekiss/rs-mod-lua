@@ -85,7 +85,9 @@ describe("State tests", function ()
                 first = false
             end
 
-            local new = state:get_or_set_temp("counter", function () return 0 end) + 1
+            local temp = state:get_temp("counter") or 0
+            local new = temp + 1
+
             state:set_temp("counter", new)
             return new
         end

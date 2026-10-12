@@ -21,7 +21,15 @@ pub(crate) fn minijinja_types(val: mlua::Value) -> mlua::Result<String> {
 /// The returned function can be provided to `Environment:set_loader`
 pub(crate) fn minijinja_path_loader(lua: &mlua::Lua) -> mlua::Result<mlua::Function> {
     lua.load(mlua::chunk!(
-        local function path_loader(paths)
+        // --- Create a template loader for the provided paths
+        // ---
+        // ---@generic F: fun(): boolean
+        // ---
+        // ---@param paths       string | string[]
+        // ---@param factory?    fun(path: string): F?
+        // ---
+        // ---@return fun(name: string): string?, F?
+        local function path_loader(paths, factory)
             if type(paths) == "string" then
                 paths = { paths }
             end
@@ -32,10 +40,9 @@ pub(crate) fn minijinja_path_loader(lua: &mlua::Lua) -> mlua::Result<mlua::Funct
                 name = name:gsub("^/+", ""):gsub("/+$", "")
 
                 local sep = package.config:sub(1,1)
-                local pattern = "([^" .. sep .. "]+)"
 
                 local splits = {}
-                for piece in name:gmatch(pattern) do
+                for piece in name:gmatch("[^/]+") do
                     if ".." == piece then return nil end
                     table.insert(splits, piece)
                 end
@@ -45,11 +52,24 @@ pub(crate) fn minijinja_path_loader(lua: &mlua::Lua) -> mlua::Result<mlua::Funct
                     local file = io.open(p, "r")
 
                     if file then
+                        local f
+                        // Make sure to close the file in case of factory errors
+                        if factory then
+                            local ok
+                            ok, f = pcall(factory, p)
+
+                            if not ok then
+                                // Do not let a close error replace the original factory error.
+                                pcall(function () file:close() end)
+                                error(f, 0)
+                            end
+                        end
+
                         // asterisk syntax is necessary for Lua 5.1 compat
                         local source = file:read("*a")
                         file:close()
 
-                        return source
+                        return source, f
                     end
                 end
             end
@@ -190,7 +210,7 @@ mod test {
     use serde_json::json;
 
     use super::*;
-    use crate::state::{LuaStateMut, LuaStateRef};
+    use crate::state::LuaState;
 
     #[test]
     fn test_minijinja_types_environment() {
@@ -207,24 +227,10 @@ mod test {
     fn test_minijinja_types_state() {
         let lua = mlua::Lua::new();
         let env = minijinja::Environment::new();
-        let state = &env.empty_state();
-
-        lua.scope(|scope| {
-            let ud = scope.create_userdata::<LuaStateRef>(state.into()).unwrap();
-            assert_eq!(minijinja_types(mlua::Value::UserData(ud)).unwrap(), "state");
-            Ok(())
-        })
-        .unwrap();
-    }
-
-    #[test]
-    fn test_minijinja_types_state_mut() {
-        let lua = mlua::Lua::new();
-        let env = minijinja::Environment::new();
         let state = &mut env.empty_state();
 
         lua.scope(|scope| {
-            let ud = scope.create_userdata::<LuaStateMut>(state.into()).unwrap();
+            let ud = scope.create_userdata::<LuaState>(state.into()).unwrap();
             assert_eq!(minijinja_types(mlua::Value::UserData(ud)).unwrap(), "state");
             Ok(())
         })
@@ -279,6 +285,43 @@ mod test {
     }
 
     #[test]
+    fn test_path_loader_sanitizes_platform_paths() {
+        let lua = mlua::Lua::new();
+        lua.globals()
+            .set("path_loader", minijinja_path_loader(&lua).unwrap())
+            .unwrap();
+
+        lua.load(mlua::chunk!(
+            for _, sep in ipairs({ "/", "\\" }) do
+                local opened = {}
+                package.config = sep
+
+                io.open = function (path, mode)
+                    table.insert(opened, { path, mode })
+                    return nil
+                end
+
+                local loader = path_loader("templates")
+
+                assert(loader("includes/foo.txt") == nil)
+                assert(#opened == 1)
+                assert(opened[1][1] == "templates" .. sep .. "includes" .. sep .. "foo.txt")
+                assert(opened[1][2] == "r")
+
+                opened = {}
+
+                assert(loader("../secret.txt") == nil)
+                assert(loader("nested/../secret.txt") == nil)
+                assert(loader("nested/../../secret.txt") == nil)
+                assert(loader("nested\\..\\secret.txt") == nil)
+                assert(#opened == 0)
+            end
+        ))
+        .exec()
+        .unwrap();
+    }
+
+    #[test]
     #[cfg(feature = "json")]
     fn test_minijinja_from_json_filter() {
         let mut env = minijinja::Environment::new();
@@ -289,7 +332,7 @@ mod test {
 
         let res = expr.eval(context! { te => ex.to_string() }).unwrap();
 
-        assert_eq!(res, minijinja::Value::from_serialize(ex));
+        assert_eq!(res, minijinja::Value::from(minijinja::value::Serde(ex)));
     }
 
     #[test]
