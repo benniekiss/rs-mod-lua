@@ -9,13 +9,7 @@ local minijinja = {}
 ---@alias minijinja.Types
 --- | "environment"
 --- | "state"
---- | "auto_escape"
---- | "undefined_behavior"
 --- | "none"
-
----@class (exact) minijinja.UndefinedBehaviorVariant: userdata
----
----@field eq fun(self, other: minijinja.UndefinedBehaviorVariant | string): boolean
 
 --- Determines how undefined values are handled.
 ---
@@ -47,25 +41,28 @@ local minijinja = {}
 ---     - attributes: fails
 ---     - test: fails
 ---
----@class (exact) minijinja.UndefinedBehavior: table
----
----@field CHAINABLE  fun(): minijinja.UndefinedBehaviorVariant
----@field LENIENT    fun(): minijinja.UndefinedBehaviorVariant
----@field SEMISTRICT fun(): minijinja.UndefinedBehaviorVariant
----@field STRICT     fun(): minijinja.UndefinedBehaviorVariant
-minijinja.UndefinedBehavior = nil
+---@enum minijinja.UndefinedBehavior
+minijinja.UndefinedBehavior = {
+    CHAINABLE = "chainable",
+    LENIENT = "lenient",
+    SEMISTRICT = "semistrict",
+    STRICT = "strict",
+}
 
----@class (exact) minijinja.AutoEscapeVariant: userdata
+--- Determines how autoescaping is applied.
 ---
----@field eq fun(self, other: minijinja.AutoEscapeVariant | string): boolean
-
----@class (exact) minijinja.AutoEscape: table
+--- Variants:
 ---
----@field HTML   fun(): minijinja.AutoEscapeVariant
----@field JSON   fun(): minijinja.AutoEscapeVariant
----@field NONE   fun(): minijinja.AutoEscapeVariant
----@field CUSTOM fun(variant: string): minijinja.AutoEscapeVariant
-minijinja.AutoEscape = nil
+--- - html
+--- - json
+--- - none
+---
+---@enum minijinja.AutoEscape
+minijinja.AutoEscape = {
+    HTML = "html",
+    JSON = "json",
+    NONE = "none",
+}
 
 --- A minijinja callback.
 ---
@@ -142,13 +139,12 @@ minijinja.AutoEscape = nil
 
 --- A callback to select the default auto escaping.
 ---
---- It takes the name of a template and returns an [`AutoEscape`](lua-minijinja.AutoEscape) variant,
---- a custom variant created with [`AutoEscape.CUSTOM()`](lua-minijinja.AutoEscape.CUSTOM), or a string
---- to represent a variant.
+--- It takes the name of a template and returns an [`AutoEscape`](lua-minijinja.AutoEscape) variant
+--- or a string representing a custom variant.
 ---
 --- This type of function can be provided to [`Environment:set_auto_escape_callback()`](lua-minijinja.Environment.set_auto_escape_callback).
 ---
----@alias minijinja.AutoEscapeCallback fun(name: string): minijinja.AutoEscapeVariant | string
+---@alias minijinja.AutoEscapeCallback fun(name: string): minijinja.AutoEscape | string
 
 --- A callback to control how values are formatted.
 ---
@@ -209,11 +205,11 @@ function minijinja.SyntaxConfig:to_builder() end
 ---
 ---@class (exact) minijinja.Environment: userdata
 ---
----@field debug              boolean                            Enable debug behavior.
----@field fuel               number | nil                       Sets the fuel of the engine. If `nil`, fuel usage is disabled.
----@field recursion_limit    number                             Reconfigures the runtime recursion limit. Default is 500.
----@field undefined_behavior minijinja.UndefinedBehaviorVariant Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
----@field auto_reload        boolean                            Enable automatic template reloading.
+---@field debug              boolean                     Enable debug behavior.
+---@field fuel               number | nil                Sets the fuel of the engine. If `nil`, fuel usage is disabled.
+---@field recursion_limit    number                      Reconfigures the runtime recursion limit. Default is 500.
+---@field undefined_behavior minijinja.UndefinedBehavior Changes the undefined behavior. Default is [`lenient`](lua-minijinja.UndefinedBehavior).
+---@field auto_reload        boolean                     Enable automatic template reloading.
 minijinja.Environment = {}
 
 --- Create a new environment.
@@ -387,12 +383,12 @@ function minijinja.State:name() end
 
 --- Get the current value of the auto escape flag.
 ---
----@return minijinja.AutoEscapeVariant # The current auto escape flag.
+---@return minijinja.AutoEscape # The current auto escape flag.
 function minijinja.State:auto_escape() end
 
 --- Get the current undefined behavior.
 ---
----@return minijinja.UndefinedBehaviorVariant # The current undefined behavior.
+---@return minijinja.UndefinedBehavior # The current undefined behavior.
 function minijinja.State:undefined_behavior() end
 
 --- Get the name of the innermost block.
@@ -481,8 +477,6 @@ function minijinja.State:set_temp(name, temp) end
 ---
 --- - `'environment'` for [`Environment`](lua-minijinja.Environment)
 --- - `'state'` for [`State`](lua-minijinja.State)
---- - `'auto_escape'` for [`AutoEscape`](lua-minijinja.AutoEscape)
---- - `'undefined_behavior'` for [`UndefinedBehavior`](lua-minijinja.UndefinedBehavior)
 --- - `'none'` for [`None`](lua-minijinja.None)
 --- - or the values returned by the builtin `type()` function.
 ---

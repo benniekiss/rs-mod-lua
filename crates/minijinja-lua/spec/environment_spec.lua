@@ -335,7 +335,7 @@ describe("Environment tests", function ()
         describe("undefined_behavior#templates", function ()
             it("chainable#undefined_behavior", function ()
                 local env = Environment.new()
-                env.undefined_behavior = minijinja.UndefinedBehavior.CHAINABLE()
+                env.undefined_behavior = minijinja.UndefinedBehavior.CHAINABLE
 
                 local source = "{{ foo.bar.baz }}"
 
@@ -344,7 +344,7 @@ describe("Environment tests", function ()
 
             it("lenient#undefined_behavior", function ()
                 local env = Environment.new()
-                env.undefined_behavior = minijinja.UndefinedBehavior.LENIENT()
+                env.undefined_behavior = minijinja.UndefinedBehavior.LENIENT
 
                 local source = "{{ foo }}"
 
@@ -353,7 +353,7 @@ describe("Environment tests", function ()
 
             it("semi_strict#undefined_behavior", function ()
                 local env = Environment.new()
-                env.undefined_behavior = minijinja.UndefinedBehavior.SEMISTRICT()
+                env.undefined_behavior = minijinja.UndefinedBehavior.SEMISTRICT
 
                 local source = "{% if not foo %}foo{% endif %}"
 
@@ -362,7 +362,7 @@ describe("Environment tests", function ()
 
             it("strict#undefined_behavior", function ()
                 local env = Environment.new()
-                env.undefined_behavior = minijinja.UndefinedBehavior.STRICT()
+                env.undefined_behavior = minijinja.UndefinedBehavior.STRICT
 
                 local source = "{% if not foo %}foo{% endif %}"
 
@@ -744,43 +744,27 @@ describe("Environment tests", function ()
         it("auto_escape_equality#callbacks", function ()
             local A = minijinja.AutoEscape
 
-            assert.Equal(A.HTML(), A.HTML())
-            assert.True(A.HTML():eq("Html"))
-
-            assert.Equal(A.JSON(), A.JSON())
-            assert.True(A.JSON():eq("Json"))
-
-            assert.Equal(A.NONE(), A.NONE())
-            assert.True(A.NONE():eq("None"))
-
-            assert.Equal(A.CUSTOM("custom"), A.CUSTOM("custom"))
-            assert.True(A.CUSTOM("custom"):eq("custom"))
+            assert.Equal("html", A.HTML)
+            assert.Equal("json", A.JSON)
+            assert.Equal("none", A.NONE)
         end)
 
         it("undefined_behavior_equality#callbacks", function ()
             local UB = minijinja.UndefinedBehavior
 
-            assert.Equal(UB.CHAINABLE(), UB.CHAINABLE())
-            assert.True(UB.CHAINABLE():eq("Chainable"))
-
-            assert.Equal(UB.LENIENT(), UB.LENIENT())
-            assert.True(UB.LENIENT():eq("Lenient"))
-
-            assert.Equal(UB.SEMISTRICT(), UB.SEMISTRICT())
-            assert.True(UB.SEMISTRICT():eq("SemiStrict"))
-
-            assert.Equal(UB.STRICT(), UB.STRICT())
-            assert.True(UB.STRICT():eq("Strict"))
+            assert.Equal("chainable", UB.CHAINABLE)
+            assert.Equal("lenient", UB.LENIENT)
+            assert.Equal("semistrict", UB.SEMISTRICT)
+            assert.Equal("strict", UB.STRICT)
         end)
 
         it("auto_escape_custom#callbacks", function ()
             local env = Environment.new()
 
-            env:set_auto_escape_callback(function () return minijinja.AutoEscape.CUSTOM("html") end)
+            env:set_auto_escape_callback(function () return "custom" end)
             env:set_formatter(function (state, value)
-                assert.Equal("html", tostring(state:auto_escape()))
-                assert.Equal(minijinja.AutoEscape.CUSTOM("html"), state:auto_escape())
-                assert.Not.Equal(minijinja.AutoEscape.CUSTOM("foobar"), state:auto_escape())
+                assert.Equal("custom", state:auto_escape())
+                assert.Not.Equal("foobar", state:auto_escape())
                 assert.Not.Equal(minijinja.AutoEscape.HTML, state:auto_escape())
 
                 return tostring(value)

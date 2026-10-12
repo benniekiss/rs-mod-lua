@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-use crate::{
-    LuaEnvironment,
-    convert::{LuaAutoEscape, LuaUndefinedBehavior},
-};
+use crate::LuaEnvironment;
 
 /// Helper to get the lua type for minijinja wrapper userdata.
 ///
@@ -11,8 +8,6 @@ use crate::{
 pub(crate) fn minijinja_types(val: mlua::Value) -> mlua::Result<String> {
     let name = match val {
         mlua::Value::UserData(ud) if ud.is::<LuaEnvironment>() => "environment",
-        mlua::Value::UserData(ud) if ud.is::<LuaAutoEscape>() => "auto_escape",
-        mlua::Value::UserData(ud) if ud.is::<LuaUndefinedBehavior>() => "undefined_behavior",
         mlua::Value::UserData(ud) if ud.type_name().is_ok_and(|s| s == "state") => "state",
         val if val.is_null() => "none",
         _ => val.type_name(),
@@ -212,7 +207,6 @@ pub mod datetime {
 #[cfg(test)]
 mod test {
     use minijinja::context;
-    use mlua::IntoLua;
     use serde_json::json;
 
     use super::*;
@@ -241,31 +235,6 @@ mod test {
             Ok(())
         })
         .unwrap();
-    }
-
-    #[test]
-    fn test_minijinja_types_autoescape() {
-        let lua = mlua::Lua::new();
-
-        for v in [
-            LuaAutoEscape::None,
-            LuaAutoEscape::Custom("foo".to_string()),
-        ] {
-            assert_eq!(
-                minijinja_types(v.into_lua(&lua).unwrap()).unwrap(),
-                "auto_escape"
-            )
-        }
-    }
-
-    #[test]
-    fn test_minijinja_types_undefined_behavior() {
-        let lua = mlua::Lua::new();
-
-        assert_eq!(
-            minijinja_types(LuaUndefinedBehavior::Strict.into_lua(&lua).unwrap()).unwrap(),
-            "undefined_behavior"
-        )
     }
 
     #[test]

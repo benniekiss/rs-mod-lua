@@ -29,7 +29,7 @@ use minijinja::{
         ValueKind as JinjaValueKind,
     },
 };
-use mlua::{FromLua, LuaSerdeExt, ObjectLike};
+use mlua::{LuaSerdeExt, ObjectLike};
 use rs_mod_lua_core::guard::with_lua;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
@@ -580,7 +580,8 @@ impl JinjaObject for LuaMultiValueObject {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, mlua::UserData)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "lowercase"))]
 pub(crate) enum LuaAutoEscape {
     #[serde(alias = "HTML", alias = "html")]
     Html,
@@ -593,27 +594,9 @@ pub(crate) enum LuaAutoEscape {
     Custom(String),
 }
 
-impl fmt::Display for LuaAutoEscape {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let repr = match self {
-            Self::Html => "Html",
-            Self::Json => "Json",
-            Self::None => "None",
-            Self::Custom(s) => s,
-        };
-        write!(f, "{repr}")
-    }
-}
-
 impl From<AutoEscape> for LuaAutoEscape {
     fn from(value: AutoEscape) -> Self {
-        match value {
-            AutoEscape::Html => Self::Html,
-            AutoEscape::Json => Self::Json,
-            AutoEscape::None => Self::None,
-            AutoEscape::Custom(s) => Self::Custom(s.to_string()),
-            _ => Self::Custom("unknown".to_string()),
-        }
+        LuaAutoEscape::from(&value)
     }
 }
 
@@ -642,60 +625,28 @@ impl From<LuaAutoEscape> for AutoEscape {
 
 impl mlua::FromLua for LuaAutoEscape {
     fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
-        match value {
-            mlua::Value::UserData(ud) if ud.is::<LuaAutoEscape>() => {
-                ud.borrow::<LuaAutoEscape>().map(|v| v.clone())
-            },
-            _ => lua.from_value(value),
-        }
+        lua.from_value(value)
     }
 }
 
-#[mlua::userdata_impl]
-impl LuaAutoEscape {
-    #[lua(meta, name = "__tostring", infallible)]
-    pub(crate) fn lua_tostring(&self) -> String {
-        self.to_string()
-    }
-
-    #[lua(meta, name = "__eq", infallible)]
-    pub(crate) fn lua_meta_eq(&self, lua: &mlua::Lua, other: mlua::Value) -> bool {
-        self.lua_eq(lua, other)
-    }
-
-    #[lua(name = "eq", infallible)]
-    pub(crate) fn lua_eq(&self, lua: &mlua::Lua, other: mlua::Value) -> bool {
-        match LuaAutoEscape::from_lua(other, lua) {
-            Ok(o) => self == &o,
-            _ => false,
-        }
+impl mlua::IntoLua for LuaAutoEscape {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.to_value(&self)
     }
 }
 
 pub(crate) fn autoescape_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set(
-        "HTML",
-        lua.create_function(|_, ()| Ok(LuaAutoEscape::Html))?,
-    )?;
-    table.set(
-        "JSON",
-        lua.create_function(|_, ()| Ok(LuaAutoEscape::Json))?,
-    )?;
-    table.set(
-        "NONE",
-        lua.create_function(|_, ()| Ok(LuaAutoEscape::None))?,
-    )?;
-    table.set(
-        "CUSTOM",
-        lua.create_function(|_, s: String| Ok(LuaAutoEscape::Custom(s)))?,
-    )?;
+    table.set("html", LuaAutoEscape::Html)?;
+    table.set("json", LuaAutoEscape::Json)?;
+    table.set("none", LuaAutoEscape::None)?;
 
     Ok(table)
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, mlua::UserData)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "lowercase"))]
 pub(crate) enum LuaUndefinedBehavior {
     #[serde(alias = "CHAINABLE", alias = "chainable")]
     Chainable,
@@ -706,18 +657,6 @@ pub(crate) enum LuaUndefinedBehavior {
     SemiStrict,
     #[serde(alias = "STRICT", alias = "strict")]
     Strict,
-}
-
-impl fmt::Display for LuaUndefinedBehavior {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let repr = match self {
-            Self::Chainable => "Chainable",
-            Self::Lenient => "Lenient",
-            Self::SemiStrict => "SemiStrict",
-            Self::Strict => "Strict",
-        };
-        write!(f, "{repr}")
-    }
 }
 
 impl From<UndefinedBehavior> for LuaUndefinedBehavior {
@@ -745,55 +684,24 @@ impl From<LuaUndefinedBehavior> for UndefinedBehavior {
 
 impl mlua::FromLua for LuaUndefinedBehavior {
     fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
-        match value {
-            mlua::Value::UserData(ud) if ud.is::<LuaUndefinedBehavior>() => {
-                ud.borrow::<LuaUndefinedBehavior>().map(|v| v.clone())
-            },
-            _ => lua.from_value(value),
-        }
+        lua.from_value(value)
     }
 }
 
-#[mlua::userdata_impl]
-impl LuaUndefinedBehavior {
-    #[lua(meta, name = "__tostring", infallible)]
-    pub(crate) fn lua_tostring(&self) -> String {
-        self.to_string()
-    }
-
-    #[lua(meta, name = "__eq", infallible)]
-    pub(crate) fn lua_meta_eq(&self, lua: &mlua::Lua, other: mlua::Value) -> bool {
-        self.lua_eq(lua, other)
-    }
-
-    #[lua(name = "eq", infallible)]
-    pub(crate) fn lua_eq(&self, lua: &mlua::Lua, other: mlua::Value) -> bool {
-        match LuaUndefinedBehavior::from_lua(other, lua) {
-            Ok(o) => self == &o,
-            _ => false,
-        }
+impl mlua::IntoLua for LuaUndefinedBehavior {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.to_value(&self)
     }
 }
 
 pub(crate) fn undefined_behavior_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set(
-        "CHAINABLE",
-        lua.create_function(|_, ()| Ok(LuaUndefinedBehavior::Chainable))?,
-    )?;
-    table.set(
-        "LENIENT",
-        lua.create_function(|_, ()| Ok(LuaUndefinedBehavior::Lenient))?,
-    )?;
-    table.set(
-        "SEMISTRICT",
-        lua.create_function(|_, ()| Ok(LuaUndefinedBehavior::SemiStrict))?,
-    )?;
-    table.set(
-        "STRICT",
-        lua.create_function(|_, ()| Ok(LuaUndefinedBehavior::Strict))?,
-    )?;
+    table.set("chainable", LuaUndefinedBehavior::Chainable)?;
+    table.set("lenient", LuaUndefinedBehavior::Lenient)?;
+    table.set("semistrict", LuaUndefinedBehavior::SemiStrict)?;
+    table.set("strict", LuaUndefinedBehavior::Strict)?;
+
     Ok(table)
 }
 
