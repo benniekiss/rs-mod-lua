@@ -1308,7 +1308,7 @@ mod tests {
 
         let lua_ae: LuaAutoEscape = AutoEscape::Html.into();
         let lua_ae_str = lua.to_value(&lua_ae).unwrap().to_string().unwrap();
-        assert_eq!(lua_ae_str, "Html");
+        assert_eq!(lua_ae_str, "html");
 
         let lua_ae: LuaAutoEscape = lua
             .from_value(lua_ae_str.clone().into_lua(&lua).unwrap())
@@ -1329,7 +1329,7 @@ mod tests {
 
         let lua_ae: LuaAutoEscape = AutoEscape::Json.into();
         let lua_ae_str = lua.to_value(&lua_ae).unwrap().to_string().unwrap();
-        assert_eq!(lua_ae_str, "Json");
+        assert_eq!(lua_ae_str, "json");
 
         let lua_ae: LuaAutoEscape = lua
             .from_value(lua_ae_str.clone().into_lua(&lua).unwrap())
@@ -1350,7 +1350,7 @@ mod tests {
 
         let lua_ae: LuaAutoEscape = AutoEscape::None.into();
         let lua_ae_str = lua.to_value(&lua_ae).unwrap().to_string().unwrap();
-        assert_eq!(lua_ae_str, "None");
+        assert_eq!(lua_ae_str, "none");
 
         let lua_ae: LuaAutoEscape = lua
             .from_value(lua_ae_str.clone().into_lua(&lua).unwrap())
@@ -1388,7 +1388,7 @@ mod tests {
 
         let lua_ae: LuaUndefinedBehavior = UndefinedBehavior::Chainable.into();
         let lua_ae_str = lua.to_value(&lua_ae).unwrap().to_string().unwrap();
-        assert_eq!(lua_ae_str, "Chainable");
+        assert_eq!(lua_ae_str, "chainable");
 
         let lua_ae: LuaUndefinedBehavior = lua
             .from_value(lua_ae_str.clone().into_lua(&lua).unwrap())
@@ -1409,7 +1409,7 @@ mod tests {
 
         let lua_ae: LuaUndefinedBehavior = UndefinedBehavior::Lenient.into();
         let lua_ae_str = lua.to_value(&lua_ae).unwrap().to_string().unwrap();
-        assert_eq!(lua_ae_str, "Lenient");
+        assert_eq!(lua_ae_str, "lenient");
 
         let lua_ae: LuaUndefinedBehavior = lua
             .from_value(lua_ae_str.clone().into_lua(&lua).unwrap())
@@ -1430,7 +1430,7 @@ mod tests {
 
         let lua_ae: LuaUndefinedBehavior = UndefinedBehavior::SemiStrict.into();
         let lua_ae_str = lua.to_value(&lua_ae).unwrap().to_string().unwrap();
-        assert_eq!(lua_ae_str, "SemiStrict");
+        assert_eq!(lua_ae_str, "semistrict");
 
         let lua_ae: LuaUndefinedBehavior = lua
             .from_value(lua_ae_str.clone().into_lua(&lua).unwrap())
@@ -1451,7 +1451,7 @@ mod tests {
 
         let lua_ae: LuaUndefinedBehavior = UndefinedBehavior::Strict.into();
         let lua_ae_str = lua.to_value(&lua_ae).unwrap().to_string().unwrap();
-        assert_eq!(lua_ae_str, "Strict");
+        assert_eq!(lua_ae_str, "strict");
 
         let lua_ae: LuaUndefinedBehavior = lua
             .from_value(lua_ae_str.clone().into_lua(&lua).unwrap())
