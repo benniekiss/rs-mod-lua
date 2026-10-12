@@ -638,9 +638,9 @@ impl mlua::IntoLua for LuaAutoEscape {
 pub(crate) fn autoescape_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set("html", LuaAutoEscape::Html)?;
-    table.set("json", LuaAutoEscape::Json)?;
-    table.set("none", LuaAutoEscape::None)?;
+    table.set("HTML", LuaAutoEscape::Html)?;
+    table.set("JSON", LuaAutoEscape::Json)?;
+    table.set("NONE", LuaAutoEscape::None)?;
 
     Ok(table)
 }
@@ -697,10 +697,10 @@ impl mlua::IntoLua for LuaUndefinedBehavior {
 pub(crate) fn undefined_behavior_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     let table = lua.create_table()?;
 
-    table.set("chainable", LuaUndefinedBehavior::Chainable)?;
-    table.set("lenient", LuaUndefinedBehavior::Lenient)?;
-    table.set("semistrict", LuaUndefinedBehavior::SemiStrict)?;
-    table.set("strict", LuaUndefinedBehavior::Strict)?;
+    table.set("CHAINABLE", LuaUndefinedBehavior::Chainable)?;
+    table.set("LENIENT", LuaUndefinedBehavior::Lenient)?;
+    table.set("SEMISTRICT", LuaUndefinedBehavior::SemiStrict)?;
+    table.set("STRICT", LuaUndefinedBehavior::Strict)?;
 
     Ok(table)
 }
