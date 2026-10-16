@@ -43,7 +43,7 @@ mlua = { workspace = true, features = ["macros", "serde"] }
 rs-mod-lua-core = { workspace = true }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = {
-  version = "1.0.151",
+  version = "1.0.154",
   features = [
     "float_roundtrip",
     "preserve_order",
