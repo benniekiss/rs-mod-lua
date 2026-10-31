@@ -481,9 +481,9 @@ dependencies = [
 
 [[package]]
 name = "minijinja"
-version = "3.0.0"
+version = "3.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13345868cfa94eadafc067112ff29271380a820d5594d9ee6ba81a8d00ea5dc2"
+checksum = "00f5a04892e86ddb4fc254e9160835370b63a0d44042d3ab4725bc2dbcbab136"
 dependencies = [
  "indexmap",
  "itoa",
@@ -498,9 +498,9 @@ dependencies = [
 
 [[package]]
 name = "minijinja-contrib"
-version = "3.0.0"
+version = "3.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd9a0180a822fa9c843c36c442dbc9ca4b0d3eca5e501a6fac6a9cc1ed230a49"
+checksum = "f804cfd81c146ff898cbf3455071c417e8745907c77f3d5058bd9691b9ace3b8"
 dependencies = [
  "jiff",
  "minijinja",
