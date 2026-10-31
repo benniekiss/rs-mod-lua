@@ -15,7 +15,7 @@ name = "minijinja_lua"
 [dependencies]
 jiff = { version = "0.2.38", features = ["serde"], optional = true }
 minijinja = {
-  version = "3.0.0",
+  version = "3.0.4",
   features = [
     "fuel",
     "json",
@@ -28,7 +28,7 @@ minijinja = {
   ]
 }
 minijinja-contrib = {
-  version = "3.0.0",
+  version = "3.0.4",
   features = [
     "datetime",
     "html_entities",
