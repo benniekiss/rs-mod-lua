@@ -510,7 +510,7 @@ dependencies = [
 
 [[package]]
 name = "minijinja-lua"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "jiff",
  "minijinja",
@@ -798,7 +798,7 @@ dependencies = [
 
 [[package]]
 name = "rsast-lua"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "mlua",
  "pest",
@@ -810,7 +810,7 @@ dependencies = [
 
 [[package]]
 name = "rsjson-lua"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "mlua",
  "rs-mod-lua-core",
@@ -820,7 +820,7 @@ dependencies = [
 
 [[package]]
 name = "rsre-lua"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "fancy-regex",
  "mlua",
