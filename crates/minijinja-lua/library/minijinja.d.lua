@@ -456,6 +456,20 @@ function minijinja.State:format(value) end
 ---@return [number, number] # The [consumed, remaining] fuel levels.
 function minijinja.State:fuel_levels() end
 
+--- Consume fuel.
+---
+--- This allows filters, tests, and functions to charge
+--- custom fuel limits.
+---
+--- If fuel runs out, the method raises an error and the
+--- rendering will fail.
+---
+--- If fuel tracking is not enabled or the `fuel` feature
+--- is turned off, this does nothing.
+---
+---@param fuel integer
+function minijinja.State:consume_fuel(fuel) end
+
 --- Look up a temp variable.
 ---
 ---@param name string The name of the variable.

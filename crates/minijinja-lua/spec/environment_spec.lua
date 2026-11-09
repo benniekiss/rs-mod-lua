@@ -311,14 +311,16 @@ describe("Environment tests", function ()
 
         it("fuel#templates", function ()
             local env = Environment.new()
-            local source = "{% for i in ['' * 10] %}{{ i | fuel_check }}{% endfor %}"
+            local source = "{{ None | fuel_check }}"
             local fuel = 10
 
             local function fuel_check(state, _)
                 local c, r = table.unpack(state:fuel_levels())
                 local total = c + r
-                assert.Equal(fuel, total)
+                assert.Equal(env.fuel, total)
                 assert.True(c < total)
+
+                state:consume_fuel(5)
             end
 
             env:add_filter("fuel_check", fuel_check)

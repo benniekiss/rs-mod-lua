@@ -214,6 +214,13 @@ impl<'scope, 'template, 'env> mlua::UserData for LuaState<'scope, 'template, 'en
             },
         );
 
+        // Consume fuel.
+        methods.add_method("consume_fuel", |_, this, fuel: u64| {
+            this.state()
+                .consume_fuel(fuel)
+                .map_err(mlua::Error::external)
+        });
+
         // Get a temp value.
         // See: https://docs.rs/minijinja/latest/minijinja/struct.State.html#method.get_temp
         methods.add_method(
