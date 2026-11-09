@@ -589,6 +589,25 @@ describe("Environment tests", function ()
             end, "captured error!")
         end)
 
+        it("spans#tempaltes", function ()
+            local env = Environment.new()
+
+            env:add_template("foo.txt", "I am {% block baz %}baz{% endblock baz %}!")
+
+            local _, spans = env:render_with_spans("foo.txt", {})
+
+            local s1 = spans[1]
+            assert.Not.Nil(s1)
+
+            ---@cast s1 - nil
+
+            assert.Equal("foo.txt", s1.name)
+            assert.Equal("raw", s1.kind)
+            assert.Equal(1, s1.line)
+            assert.Same({ ["start"] = 0, ["end"] = 5 }, s1.output_range)
+            assert.Same({ ["start"] = 0, ["end"] = 5 }, s1.source_range)
+        end)
+
         it("print_multivalue#templates", function ()
             local env = Environment.new()
 

@@ -64,6 +64,39 @@ minijinja.AutoEscape = {
     NONE = "none",
 }
 
+--- Describes what produced an [`OutputSpan`](lua-minijinja.OutputSpan)
+---
+--- Variants:
+---
+--- - raw:
+---
+---   Template data that was written verbatim.
+---
+---   The output of such a span is identical to the source it points to,
+---   so offsets within the span map one-to-one to the template source.
+---
+--- - expression:
+---
+---   The output of an expression.
+---
+---   This is used for `{{ ... }}` but also for the output of
+---   `{% filter %}` and `{% call %}` blocks, in which case the span
+---   points to the filter and call expression respectively.
+---
+---@enum minijinja.OutputSpanKind
+minijinja.OutputSpanKind = {
+    RAW = "raw",
+    EXPRESSION = "expression",
+}
+
+---@class minijinja.OutputSpan: table
+---
+---@field name         string                           The name of the template that produced the output.
+---@field kind         minijinja.OutputSpanKind         The kind of source that produced the output.
+---@field line         integer                          The line in the template source where the span starts.
+---@field output_range { start: integer, end: integer } The byte range in the rendered output.
+---@field source_range { start: integer, end: integer } The byte range in the source of the template.
+
 --- A minijinja callback.
 ---
 --- It takes a [`State`](lua-minijinja.State) as the first paramter followed by any number of args.
@@ -310,6 +343,14 @@ function minijinja.Environment:render_template(name, ctx) end
 ---@return string # The rendered template.
 ---@return R      # The value returned by `callback`
 function minijinja.Environment:render_captured(name, ctx, callback) end
+
+--- Render a template and return a list of [`OutputSpan`](lua-minijinja.OutputSpan)
+---
+---@param name string The name of the template to render.
+---@param ctx? table  The template context.
+---
+---@return string, minijinja.OutputSpan[] # The rendered template and a list of output spans.
+function minijinja.Environment:render_with_spans(name, ctx) end
 
 --- Render a string directly.
 ---
