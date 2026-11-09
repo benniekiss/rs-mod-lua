@@ -5,7 +5,7 @@ use std::{
     cmp,
     fmt::{self, Debug},
     marker::PhantomData,
-    ops::{Deref, DerefMut},
+    ops::{Deref, DerefMut, Range},
     sync::{
         Arc,
         Mutex,
@@ -17,6 +17,8 @@ use minijinja::{
     AutoEscape,
     Error as JinjaError,
     ErrorKind as JinjaErrorKind,
+    OutputSpan,
+    OutputSpanKind,
     UndefinedBehavior,
     syntax::{SyntaxConfig, SyntaxConfigBuilder},
     value::{
@@ -883,6 +885,70 @@ impl LuaSyntaxConfigBuilder {
             .keep_trailing_newline(keep);
 
         Ok(self.clone())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "lowercase"))]
+enum LuaOutputSpanKind {
+    #[serde(alias = "RAW", alias = "raw")]
+    Raw,
+    #[serde(alias = "EXPRESSION", alias = "expression")]
+    Expression,
+}
+
+impl From<OutputSpanKind> for LuaOutputSpanKind {
+    fn from(value: OutputSpanKind) -> Self {
+        match value {
+            OutputSpanKind::Raw => Self::Raw,
+            OutputSpanKind::Expression => Self::Expression,
+            _ => unreachable!("unsupported OutputSpanKind"),
+        }
+    }
+}
+
+impl mlua::FromLua for LuaOutputSpanKind {
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        lua.from_value(value)
+    }
+}
+
+impl mlua::IntoLua for LuaOutputSpanKind {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.to_value(&self)
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub(crate) struct LuaOutputSpan {
+    name: String,
+    kind: LuaOutputSpanKind,
+    output_range: Range<usize>,
+    source_range: Range<usize>,
+    line: usize,
+}
+
+impl From<OutputSpan> for LuaOutputSpan {
+    fn from(value: OutputSpan) -> Self {
+        Self {
+            name: value.name().to_string(),
+            kind: value.kind().into(),
+            output_range: value.output_range(),
+            source_range: value.source_range(),
+            line: value.line(),
+        }
+    }
+}
+
+impl mlua::FromLua for LuaOutputSpan {
+    fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
+        lua.from_value(value)
+    }
+}
+
+impl mlua::IntoLua for LuaOutputSpan {
+    fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
+        lua.to_value(&self)
     }
 }
 

@@ -17,6 +17,7 @@ use rs_mod_lua_core::guard::bind_lua;
 use crate::convert::{
     LuaAutoEscape,
     LuaFunctionObject,
+    LuaOutputSpan,
     LuaSyntaxConfig,
     LuaTableObject,
     LuaUndefinedBehavior,
@@ -374,6 +375,35 @@ impl LuaEnvironment {
             mv.push_front(mlua::Value::String(lua.create_string(rendered)?));
 
             Ok(mv)
+        })
+    }
+
+    #[lua(name = "render_with_spans")]
+    pub(crate) fn lua_render_with_spans(
+        &self,
+        lua: &mlua::Lua,
+        name: &str,
+        ctx: Option<mlua::Table>,
+    ) -> mlua::Result<(String, Vec<LuaOutputSpan>)> {
+        let ctx: Option<JinjaValue> = ctx
+            .and_then(|t| LuaTableObject::from_value(lua, &t).ok())
+            .map(|obj| obj.into());
+
+        bind_lua(lua, || {
+            let (output, spans) = self
+                .0
+                .get_template(name)
+                .map_err(mlua::Error::external)?
+                .render_with_spans(ctx)
+                .map_err(mlua::Error::external)?;
+
+            Ok((
+                output,
+                spans
+                    .into_iter()
+                    .map(LuaOutputSpan::from)
+                    .collect::<Vec<_>>(),
+            ))
         })
     }
 
