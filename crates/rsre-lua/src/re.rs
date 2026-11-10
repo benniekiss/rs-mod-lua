@@ -2,7 +2,7 @@
 
 use std::{collections::BTreeMap, ops::Deref};
 
-use crate::builders::LuaRegexOptions;
+use crate::options::LuaRegexOptions;
 
 #[derive(Clone)]
 pub(crate) struct LuaMatch {
