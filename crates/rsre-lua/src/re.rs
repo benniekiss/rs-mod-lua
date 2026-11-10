@@ -2,14 +2,13 @@
 
 use std::{collections::BTreeMap, ops::Deref};
 
-#[derive(mlua::UserData, Clone)]
+use crate::builders::LuaRegexOptions;
+
+#[derive(Clone)]
 pub(crate) struct LuaMatch {
-    #[lua(get)]
     start: usize,
-    #[lua(get)]
     stop: usize,
-    #[lua(get)]
-    text: String,
+    text: Vec<u8>,
 }
 
 impl From<fancy_regex::Match<'_>> for LuaMatch {
@@ -17,21 +16,33 @@ impl From<fancy_regex::Match<'_>> for LuaMatch {
         Self {
             start: m.start().saturating_add(1), // since lua is 1-indexed
             stop: m.end().saturating_add(1),    // since lua is 1-indexed
-            text: m.as_str().to_string(),
+            text: m.as_str().to_string().into_bytes(),
         }
     }
 }
 
-#[mlua::userdata_impl]
-impl LuaMatch {
-    #[lua(meta, name = "__tostring", infallible)]
-    pub(crate) fn lua_tostring(&self) -> String {
-        self.text.clone()
+impl From<fancy_regex::MatchBytes<'_>> for LuaMatch {
+    fn from(m: fancy_regex::MatchBytes<'_>) -> Self {
+        Self {
+            start: m.start().saturating_add(1), // since lua is 1-indexed
+            stop: m.end().saturating_add(1),    // since lua is 1-indexed
+            text: m.as_bytes().to_owned(),
+        }
     }
+}
 
-    #[lua(name = "range", infallible)]
-    pub(crate) fn lua_range(&self) -> (usize, usize) {
-        (self.start, self.stop)
+impl mlua::IntoLua for LuaMatch {
+    fn into_lua(
+        self,
+        lua: &mlua::prelude::Lua,
+    ) -> mlua::prelude::LuaResult<mlua::prelude::LuaValue> {
+        lua.create_table_with_capacity(0, 3).and_then(|t| {
+            t.raw_set("start", self.start)?;
+            t.raw_set("stop", self.stop)?;
+            t.raw_set("text", lua.create_string(self.text)?)?;
+
+            Ok(mlua::Value::Table(t))
+        })
     }
 }
 
@@ -45,6 +56,18 @@ pub(crate) struct LuaCaptures {
 
 impl From<fancy_regex::Captures<'_, str>> for LuaCaptures {
     fn from(captures: fancy_regex::Captures<str>) -> Self {
+        Self {
+            matches: captures
+                .iter()
+                .map(|v| v.map(LuaMatch::from))
+                .collect::<Vec<Option<LuaMatch>>>(),
+            names: BTreeMap::new(),
+        }
+    }
+}
+
+impl From<fancy_regex::Captures<'_, [u8]>> for LuaCaptures {
+    fn from(captures: fancy_regex::Captures<[u8]>) -> Self {
         Self {
             matches: captures
                 .iter()
@@ -128,15 +151,23 @@ impl LuaRegex {
             .map_err(mlua::Error::external)
     }
 
+    #[lua(name = "new_with_options")]
+    pub(crate) fn lua_new_with_options(
+        patt: String,
+        options: LuaRegexOptions,
+    ) -> mlua::Result<Self> {
+        options.lua_build(patt)
+    }
+
     #[lua(name = "match")]
-    pub(crate) fn lua_is_match(&self, hay: &str) -> mlua::Result<bool> {
+    pub(crate) fn lua_is_match(&self, hay: &[u8]) -> mlua::Result<bool> {
         self.0.is_match(hay).map_err(mlua::Error::external)
     }
 
     #[lua(name = "find")]
     pub(crate) fn lua_find_from_pos(
         &self,
-        hay: &str,
+        hay: &[u8],
         start: Option<usize>,
     ) -> mlua::Result<Option<LuaMatch>> {
         let start = start.unwrap_or(1).saturating_sub(1);
@@ -149,7 +180,7 @@ impl LuaRegex {
     #[lua(name = "captures")]
     pub(crate) fn lua_captures_from_pos(
         &self,
-        hay: &str,
+        hay: &[u8],
         start: Option<usize>,
     ) -> mlua::Result<Option<LuaCaptures>> {
         let start = start.unwrap_or(1);
@@ -241,8 +272,8 @@ mod test {
             .unwrap();
 
         // Note that `get()` is 1-indexed
-        assert_eq!(c.lua_get(1).unwrap().text, "abc123def");
-        assert_eq!(c.lua_get(2).unwrap().text, "123");
+        assert_eq!(c.lua_get(1).unwrap().text, b"abc123def");
+        assert_eq!(c.lua_get(2).unwrap().text, b"123");
     }
 
     #[test]
@@ -263,7 +294,7 @@ mod test {
                 .collect::<Vec<Option<String>>>(),
         );
 
-        assert_eq!(c.lua_name("digits").unwrap().text, "123");
+        assert_eq!(c.lua_name("digits").unwrap().text, b"123");
     }
 
     #[test]
