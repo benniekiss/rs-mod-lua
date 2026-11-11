@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.6.0...minijinja-lua-v0.7.0) - 2026-11-11
+
+### Added
+
+- add render_with_spans
+- expose `consume_fuel` on minijinja.State
+
+### Fixed
+
+- *(deps)* update rust crate jiff to 0.2.42 ([#231](https://github.com/benniekiss/rs-mod-lua/pull/231))
+- *(deps)* update minijinja to 3.1.0 ([#226](https://github.com/benniekiss/rs-mod-lua/pull/226))
+- *(deps)* update rust crate jiff to 0.2.41 ([#225](https://github.com/benniekiss/rs-mod-lua/pull/225))
+- *(deps)* update minijinja to 3.0.5 ([#196](https://github.com/benniekiss/rs-mod-lua/pull/196))
+- *(deps)* update rust crate jiff to 0.2.39 ([#220](https://github.com/benniekiss/rs-mod-lua/pull/220))
+- *(deps)* update rust crate serde_json to 1.0.154 ([#194](https://github.com/benniekiss/rs-mod-lua/pull/194))
+
+### Other
+
+- [**breaking**] bump minijinja version
+- bump lux package version
+- add test and docs
+
 ## [0.6.0](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.5.5...minijinja-lua-v0.6.0) - 2026-10-13
 
 ### Added
