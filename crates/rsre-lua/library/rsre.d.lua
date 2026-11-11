@@ -185,7 +185,7 @@ function rsre.Options:delegate_dfa_size_limit(limit) end
 
 --- Set whether the reverse lazy DFA built for a variable
 --- length lookbehind may exceed the limit set by
---- [`delegate_dfa_size_limit`](lua-rsre.RegexOptions.delegate_dfa_size_limit)
+--- [`delegate_dfa_size_limit`](lua-rsre.Options.delegate_dfa_size_limit)
 --- when it needs a larger minimum cache capacity.
 ---
 --- When `true` (the default), the cache capacity is rounded up
