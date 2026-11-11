@@ -1,8 +1,55 @@
 local rsre = require("rsre")
 
 describe("api", function ()
+    describe("options#api", function ()
+        it("new#options", function () assert.Not.Error(function () rsre.Options.new() end) end)
+
+        it("build#options", function ()
+            local re = rsre.Options.new()
+                :build([[\d{3}]])
+
+            assert.True(re:match("123"))
+        end)
+
+        it("start_bytes#options", function ()
+            local opts = rsre.Options.new()
+
+            local b = opts:start_bytes([[(a|b|c)def]])
+
+            assert.Same({ 97, 98, 99 }, b)
+        end)
+
+        it("required_bytes#options", function ()
+            local opts = rsre.Options.new()
+
+            local b = opts:required_bytes([[(a|b|c)def]])
+
+            assert.Same({ 100, 101, 102 }, b)
+        end)
+    end)
+
     describe("regex#api", function ()
         it("new#regex", function () assert.Not.Error(function () rsre.Regex.new("123") end) end)
+
+        it("new_with_options#api", function ()
+            local pattern = [[aaa]]
+            local hay = "123AAA456"
+
+            local opts = rsre.Options.new()
+                :case_insensitive(true)
+
+            local re = rsre.Regex.new_with_options(pattern, opts)
+            local m = re:find(hay)
+
+            local start = m.start
+            local stop = m.stop
+            local text = m.text
+
+            assert.Equal(4, start)
+            assert.Equal(7, stop)
+            assert.Equal("AAA", text)
+            assert.Equal(text, hay:sub(start, stop - 1))
+        end)
 
         it("match#regex", function ()
             local re = rsre.Regex.new([[\d{3}]])

@@ -77,7 +77,7 @@ function rsre.Captures:name(name) end
 ---@return integer
 function rsre.Captures:len() end
 
----@class Options: userdata
+---@class rsre.Options: userdata
 ---
 rsre.Options = {}
 
@@ -274,13 +274,6 @@ function rsre.Options:bytes_mode(mode) end
 ---@return self
 function rsre.Options:disallow_empty_match_at_eof_after_newline(yes) end
 
--- Disabled as unused
---
--- ---@param yes boolean
--- ---
--- ---@return self
--- function rsre.Options:allow_input_assertion_overrides(yes) end
-
 --- Set whether to build a prefilter for the regex.
 ---
 --- If the regex only does an anchored search, the prefilter would not
@@ -322,6 +315,10 @@ rsre.Regex = {}
 ---@return rsre.Regex
 function rsre.Regex.new(pattern) end
 
+--- Compile a new regex with the provided options.
+---
+--- Equivalent to calling `options:build(patter)`
+---
 ---@param pattern string
 ---@param options rsre.Options
 ---
