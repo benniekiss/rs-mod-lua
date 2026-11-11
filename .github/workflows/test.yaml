@@ -56,7 +56,7 @@ jobs:
             shared: &shared
               - rust-toolchain.toml
               - .cargo/config.toml
-              - !**/docs/**
+              - '!**/docs/**'
             rs-mod-lua-core:
               - *shared
               - crates/rs-mod-lua-core/**
