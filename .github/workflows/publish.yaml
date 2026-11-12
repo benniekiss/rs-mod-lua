@@ -70,7 +70,7 @@ jobs:
       - name: Upload rock
         env:
           LUX_API_KEY: ${{ secrets.LUAROCKS_API_KEY }}
-        run: lx --lua-version ${{ env.LUA_VERSION }} --profile ${{ env.LUX_PROFILE }} upload --sign-protocol none --package ${{ env.PACKAGE }}
+        run: lx --lua-version ${{ env.LUA_VERSION }} --profile ${{ env.LUX_PROFILE }} upload --package ${{ env.PACKAGE }}
 
   build-release:
     name: ${{ matrix.job.target }}-${{ matrix.lua_version }}
