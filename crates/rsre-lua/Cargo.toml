@@ -1,6 +1,6 @@
 [package]
 name = "rsre-lua"
-version = "0.5.1"
+version = "0.5.2"
 edition.workspace = true
 description = "a regex lua module using the fancy-regex rust crate"
 repository.workspace = true
