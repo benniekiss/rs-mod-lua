@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.5.1...rsre-lua-v0.5.2) - 2026-11-12
+
+### Fixed
+
+- *(deps)* update rust crate fancy-regex to 0.20.2 ([#236](https://github.com/benniekiss/rs-mod-lua/pull/236))
+
+### Other
+
+- bump lux package version
+
 ## [0.5.1](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.5.0...rsre-lua-v0.5.1) - 2026-11-11
 
 ### Other
