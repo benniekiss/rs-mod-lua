@@ -62,10 +62,6 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: test keys
-        run: |
-          gpg -K
-
       - name: Setup Lux
         uses: lumen-oss/gh-actions-lux@773ed71fc416002ea236b672563368154b7a00fa # v1
         with:
