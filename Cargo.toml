@@ -9,6 +9,7 @@ members = [
   "crates/rsast-lua",
   "crates/rsjson-lua",
   "crates/rsre-lua",
+  "crates/rsreq-lua",
 ]
 
 [workspace.package]

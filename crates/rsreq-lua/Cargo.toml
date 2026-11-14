@@ -1,0 +1,28 @@
+[package]
+name = "rsreq-lua"
+version = "0.1.0"
+edition.workspace = true
+description = "an http client lua module using the reqwest rust crate"
+repository.workspace = true
+license.workspace = true
+keywords = ["client", "http", "lua", "mlua", "module"]
+categories = ["text-processing"]
+
+[features]
+default = ["lua54", "vendored"]
+lua51 = ["mlua/lua51"]
+lua52 = ["mlua/lua52"]
+lua53 = ["mlua/lua53"]
+lua54 = ["mlua/lua54"]
+lua55 = ["mlua/lua55"]
+luajit = ["mlua/luajit"]
+luajit52 = ["mlua/luajit52"]
+module = ["mlua/module"]
+vendored = ["mlua/vendored"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "rsreq_lua"
+
+[dependencies]
+mlua = { workspace = true, features = ["macros"] }
