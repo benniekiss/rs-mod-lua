@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "rslua"
+project = "rs-mod-lua"
 copyright = "2026, benniekiss"
 author = "benniekiss"
 
@@ -56,6 +56,7 @@ lua_ls_class_default_function_name = "new"
 lua_ls_apidoc_format = "md"
 
 lua_ls_project_directories = [
+    "crates/rs-mod-lua-core/library/",
     "crates/jsonschema-lua/library/",
     "crates/minijinja-lua/library/",
     "crates/rsast-lua/library/",
@@ -64,6 +65,7 @@ lua_ls_project_directories = [
 ]
 
 lua_ls_apidoc_roots = {
+    "rs_mod_lua_core": "api/rs-mod-lua-core",
     "jsonschema": "api/jsonschema",
     "minijinja": "api/minijinja",
     "rsast": "api/rsast",

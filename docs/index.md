@@ -26,6 +26,7 @@ source/contributing
 :hidden:
 :includehidden:
 
+crates/rs-mod-lua-core/index
 crates/jsonschema-lua/index
 crates/minijinja-lua/index
 crates/rsast-lua/index
