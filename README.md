@@ -1,6 +1,7 @@
 # Rust % Lua
 
-*Lua modules for Rust libraries built with [`mlua`](https://github.com/mlua-rs/mlua)*
+*Lua modules for Rust libraries built with
+[`mlua`](https://github.com/mlua-rs/mlua)*
 
 ## Modules
 
@@ -11,6 +12,7 @@ The following modules are contained in this repo:
 - [`rsast-lua`][rsast-lua]
 - [`rsjson-lua`][rsjson-lua]
 - [`rsre-lua`][rsre-lua]
+- [`rsreq-lua`][rsreq-lua]
 
 ## Documentation
 
@@ -30,3 +32,4 @@ The following modules are contained in this repo:
 [rsast-lua]: crates/rsast-lua/README.md
 [rsjson-lua]: crates/rsjson-lua/README.md
 [rsre-lua]: crates/rsre-lua/README.md
+[rsreq-lua]: crates/rsreq-lua/README.md
