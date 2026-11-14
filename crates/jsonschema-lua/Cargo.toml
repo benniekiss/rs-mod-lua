@@ -1,0 +1,47 @@
+[package]
+name = "jsonschema-lua"
+version = "0.1.0"
+edition = "2024"
+description = "a json schema validation lua module using the jsonschema rust crate"
+repository = "https://github.com/benniekiss/rs-mod-lua"
+license = "MIT"
+keywords = ["jsonschema", "lua", "mlua", "module"]
+categories = ["encoding"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "jsonschema_lua"
+
+[dependencies]
+jsonschema = {
+  version = "0.46.10",
+  default-features = false,
+  features = [
+    "resolve-file",
+  ]
+}
+mlua = { workspace = true, features = ["macros", "serde"] }
+rs-mod-lua-core = { workspace = true, features = ["serde"] }
+serde = "1.0.229"
+serde_json = {
+  version = "1.0.151",
+  features = [
+    "float_roundtrip",
+    "preserve_order",
+  ]
+}
+
+[features]
+default = ["async", "lua54", "vendored"]
+arbitrary-precision = [
+  "jsonschema/arbitrary-precision",
+  "serde_json/arbitrary_precision",
+]
+async = ["jsonschema/resolve-async", "mlua/async"]
+lua51 = ["mlua/lua51"]
+lua52 = ["mlua/lua52"]
+lua53 = ["mlua/lua53"]
+lua54 = ["mlua/lua54"]
+lua55 = ["mlua/lua55"]
+module = ["mlua/module"]
+vendored = ["mlua/vendored"]
