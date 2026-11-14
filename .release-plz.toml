@@ -12,9 +12,9 @@ git_release_enable = false
 
 [[package]]
 name = "jsonschema-lua"
-release = false
-publish = false
-publish_features = ["vendored"]
+release = true
+publish = true
+publish_features = ["vendored", "async"]
 
 [[package]]
 name = "minijinja-lua"
