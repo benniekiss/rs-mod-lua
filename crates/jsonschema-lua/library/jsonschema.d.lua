@@ -239,7 +239,7 @@ function jsonschema.ValidatorMap:contains_key(pointer) end
 ---@return string[]
 function jsonschema.ValidatorMap:keys() end
 
---- Email format options. Setters consume the options and return new userdata.
+--- Email format options.
 ---
 ---@class (exact) jsonschema.EmailOptions: userdata
 jsonschema.EmailOptions = {}
@@ -253,46 +253,55 @@ function jsonschema.EmailOptions.new() end
 ---
 ---@param min integer
 ---
+---@nodiscard
 ---@return jsonschema.EmailOptions
 function jsonschema.EmailOptions:with_minimum_sub_domains(min) end
 
 --- Allow single-segment domains.
 ---
+---@nodiscard
 ---@return jsonschema.EmailOptions
 function jsonschema.EmailOptions:with_no_minimum_sub_domains() end
 
 --- Require a top-level domain.
 ---
+---@nodiscard
 ---@return jsonschema.EmailOptions
 function jsonschema.EmailOptions:with_required_tld() end
 
 --- Allow domain literals.
 ---
+---@nodiscard
 ---@return jsonschema.EmailOptions
 function jsonschema.EmailOptions:with_domain_literal() end
 
 --- Reject domain literals.
 ---
+---@nodiscard
 ---@return jsonschema.EmailOptions
 function jsonschema.EmailOptions:without_domain_literal() end
 
 --- Allow display text.
 ---
+---@nodiscard
 ---@return jsonschema.EmailOptions
 function jsonschema.EmailOptions:with_display_text() end
 
 --- Reject display text.
 ---
+---@nodiscard
 ---@return jsonschema.EmailOptions
 function jsonschema.EmailOptions:without_display_text() end
 
---- Regex options. Setters consume the options and return new userdata.
+--- Regex options.
 ---
+---@nodiscard
 ---@class (exact) jsonschema.PatternOptions: userdata
 jsonschema.PatternOptions = {}
 
 --- Create fancy-regex options.
 ---
+---@nodiscard
 ---@return jsonschema.PatternOptions
 function jsonschema.PatternOptions.new() end
 
@@ -300,6 +309,7 @@ function jsonschema.PatternOptions.new() end
 ---
 ---@param limit integer
 ---
+---@nodiscard
 ---@return jsonschema.PatternOptions
 function jsonschema.PatternOptions:backtrack_limit(limit) end
 
@@ -307,6 +317,7 @@ function jsonschema.PatternOptions:backtrack_limit(limit) end
 ---
 ---@param limit integer
 ---
+---@nodiscard
 ---@return jsonschema.PatternOptions
 function jsonschema.PatternOptions:size_limit(limit) end
 
@@ -314,6 +325,7 @@ function jsonschema.PatternOptions:size_limit(limit) end
 ---
 ---@param limit integer
 ---
+---@nodiscard
 ---@return jsonschema.PatternOptions
 function jsonschema.PatternOptions:dfa_size_limit(limit) end
 
@@ -329,7 +341,7 @@ function jsonschema.PatternOptions:dfa_size_limit(limit) end
 
 ---@alias jsonschema.KeywordFactory fun(parent: table<string, any>, value: any, location: string): jsonschema.KeywordCheck, jsonschema.KeywordValidate
 
---- Validation options. Setters consume the options and return new userdata.
+--- Validation options.
 ---
 ---@class (exact) jsonschema.ValidationOptions: userdata
 jsonschema.ValidationOptions = {}
@@ -377,6 +389,7 @@ function jsonschema.ValidationOptions:dereference(schema, encode, decode) end
 ---
 ---@param draft jsonschema.DraftVariant
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:with_draft(draft) end
 
@@ -384,6 +397,7 @@ function jsonschema.ValidationOptions:with_draft(draft) end
 ---
 ---@param base_uri string
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:with_base_uri(base_uri) end
 
@@ -391,13 +405,15 @@ function jsonschema.ValidationOptions:with_base_uri(base_uri) end
 ---
 ---@param options jsonschema.EmailOptions
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:with_email_options(options) end
 
---- Set regex options, consuming the supplied userdata.
+--- Set regex options.
 ---
 ---@param options jsonschema.PatternOptions
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:with_pattern_options(options) end
 
@@ -406,20 +422,23 @@ function jsonschema.ValidationOptions:with_pattern_options(options) end
 ---@param retriever jsonschema.Retriever
 ---@param options?  jsonschema.EncodeConfig
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:with_retriever(retriever, options) end
 
---- Whether to validate formats.
+--- Set whether to validate formats.
 ---
 ---@param validate boolean
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:should_validate_formats(validate) end
 
---- Whether to ignore unknown formats.
+--- Set whether to ignore unknown formats.
 ---
 ---@param ignore boolean
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:should_ignore_unknown_formats(ignore) end
 
@@ -428,6 +447,7 @@ function jsonschema.ValidationOptions:should_ignore_unknown_formats(ignore) end
 ---@param name   string
 ---@param format jsonschema.Format
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:with_format(name, format) end
 
@@ -436,6 +456,7 @@ function jsonschema.ValidationOptions:with_format(name, format) end
 ---@param name    string
 ---@param factory jsonschema.KeywordFactory
 ---
+---@nodiscard
 ---@return jsonschema.ValidationOptions
 function jsonschema.ValidationOptions:with_keyword(name, factory) end
 

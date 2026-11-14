@@ -90,42 +90,49 @@ impl LuaEmailOptions {
         jsonschema::EmailOptions::default().into()
     }
 
+    #[must_use]
     #[lua(name = "with_minimum_sub_domains", infallible)]
     pub(crate) fn lua_with_minimum_sub_domains(mut self, min: usize) -> Self {
         self.0 = self.0.with_minimum_sub_domains(min);
         self
     }
 
+    #[must_use]
     #[lua(name = "with_no_minimum_sub_domains", infallible)]
     pub(crate) fn lua_with_no_minimum_sub_domains(mut self) -> Self {
         self.0 = self.0.with_no_minimum_sub_domains();
         self
     }
 
+    #[must_use]
     #[lua(name = "with_required_tld", infallible)]
     pub(crate) fn lua_with_required_tld(mut self) -> Self {
         self.0 = self.0.with_required_tld();
         self
     }
 
+    #[must_use]
     #[lua(name = "with_domain_literal", infallible)]
     pub(crate) fn lua_with_domain_literal(mut self) -> Self {
         self.0 = self.0.with_domain_literal();
         self
     }
 
+    #[must_use]
     #[lua(name = "without_domain_literal", infallible)]
     pub(crate) fn lua_without_domain_literal(mut self) -> Self {
         self.0 = self.0.without_domain_literal();
         self
     }
 
+    #[must_use]
     #[lua(name = "with_display_text", infallible)]
     pub(crate) fn lua_with_display_text(mut self) -> Self {
         self.0 = self.0.with_display_text();
         self
     }
 
+    #[must_use]
     #[lua(name = "without_display_text", infallible)]
     pub(crate) fn lua_without_display_text(mut self) -> Self {
         self.0 = self.0.without_display_text();
@@ -182,18 +189,21 @@ impl LuaFancyRegexPatternOptions {
         jsonschema::PatternOptions::fancy_regex().into()
     }
 
+    #[must_use]
     #[lua(name = "backtrack_limit", infallible)]
     pub(crate) fn lua_backtrack_limit(mut self, limit: usize) -> Self {
         self.0 = self.0.backtrack_limit(limit);
         self
     }
 
+    #[must_use]
     #[lua(name = "size_limit", infallible)]
     pub(crate) fn lua_size_limit(mut self, limit: usize) -> Self {
         self.0 = self.0.size_limit(limit);
         self
     }
 
+    #[must_use]
     #[lua(name = "dfa_size_limit", infallible)]
     pub(crate) fn lua_dfa_size_limit(mut self, limit: usize) -> Self {
         self.0 = self.0.dfa_size_limit(limit);
@@ -271,30 +281,35 @@ impl LuaValidationOptions {
             .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
     }
 
+    #[must_use]
     #[lua(name = "with_draft", infallible)]
-    pub(crate) fn lua_with_draft(mut self, draft: LuaDraft) -> mlua::Result<Self> {
+    pub(crate) fn lua_with_draft(mut self, draft: LuaDraft) -> Self {
         self.0 = self.0.with_draft(draft.into());
-        Ok(self)
+        self
     }
 
+    #[must_use]
     #[lua(name = "with_base_uri", infallible)]
     pub(crate) fn lua_with_base_uri(mut self, base_uri: String) -> Self {
         self.0 = self.0.with_base_uri(base_uri);
         self
     }
 
+    #[must_use]
     #[lua(name = "with_email_options", infallible)]
     pub(crate) fn lua_with_email_options(mut self, options: LuaEmailOptions) -> Self {
         self.0 = self.0.with_email_options(options.into());
         self
     }
 
+    #[must_use]
     #[lua(name = "with_pattern_options", infallible)]
     pub(crate) fn lua_with_pattern_options(mut self, options: LuaFancyRegexPatternOptions) -> Self {
         self.0 = self.0.with_pattern_options(options.into());
         self
     }
 
+    #[must_use = "consumes Self"]
     #[lua(name = "with_retriever")]
     pub(crate) fn lua_with_retriever(
         mut self,
@@ -309,18 +324,21 @@ impl LuaValidationOptions {
         Ok(self)
     }
 
+    #[must_use]
     #[lua(name = "should_validate_formats", infallible)]
     pub(crate) fn lua_should_validate_formats(mut self, validate: bool) -> Self {
         self.0 = self.0.should_validate_formats(validate);
         self
     }
 
+    #[must_use]
     #[lua(name = "should_ignore_unknown_formats", infallible)]
     pub(crate) fn lua_should_ignore_unknown_formats(mut self, ignore: bool) -> Self {
         self.0 = self.0.should_ignore_unknown_formats(ignore);
         self
     }
 
+    #[must_use = "consumes Self"]
     #[lua(name = "with_format", infallible)]
     pub(crate) fn lua_with_format(
         mut self,
@@ -340,6 +358,7 @@ impl LuaValidationOptions {
         Ok(self)
     }
 
+    #[must_use = "consumes Self"]
     #[lua(name = "with_keyword")]
     pub(crate) fn lua_with_keyword(
         mut self,
