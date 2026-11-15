@@ -26,7 +26,7 @@ local function check_validator(validator)
     assert.Same({ err }, validator:errors({ count = -1 }))
     assert.True(validator:evaluate({ count = 2 }):flag().valid)
     assert.False(validator:evaluate({ count = -1 }):flag().valid)
-    assert.Equal(jsonschema.Draft.DRAFT202012, validator:draft())
+    assert.Equal(jsonschema.drafts.DRAFT202012, validator:draft())
 end
 
 local function check_map(map)

@@ -29,6 +29,7 @@ describe("evaluation#jsonschema", function ()
         it("flag#valid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             assert.True(eval:flag().valid)
+            assert.True(eval:is_valid())
         end)
 
         it("list#valid", function ()
@@ -90,6 +91,7 @@ describe("evaluation#jsonschema", function ()
                 ["valid"] = true,
             }
             assert.Same(ex, eval:list())
+            assert.True(eval:is_valid())
         end)
 
         it("hierarchical#valid", function ()
@@ -156,6 +158,7 @@ describe("evaluation#jsonschema", function ()
                 ["valid"] = true,
             }
             assert.Same(ex, eval:hierarchical())
+            assert.True(eval:is_valid())
         end)
 
         it("annotations#valid", function ()
@@ -170,12 +173,14 @@ describe("evaluation#jsonschema", function ()
                 },
             }
             assert.Same(ex, eval:annotations())
+            assert.True(eval:is_valid())
         end)
 
         it("errors#valid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {}
             assert.Same(ex, eval:errors())
+            assert.True(eval:is_valid())
         end)
     end)
 
@@ -194,6 +199,7 @@ describe("evaluation#jsonschema", function ()
         it("flag#invalid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             assert.False(eval:flag().valid)
+            assert.False(eval:is_valid())
         end)
 
         it("list#invalid", function ()
@@ -246,6 +252,7 @@ describe("evaluation#jsonschema", function ()
                 ["valid"] = false,
             }
             assert.Same(ex, eval:list())
+            assert.False(eval:is_valid())
         end)
 
         it("hierarchical#invalid", function ()
@@ -299,12 +306,14 @@ describe("evaluation#jsonschema", function ()
                 ["valid"] = false,
             }
             assert.Same(ex, eval:hierarchical())
+            assert.False(eval:is_valid())
         end)
 
         it("annotations#invalid", function ()
             local eval = jsonschema.evaluate(schema, instance)
             local ex = {}
             assert.Same(ex, eval:annotations())
+            assert.False(eval:is_valid())
         end)
 
         it("errors#invalid", function ()
@@ -328,6 +337,7 @@ describe("evaluation#jsonschema", function ()
                 },
             }
             assert.Same(ex, eval:errors())
+            assert.False(eval:is_valid())
         end)
     end)
 end)

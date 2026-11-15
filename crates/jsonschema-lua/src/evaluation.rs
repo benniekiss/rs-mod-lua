@@ -107,4 +107,9 @@ impl LuaEvaluation {
             .map(LuaErrorEntry::from)
             .collect::<Vec<_>>()
     }
+
+    #[lua(name = "is_valid", infallible)]
+    pub(crate) fn lua_is_valid(&self) -> bool {
+        self.0.is_valid()
+    }
 }

@@ -154,7 +154,7 @@ pub(crate) fn jsonschema_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
     )?;
     table.set("EmailOptions", lua.create_proxy::<LuaEmailOptions>()?)?;
 
-    table.set("Draft", draft_lua(lua)?)?;
+    table.set("drafts", draft_lua(lua)?)?;
 
     table.set("meta", jsonschema_meta_lua(lua)?)?;
 

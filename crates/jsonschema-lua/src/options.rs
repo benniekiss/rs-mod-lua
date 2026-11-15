@@ -31,7 +31,7 @@ impl LuaKeyword {
     }
 }
 
-impl jsonschema::Keyword for LuaKeyword {
+impl jsonschema::Keyword<'_> for LuaKeyword {
     fn is_valid(&self, instance: &serde_json::Value) -> bool {
         with_lua(|lua| {
             let func = lua.registry_value::<mlua::Function>(&self.is_valid)?;
@@ -281,6 +281,18 @@ impl LuaValidationOptions {
             .and_then(|bundle| lua.to_value_with(&bundle, *decode.unwrap_or_default()))
     }
 
+    #[lua(name = "is_known_format", infallible)]
+    pub(crate) fn lua_is_known_format(&self, draft: LuaDraft, format: &str) -> bool {
+        self.0.is_known_format(draft.into(), format)
+    }
+
+    #[must_use]
+    #[lua(name = "offline", infallible)]
+    pub(crate) fn lua_offline(mut self) -> Self {
+        self.0 = self.0.offline();
+        self
+    }
+
     #[must_use]
     #[lua(name = "with_draft", infallible)]
     pub(crate) fn lua_with_draft(mut self, draft: LuaDraft) -> Self {
@@ -306,6 +318,13 @@ impl LuaValidationOptions {
     #[lua(name = "with_pattern_options", infallible)]
     pub(crate) fn lua_with_pattern_options(mut self, options: LuaFancyRegexPatternOptions) -> Self {
         self.0 = self.0.with_pattern_options(options.into());
+        self
+    }
+
+    #[must_use]
+    #[lua(name = "with_pattern_cache", infallible)]
+    pub(crate) fn lua_with_pattern_cache(mut self) -> Self {
+        self.0 = self.0.with_pattern_cache(jsonschema::PatternCache::new());
         self
     }
 
@@ -358,6 +377,13 @@ impl LuaValidationOptions {
         Ok(self)
     }
 
+    #[must_use]
+    #[lua(name = "with_vocabulary", infallible)]
+    pub(crate) fn lua_with_vocabulary(mut self, uri: String) -> Self {
+        self.0 = self.0.with_vocabulary(uri);
+        self
+    }
+
     #[must_use = "consumes Self"]
     #[lua(name = "with_keyword")]
     pub(crate) fn lua_with_keyword(
@@ -382,7 +408,7 @@ impl LuaValidationOptions {
 
                 LuaKeyword::new(lua, is_valid, validate)
             })
-            .map(|kw| Box::new(kw) as Box<dyn jsonschema::Keyword>)
+            .map(|kw| Box::new(kw) as Box<dyn for<'i> jsonschema::Keyword<'i>>)
             .map_err(|err| jsonschema::ValidationError::custom(err.to_string()))
         });
         Ok(self)

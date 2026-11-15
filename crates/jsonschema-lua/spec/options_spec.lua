@@ -22,8 +22,8 @@ describe("options#jsonschema", function ()
 
     it("with_draft#options", function ()
         local options = Options.new()
-        local draft4 = options:with_draft(jsonschema.Draft.DRAFT4)
-        assert.Equal(jsonschema.Draft.DRAFT4, draft4:build({}):draft())
+        local draft4 = options:with_draft(jsonschema.drafts.DRAFT4)
+        assert.Equal(jsonschema.drafts.DRAFT4, draft4:build({}):draft())
         assert.has_error(function () options:build({}) end)
     end)
 
@@ -75,8 +75,40 @@ describe("options#jsonschema", function ()
         assert.False(validator:validate('"value"'))
     end)
 
+    it("with_vocabulary#options", function ()
+        local vocabulary = "https://example.com/vocab/custom"
+        local dialect = "https://example.com/dialect"
+        local options = Options.new():with_retriever(function (uri)
+            assert.Equal(dialect, tostring(uri))
+            return {
+                ["$schema"] = "https://json-schema.org/draft/2020-12/schema",
+                ["$id"] = dialect,
+                ["$vocabulary"] = {
+                    ["https://json-schema.org/draft/2020-12/vocab/core"] = true,
+                    ["https://json-schema.org/draft/2020-12/vocab/validation"] = true,
+                    [vocabulary] = true,
+                },
+            }
+        end)
+        local schema = { ["$schema"] = dialect, type = "integer" }
+
+        assert.match_error(
+            function () options:build(schema) end,
+            "Unknown vocabulary: '" .. vocabulary
+                .. "' is required by the meta-schema. Adjust configuration to declare support for it",
+            0,
+            true
+        )
+
+        local validator = options:with_vocabulary(vocabulary):build(schema)
+        assert.True(validator:is_valid(1))
+        assert.False(validator:is_valid(false))
+    end)
+
     it("with_keyword#options", function ()
         local calls = 0
+
+        ---@type jsonschema.KeywordFactory
         local factory = function (parent, value, location)
             calls = calls + 1
             assert.Same({ multipleOfCustom = 3 }, parent)
@@ -96,7 +128,7 @@ describe("options#jsonschema", function ()
         assert.True(validator:validate(6))
         local valid, err = validator:validate(7)
         assert.False(valid)
-        assert.matches("not a custom multiple", err)
+        assert.matches("not a custom multiple", err or "")
         assert.Equal(1, #validator:errors(7))
     end)
 
@@ -140,6 +172,33 @@ describe("options#jsonschema", function ()
         local options = Options.new()
         assert.Same(schema, options:bundle(schema))
         assert.Same({ type = "integer" }, options:dereference(schema).properties.count)
+    end)
+
+    it("is_known_format#options", function ()
+        local options = Options.new()
+        local draft = jsonschema.drafts.DRAFT7
+
+        assert.False(options:is_known_format(draft, "foo"))
+
+        options = options:with_format("foo", function (_) end)
+
+        assert.True(options:is_known_format(draft, "foo"))
+    end)
+
+    it("offline#options", function ()
+        local options = Options.new()
+            -- Use a no-op retriever to prevent any accidental network calls
+            :with_retriever(function () return nil end)
+            :offline()
+
+        assert.True(options:build({ type = "integer" }):is_valid(1))
+        assert.match_error(function ()
+            options:build({
+                ["$ref"] = "https://example.com/schema.json",
+            })
+        end,
+            "Resource 'https://example.com/schema.json' is not present in a registry and retrieving it failed: Retrieval is disabled, cannot fetch https://example.com/schema.json"
+        )
     end)
 end)
 

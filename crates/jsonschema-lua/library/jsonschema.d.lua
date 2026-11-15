@@ -64,40 +64,40 @@ function jsonschema.Uri:has_fragment() end
 ---@param fragment? string
 function jsonschema.Uri:set_fragment(fragment) end
 
----@class (exact) jsonschema.DraftVariant: userdata
-jsonschema.DraftVariant = {}
+---@class (exact) jsonschema.Draft: userdata
+jsonschema.Draft = {}
 
 --- Detect the schema draft, falling back to this draft.
 ---
 ---@param schema   any
 ---@param options? jsonschema.EncodeConfig
 ---
----@return jsonschema.DraftVariant
-function jsonschema.DraftVariant:detect(schema, options) end
+---@return jsonschema.Draft
+function jsonschema.Draft:detect(schema, options) end
 
 --- Check whether the draft defines a keyword.
 ---
 ---@param keyword string
 ---
 ---@return boolean
-function jsonschema.DraftVariant:is_known_keyword(keyword) end
+function jsonschema.Draft:is_known_keyword(keyword) end
 
----@class (exact) jsonschema.Draft: table
+---@class (exact) jsonschema.drafts: table
 ---
----@field DRAFT202012 jsonschema.DraftVariant
----@field DRAFT201909 jsonschema.DraftVariant
----@field DRAFT7      jsonschema.DraftVariant
----@field DRAFT6      jsonschema.DraftVariant
----@field DRAFT4      jsonschema.DraftVariant
----@field UNKNOWN     jsonschema.DraftVariant
-jsonschema.Draft = {}
+---@field DRAFT202012 jsonschema.Draft
+---@field DRAFT201909 jsonschema.Draft
+---@field DRAFT7      jsonschema.Draft
+---@field DRAFT6      jsonschema.Draft
+---@field DRAFT4      jsonschema.Draft
+---@field UNKNOWN     jsonschema.Draft
+jsonschema.drafts = {}
 
 --- Get the draft for a schema URI.
 ---
 ---@param uri string
 ---
----@return jsonschema.DraftVariant
-function jsonschema.Draft.from_schema_uri(uri) end
+---@return jsonschema.Draft
+function jsonschema.drafts.from_schema_uri(uri) end
 
 ---@class (exact) jsonschema.EvaluationNode: table
 ---
@@ -173,6 +173,11 @@ function jsonschema.Evaluation:annotations() end
 ---@return jsonschema.ErrorEntry[]
 function jsonschema.Evaluation:errors() end
 
+--- Whether the evaluated instance is valid
+---
+---@return boolean
+function jsonschema.Evaluation:is_valid() end
+
 --- A compiled schema validator.
 ---
 ---@class (exact) jsonschema.Validator: userdata
@@ -212,7 +217,7 @@ function jsonschema.Validator:errors(json, options) end
 
 --- Get the draft used to compile the schema.
 ---
----@return jsonschema.DraftVariant
+---@return jsonschema.Draft
 function jsonschema.Validator:draft() end
 
 --- Validators keyed by URI-fragment pointers, with the root at "#".
@@ -254,55 +259,54 @@ function jsonschema.EmailOptions.new() end
 ---@param min integer
 ---
 ---@nodiscard
----@return jsonschema.EmailOptions
+---@return self
 function jsonschema.EmailOptions:with_minimum_sub_domains(min) end
 
 --- Allow single-segment domains.
 ---
 ---@nodiscard
----@return jsonschema.EmailOptions
+---@return self
 function jsonschema.EmailOptions:with_no_minimum_sub_domains() end
 
 --- Require a top-level domain.
 ---
 ---@nodiscard
----@return jsonschema.EmailOptions
+---@return self
 function jsonschema.EmailOptions:with_required_tld() end
 
 --- Allow domain literals.
 ---
 ---@nodiscard
----@return jsonschema.EmailOptions
+---@return self
 function jsonschema.EmailOptions:with_domain_literal() end
 
 --- Reject domain literals.
 ---
 ---@nodiscard
----@return jsonschema.EmailOptions
+---@return self
 function jsonschema.EmailOptions:without_domain_literal() end
 
 --- Allow display text.
 ---
 ---@nodiscard
----@return jsonschema.EmailOptions
+---@return self
 function jsonschema.EmailOptions:with_display_text() end
 
 --- Reject display text.
 ---
 ---@nodiscard
----@return jsonschema.EmailOptions
+---@return self
 function jsonschema.EmailOptions:without_display_text() end
 
 --- Regex options.
 ---
----@nodiscard
 ---@class (exact) jsonschema.PatternOptions: userdata
 jsonschema.PatternOptions = {}
 
 --- Create fancy-regex options.
 ---
 ---@nodiscard
----@return jsonschema.PatternOptions
+---@return self
 function jsonschema.PatternOptions.new() end
 
 --- Set the backtracking limit.
@@ -310,7 +314,7 @@ function jsonschema.PatternOptions.new() end
 ---@param limit integer
 ---
 ---@nodiscard
----@return jsonschema.PatternOptions
+---@return self
 function jsonschema.PatternOptions:backtrack_limit(limit) end
 
 --- Set the compiled regex size limit.
@@ -318,7 +322,7 @@ function jsonschema.PatternOptions:backtrack_limit(limit) end
 ---@param limit integer
 ---
 ---@nodiscard
----@return jsonschema.PatternOptions
+---@return self
 function jsonschema.PatternOptions:size_limit(limit) end
 
 --- Set the DFA cache size limit.
@@ -326,7 +330,7 @@ function jsonschema.PatternOptions:size_limit(limit) end
 ---@param limit integer
 ---
 ---@nodiscard
----@return jsonschema.PatternOptions
+---@return self
 function jsonschema.PatternOptions:dfa_size_limit(limit) end
 
 ---@alias jsonschema.Format fun(value: string): boolean
@@ -385,12 +389,25 @@ function jsonschema.ValidationOptions:bundle(schema, encode, decode) end
 ---@return any
 function jsonschema.ValidationOptions:dereference(schema, encode, decode) end
 
+--- Whether a format is validated by the draft version.
+---
+---@param draft  jsonschema.Draft
+---@param format string
+---
+---@return boolean
+function jsonschema.ValidationOptions:is_known_format(draft, format) end
+
+--- Only fetch references already in the registry.
+---
+---@return self
+function jsonschema.ValidationOptions:offline() end
+
 --- Set the schema draft.
 ---
----@param draft jsonschema.DraftVariant
+---@param draft jsonschema.Draft
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:with_draft(draft) end
 
 --- Set the base URI for relative references.
@@ -398,7 +415,7 @@ function jsonschema.ValidationOptions:with_draft(draft) end
 ---@param base_uri string
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:with_base_uri(base_uri) end
 
 --- Set email format options.
@@ -406,7 +423,7 @@ function jsonschema.ValidationOptions:with_base_uri(base_uri) end
 ---@param options jsonschema.EmailOptions
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:with_email_options(options) end
 
 --- Set regex options.
@@ -414,8 +431,15 @@ function jsonschema.ValidationOptions:with_email_options(options) end
 ---@param options jsonschema.PatternOptions
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:with_pattern_options(options) end
+
+--- Cache regex compilations across built [`Validator`](lua-jsonschema.Validator)
+--- and [`ValidatorMap`](lua-jsonschema.ValidatorMap) instances.
+---
+---@nodiscard
+---@return self
+function jsonschema.ValidationOptions:with_pattern_cache() end
 
 --- Set a schema retrieval callback.
 ---
@@ -423,7 +447,7 @@ function jsonschema.ValidationOptions:with_pattern_options(options) end
 ---@param options?  jsonschema.EncodeConfig
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:with_retriever(retriever, options) end
 
 --- Set whether to validate formats.
@@ -431,7 +455,7 @@ function jsonschema.ValidationOptions:with_retriever(retriever, options) end
 ---@param validate boolean
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:should_validate_formats(validate) end
 
 --- Set whether to ignore unknown formats.
@@ -439,7 +463,7 @@ function jsonschema.ValidationOptions:should_validate_formats(validate) end
 ---@param ignore boolean
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:should_ignore_unknown_formats(ignore) end
 
 --- Register a format checker.
@@ -448,8 +472,19 @@ function jsonschema.ValidationOptions:should_ignore_unknown_formats(ignore) end
 ---@param format jsonschema.Format
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:with_format(name, format) end
+
+--- Register support for custom vocabulary.
+---
+--- Use this together with [`with_keyword`](lua-jsonschema.ValidationOptions.with_keyword)
+--- to use a meta schema that requires an unknown vocabulary.
+---
+---@param uri string
+---
+---@nodiscard
+---@return self
+function jsonschema.ValidationOptions:with_vocabulary(uri) end
 
 --- Register a keyword factory.
 ---
@@ -457,7 +492,7 @@ function jsonschema.ValidationOptions:with_format(name, format) end
 ---@param factory jsonschema.KeywordFactory
 ---
 ---@nodiscard
----@return jsonschema.ValidationOptions
+---@return self
 function jsonschema.ValidationOptions:with_keyword(name, factory) end
 
 --- Meta-schema validation.

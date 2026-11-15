@@ -8,29 +8,6 @@ license = "MIT"
 keywords = ["jsonschema", "lua", "mlua", "module"]
 categories = ["encoding"]
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-name = "jsonschema_lua"
-
-[dependencies]
-jsonschema = {
-  version = "0.46.10",
-  default-features = false,
-  features = [
-    "resolve-file",
-  ]
-}
-mlua = { workspace = true, features = ["macros", "serde"] }
-rs-mod-lua-core = { workspace = true, features = ["serde"] }
-serde = "1.0.229"
-serde_json = {
-  version = "1.0.154",
-  features = [
-    "float_roundtrip",
-    "preserve_order",
-  ]
-}
-
 [features]
 default = ["async", "lua54", "vendored"]
 arbitrary-precision = [
@@ -45,3 +22,27 @@ lua54 = ["mlua/lua54"]
 lua55 = ["mlua/lua55"]
 module = ["mlua/module"]
 vendored = ["mlua/vendored"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+name = "jsonschema_lua"
+
+[dependencies]
+jsonschema = {
+  version = "0.61.2",
+  default-features = false,
+  features = [
+    "idna",
+    "resolve-file",
+  ]
+}
+mlua = { workspace = true, features = ["macros", "serde"] }
+rs-mod-lua-core = { workspace = true, features = ["serde"] }
+serde = "1.0.229"
+serde_json = {
+  version = "1.0.154",
+  features = [
+    "float_roundtrip",
+    "preserve_order",
+  ]
+}
