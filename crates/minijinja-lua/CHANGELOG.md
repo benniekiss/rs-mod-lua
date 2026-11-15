@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.7.2...minijinja-lua-v0.7.3) - 2026-11-15
+
+### Fixed
+
+- *(deps)* update rust crate jiff to 0.2.45 ([#245](https://github.com/benniekiss/rs-mod-lua/pull/245))
+
+### Other
+
+- bump lua versions
+
 ## [0.7.2](https://github.com/benniekiss/rs-mod-lua/compare/minijinja-lua-v0.7.1...minijinja-lua-v0.7.2) - 2026-11-14
 
 ### Fixed

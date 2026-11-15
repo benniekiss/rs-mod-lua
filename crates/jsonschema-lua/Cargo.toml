@@ -1,6 +1,6 @@
 [package]
 name = "jsonschema-lua"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "a json schema validation lua module using the jsonschema rust crate"
 repository = "https://github.com/benniekiss/rs-mod-lua"
