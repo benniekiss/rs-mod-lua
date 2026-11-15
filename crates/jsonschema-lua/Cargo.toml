@@ -14,7 +14,7 @@ name = "jsonschema_lua"
 
 [dependencies]
 jsonschema = {
-  version = "0.46.10",
+  version = "0.61.2",
   default-features = false,
   features = [
     "resolve-file",
