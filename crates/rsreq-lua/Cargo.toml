@@ -26,3 +26,4 @@ name = "rsreq_lua"
 
 [dependencies]
 mlua = { workspace = true, features = ["macros"] }
+reqwest = "0.13.5"
