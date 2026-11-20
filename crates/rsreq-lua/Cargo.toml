@@ -9,7 +9,8 @@ keywords = ["client", "http", "lua", "mlua", "module"]
 categories = ["text-processing"]
 
 [features]
-default = ["lua54", "vendored"]
+default = ["async", "lua54", "vendored"]
+async = ["mlua/async"]
 lua51 = ["mlua/lua51"]
 lua52 = ["mlua/lua52"]
 lua53 = ["mlua/lua53"]
@@ -25,5 +26,7 @@ crate-type = ["cdylib", "rlib"]
 name = "rsreq_lua"
 
 [dependencies]
-mlua = { workspace = true, features = ["macros"] }
-reqwest = "0.13.5"
+mlua = { workspace = true, features = ["macros", "serde"] }
+reqwest = { version = "0.13.5", features = ["form", "json", "multipart", "query", "stream"] }
+
+serde = { version = "1.0.229", features = ["derive"] }
