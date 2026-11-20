@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 
 mod client;
+mod headers;
+mod multipart;
+mod request;
+mod response;
+mod url;
+mod version;
 
 #[cfg_attr(feature = "module", mlua::lua_module(name = "rsreq"))]
 pub fn rsreq_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
