@@ -54,8 +54,26 @@ pub(crate) struct LuaCaptures {
     names: BTreeMap<String, usize>,
 }
 
+impl From<&fancy_regex::Captures<'_, str>> for LuaCaptures {
+    fn from(captures: &fancy_regex::Captures<str>) -> Self {
+        Self {
+            matches: captures
+                .iter()
+                .map(|v| v.map(LuaMatch::from))
+                .collect::<Vec<Option<LuaMatch>>>(),
+            names: BTreeMap::new(),
+        }
+    }
+}
+
 impl From<fancy_regex::Captures<'_, str>> for LuaCaptures {
     fn from(captures: fancy_regex::Captures<str>) -> Self {
+        Self::from(&captures)
+    }
+}
+
+impl From<&fancy_regex::Captures<'_, [u8]>> for LuaCaptures {
+    fn from(captures: &fancy_regex::Captures<[u8]>) -> Self {
         Self {
             matches: captures
                 .iter()
@@ -68,13 +86,7 @@ impl From<fancy_regex::Captures<'_, str>> for LuaCaptures {
 
 impl From<fancy_regex::Captures<'_, [u8]>> for LuaCaptures {
     fn from(captures: fancy_regex::Captures<[u8]>) -> Self {
-        Self {
-            matches: captures
-                .iter()
-                .map(|v| v.map(LuaMatch::from))
-                .collect::<Vec<Option<LuaMatch>>>(),
-            names: BTreeMap::new(),
-        }
+        Self::from(&captures)
     }
 }
 
@@ -111,6 +123,11 @@ impl LuaCaptures {
     #[lua(name = "len", infallible)]
     pub(crate) fn lua_len(&self) -> usize {
         self.matches.len()
+    }
+
+    #[lua(name = "is_empty", infallible)]
+    pub(crate) fn lua_is_empty(&self) -> bool {
+        self.matches.is_empty()
     }
 }
 
@@ -183,10 +200,10 @@ impl LuaRegex {
         hay: &[u8],
         start: Option<usize>,
     ) -> mlua::Result<Option<LuaCaptures>> {
-        let start = start.unwrap_or(1);
+        let start = start.unwrap_or(1).saturating_sub(1);
         let mut captures = self
             .0
-            .captures_from_pos(hay, start - 1)
+            .captures_from_pos(hay, start)
             .map(|r| r.map(LuaCaptures::from))
             .map_err(mlua::Error::external)?;
 

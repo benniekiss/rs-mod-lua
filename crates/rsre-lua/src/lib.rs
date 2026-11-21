@@ -2,6 +2,7 @@
 
 mod options;
 mod re;
+mod set;
 
 #[cfg_attr(feature = "module", mlua::lua_module(name = "rsre"))]
 pub fn rsre_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
@@ -9,6 +10,7 @@ pub fn rsre_lua(lua: &mlua::Lua) -> mlua::Result<mlua::Table> {
 
     table.set("Options", lua.create_proxy::<options::LuaRegexOptions>()?)?;
     table.set("Regex", lua.create_proxy::<re::LuaRegex>()?)?;
+    table.set("RegexSet", lua.create_proxy::<set::LuaRegexSet>()?)?;
     table.set("BytesMode", options::bytesmode_lua(lua)?)?;
     table.set(
         "escape",

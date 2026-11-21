@@ -101,6 +101,7 @@ describe("api", function ()
                 local c = re:captures(hay)
 
                 assert.Equal(3, c:len())
+                assert.False(c:is_empty())
 
                 assert.Equal(4, c:get(1).start)
                 assert.Equal(10, c:get(1).stop)
@@ -251,6 +252,58 @@ describe("api", function ()
             local ex = [=[A \$malf\(orned\) \[regex\]]=]
 
             assert.Equal(ex, rsre.escape(te))
+        end)
+    end)
+
+    describe("set#api", function ()
+        it(
+            "new#set",
+            function () assert.Not.Error(function () rsre.RegexSet.new({ "123", "abcd" }) end) end
+        )
+
+        it("new_with_options#set", function ()
+            local patterns = { [[111]], [[aaa]] }
+            local opts = rsre.Options.new()
+                :case_insensitive(true)
+
+            assert.Not.Error(function () rsre.RegexSet.new_with_options(patterns, opts) end)
+        end)
+
+        it("len#set", function ()
+            local set = rsre.RegexSet.new({ "123", "abcd" })
+            assert.Equal(2, set:len())
+        end)
+
+        it("is_empty#set", function ()
+            local set = rsre.RegexSet.new({ "123", "abcd" })
+            assert.False(set:is_empty())
+
+            set = rsre.RegexSet.new({})
+            assert.True(set:is_empty())
+        end)
+
+        it("find#set", function ()
+            local patterns = { [[111]], [[AAA]] }
+            local hay = "123AAA456"
+
+            local re = rsre.RegexSet.new(patterns)
+            local i, m = re:find(hay)
+
+            assert.Not.Nil(i)
+
+            ---@cast i - nil
+
+            local first = m[1]
+
+            assert.Not.Nil(first)
+
+            ---@cast first - nil
+
+            assert.Equal(3, i)
+            assert.Equal(2, first.pattern)
+            assert.Equal("AAA", first.match.text)
+            assert.Equal(first.match.text, hay:sub(first.match.start, first.match.stop - 1))
+            assert.Equal(1, first.captures:len())
         end)
     end)
 end)

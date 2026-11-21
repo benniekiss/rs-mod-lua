@@ -77,6 +77,18 @@ function rsre.Captures:name(name) end
 ---@return integer
 function rsre.Captures:len() end
 
+--- Get whether there were any matches.
+---
+---@return boolean
+function rsre.Captures:is_empty() end
+
+---@class rsre.SetMatch: table
+---
+---@field pattern  integer
+---@field captures rsre.Captures
+---@field match    rsre.Match
+rsre.SetMatch = {}
+
 ---@class rsre.Options: userdata
 ---
 rsre.Options = {}
@@ -369,6 +381,42 @@ function rsre.Regex:split(text, limit) end
 ---
 ---@return string
 function rsre.Regex:__tostring() end
+
+---@class (exact) rsre.RegexSet: userdata
+rsre.RegexSet = {}
+
+--- Compile a new regex set with the provided patterns.
+---
+---@param patterns string[]
+---
+---@return rsre.RegexSet
+function rsre.RegexSet.new(patterns) end
+
+--- Compile a new regex set with the provided patterns and options.
+---
+---@param patterns string[]
+---@param options  rsre.Options
+---
+---@return rsre.RegexSet
+function rsre.RegexSet.new_with_options(patterns, options) end
+
+--- Get how many patterns are in this set.
+---
+---@return integer
+function rsre.RegexSet:len() end
+
+--- Get whether the set is empty and has no patterns.
+---
+---@return boolean
+function rsre.RegexSet:is_empty() end
+
+--- Find matches against every pattern.
+---
+---@param hay string
+---@param pos integer?
+---
+---@return integer?, rsre.SetMatch[]
+function rsre.RegexSet:find(hay, pos) end
 
 --- Escapes special characters in text with '\'. Returns a string which,
 --- when interpreted as a regex, matches exactly `text`.

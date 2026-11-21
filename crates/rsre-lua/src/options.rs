@@ -1,6 +1,6 @@
 use std::{
     fmt,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
 };
 
 use crate::re;
@@ -95,6 +95,11 @@ impl From<fancy_regex::RegexOptionsBuilder> for LuaRegexOptions {
 
 #[mlua::userdata_impl]
 impl LuaRegexOptions {
+    #[lua(skip)]
+    pub(crate) fn lock(&self) -> mlua::Result<MutexGuard<'_, fancy_regex::RegexOptionsBuilder>> {
+        self.0.lock().map_err(mlua::Error::runtime)
+    }
+
     #[lua(name = "new", infallible)]
     fn lua_new() -> Self {
         fancy_regex::RegexOptionsBuilder::new().into()
@@ -300,18 +305,6 @@ impl LuaRegexOptions {
 
         Ok(self.clone())
     }
-
-    // Disabled since it is unused with the current API
-    //
-    // #[lua(name = "allow_input_assertion_overrides")]
-    // fn lua_allow_input_assertion_overrides(&self, yes: bool) -> mlua::Result<Self> {
-    //     self.0
-    //         .lock()
-    //         .map_err(mlua::Error::runtime)?
-    //         .allow_input_assertion_overrides(yes);
-    //
-    //     Ok(self.clone())
-    // }
 
     #[lua(name = "build_delegate_prefilter")]
     fn lua_build_delegate_prefilter(&self, yes: bool) -> mlua::Result<Self> {
