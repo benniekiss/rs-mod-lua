@@ -1137,7 +1137,7 @@ dependencies = [
 
 [[package]]
 name = "minijinja-lua"
-version = "0.7.3"
+version = "0.7.4"
 dependencies = [
  "jiff 1.0.1",
  "minijinja",
@@ -1681,7 +1681,7 @@ dependencies = [
 
 [[package]]
 name = "rsre-lua"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "fancy-regex",
  "mlua",
