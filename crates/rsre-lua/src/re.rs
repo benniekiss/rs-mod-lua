@@ -183,10 +183,10 @@ impl LuaRegex {
         hay: &[u8],
         start: Option<usize>,
     ) -> mlua::Result<Option<LuaCaptures>> {
-        let start = start.unwrap_or(1);
+        let start = start.unwrap_or(1).saturating_sub(1);
         let mut captures = self
             .0
-            .captures_from_pos(hay, start - 1)
+            .captures_from_pos(hay, start)
             .map(|r| r.map(LuaCaptures::from))
             .map_err(mlua::Error::external)?;
 
