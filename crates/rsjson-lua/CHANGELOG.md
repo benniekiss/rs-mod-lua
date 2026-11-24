@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.4](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.8.3...rsjson-lua-v0.8.4) - 2026-11-24
+
+### Other
+
+- update Cargo.toml dependencies
+
 ## [0.8.3](https://github.com/benniekiss/rs-mod-lua/compare/rsjson-lua-v0.8.2...rsjson-lua-v0.8.3) - 2026-11-15
 
 ### Other
