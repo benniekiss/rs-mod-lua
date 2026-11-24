@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.5.2...rsre-lua-v0.6.0) - 2026-11-24
+
+### Fixed
+
+- [**breaking**] don't overflow when adjusting indices
+
 ## [0.5.2](https://github.com/benniekiss/rs-mod-lua/compare/rsre-lua-v0.5.1...rsre-lua-v0.5.2) - 2026-11-12
 
 ### Fixed
